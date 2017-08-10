@@ -80,8 +80,8 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_subcmd->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_subcmd_Validating);
 			this->textBoxDbg_subcmd->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_subcmd_Validated);
 
-			this->textBoxDbg_SubcmdArg->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
-			this->textBoxDbg_SubcmdArg->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
+			this->textBoxDbg_SubcmdArg->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_SubcmdArg_Validating);
+			this->textBoxDbg_SubcmdArg->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_SubcmdArg_Validated);
 
 			this->textBoxDbg_lfamp->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
 			this->textBoxDbg_lfamp->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
@@ -180,6 +180,7 @@ namespace CppWinFormJoy {
 	private: System::Windows::Forms::Label^  label13;
 	private: System::Windows::Forms::Label^  label_sn_change_warning;
 	private: System::Windows::Forms::ToolTip^  toolTip1;
+	public: System::Windows::Forms::TextBox^  textBoxDbg_sent;
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply;
 	private: System::ComponentModel::IContainer^  components;
 
@@ -235,6 +236,7 @@ namespace CppWinFormJoy {
 			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->groupDbg = (gcnew System::Windows::Forms::GroupBox());
 			this->textBoxDbg_reply = (gcnew System::Windows::Forms::TextBox());
+			this->textBoxDbg_sent = (gcnew System::Windows::Forms::TextBox());
 			this->label12 = (gcnew System::Windows::Forms::Label());
 			this->label11 = (gcnew System::Windows::Forms::Label());
 			this->label10 = (gcnew System::Windows::Forms::Label());
@@ -678,11 +680,11 @@ namespace CppWinFormJoy {
 			this->label1->AutoSize = true;
 			this->label1->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label1->Location = System::Drawing::Point(13, 178);
+			this->label1->Location = System::Drawing::Point(13, 129);
 			this->label1->Name = L"label1";
-			this->label1->Size = System::Drawing::Size(119, 17);
+			this->label1->Size = System::Drawing::Size(124, 17);
 			this->label1->TabIndex = 15;
-			this->label1->Text = L"Subcmd Argument:";
+			this->label1->Text = L"Subcmd arguments:";
 			// 
 			// textBoxDbg_SubcmdArg
 			// 
@@ -690,12 +692,14 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_SubcmdArg->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
 			this->textBoxDbg_SubcmdArg->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-			this->textBoxDbg_SubcmdArg->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(250)),
-				static_cast<System::Int32>(static_cast<System::Byte>(250)), static_cast<System::Int32>(static_cast<System::Byte>(250)));
-			this->textBoxDbg_SubcmdArg->Location = System::Drawing::Point(169, 170);
-			this->textBoxDbg_SubcmdArg->MaxLength = 2;
+			this->textBoxDbg_SubcmdArg->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
+			this->textBoxDbg_SubcmdArg->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->textBoxDbg_SubcmdArg->Location = System::Drawing::Point(16, 149);
+			this->textBoxDbg_SubcmdArg->MaxLength = 50;
+			this->textBoxDbg_SubcmdArg->Multiline = true;
 			this->textBoxDbg_SubcmdArg->Name = L"textBoxDbg_SubcmdArg";
-			this->textBoxDbg_SubcmdArg->Size = System::Drawing::Size(35, 25);
+			this->textBoxDbg_SubcmdArg->Size = System::Drawing::Size(188, 40);
 			this->textBoxDbg_SubcmdArg->TabIndex = 25;
 			this->textBoxDbg_SubcmdArg->Text = L"00";
 			this->textBoxDbg_SubcmdArg->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
@@ -710,7 +714,7 @@ namespace CppWinFormJoy {
 			this->btnDbg_send_cmd->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
 			this->btnDbg_send_cmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
 				static_cast<System::Int32>(static_cast<System::Byte>(0)));
-			this->btnDbg_send_cmd->Location = System::Drawing::Point(73, 207);
+			this->btnDbg_send_cmd->Location = System::Drawing::Point(73, 202);
 			this->btnDbg_send_cmd->Name = L"btnDbg_send_cmd";
 			this->btnDbg_send_cmd->Size = System::Drawing::Size(75, 34);
 			this->btnDbg_send_cmd->TabIndex = 17;
@@ -723,31 +727,31 @@ namespace CppWinFormJoy {
 			this->label2->AutoSize = true;
 			this->label2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label2->Location = System::Drawing::Point(13, 23);
+			this->label2->Location = System::Drawing::Point(13, 98);
 			this->label2->Name = L"label2";
-			this->label2->Size = System::Drawing::Size(71, 17);
+			this->label2->Size = System::Drawing::Size(38, 17);
 			this->label2->TabIndex = 18;
-			this->label2->Text = L"Command:";
+			this->label2->Text = L"Cmd:";
 			// 
 			// label3
 			// 
 			this->label3->AutoSize = true;
 			this->label3->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label3->Location = System::Drawing::Point(13, 138);
+			this->label3->Location = System::Drawing::Point(106, 98);
 			this->label3->Name = L"label3";
-			this->label3->Size = System::Drawing::Size(91, 17);
+			this->label3->Size = System::Drawing::Size(58, 17);
 			this->label3->TabIndex = 19;
-			this->label3->Text = L"Subcommand:";
+			this->label3->Text = L"Subcmd:";
 			// 
 			// textBoxDbg_cmd
 			// 
 			this->textBoxDbg_cmd->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)));
 			this->textBoxDbg_cmd->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-			this->textBoxDbg_cmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(250)), static_cast<System::Int32>(static_cast<System::Byte>(250)),
-				static_cast<System::Int32>(static_cast<System::Byte>(250)));
-			this->textBoxDbg_cmd->Location = System::Drawing::Point(169, 21);
+			this->textBoxDbg_cmd->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
+			this->textBoxDbg_cmd->ForeColor = System::Drawing::Color::White;
+			this->textBoxDbg_cmd->Location = System::Drawing::Point(64, 96);
 			this->textBoxDbg_cmd->MaxLength = 2;
 			this->textBoxDbg_cmd->Name = L"textBoxDbg_cmd";
 			this->textBoxDbg_cmd->Size = System::Drawing::Size(35, 25);
@@ -761,9 +765,10 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_subcmd->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
 			this->textBoxDbg_subcmd->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-			this->textBoxDbg_subcmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(250)),
-				static_cast<System::Int32>(static_cast<System::Byte>(250)), static_cast<System::Int32>(static_cast<System::Byte>(250)));
-			this->textBoxDbg_subcmd->Location = System::Drawing::Point(169, 136);
+			this->textBoxDbg_subcmd->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
+			this->textBoxDbg_subcmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->textBoxDbg_subcmd->Location = System::Drawing::Point(169, 96);
 			this->textBoxDbg_subcmd->MaxLength = 2;
 			this->textBoxDbg_subcmd->Name = L"textBoxDbg_subcmd";
 			this->textBoxDbg_subcmd->Size = System::Drawing::Size(35, 25);
@@ -785,6 +790,7 @@ namespace CppWinFormJoy {
 			// groupDbg
 			// 
 			this->groupDbg->Controls->Add(this->textBoxDbg_reply);
+			this->groupDbg->Controls->Add(this->textBoxDbg_sent);
 			this->groupDbg->Controls->Add(this->label12);
 			this->groupDbg->Controls->Add(this->label11);
 			this->groupDbg->Controls->Add(this->label10);
@@ -816,22 +822,44 @@ namespace CppWinFormJoy {
 			// 
 			this->textBoxDbg_reply->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBoxDbg_reply->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBoxDbg_reply->Font = (gcnew System::Drawing::Font(L"Lucida Console", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
 			this->textBoxDbg_reply->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-			this->textBoxDbg_reply->Location = System::Drawing::Point(16, 247);
+			this->textBoxDbg_reply->Location = System::Drawing::Point(12, 320);
 			this->textBoxDbg_reply->Multiline = true;
 			this->textBoxDbg_reply->Name = L"textBoxDbg_reply";
 			this->textBoxDbg_reply->ReadOnly = true;
-			this->textBoxDbg_reply->Size = System::Drawing::Size(188, 138);
-			this->textBoxDbg_reply->TabIndex = 32;
+			this->textBoxDbg_reply->Size = System::Drawing::Size(196, 69);
+			this->textBoxDbg_reply->TabIndex = 33;
+			this->textBoxDbg_reply->Text = L"Reply text";
 			this->textBoxDbg_reply->Visible = false;
+			// 
+			// textBoxDbg_sent
+			// 
+			this->textBoxDbg_sent->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBoxDbg_sent->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBoxDbg_sent->Font = (gcnew System::Drawing::Font(L"Lucida Console", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
+			this->textBoxDbg_sent->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
+				static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->textBoxDbg_sent->Location = System::Drawing::Point(12, 247);
+			this->textBoxDbg_sent->Multiline = true;
+			this->textBoxDbg_sent->Name = L"textBoxDbg_sent";
+			this->textBoxDbg_sent->ReadOnly = true;
+			this->textBoxDbg_sent->Size = System::Drawing::Size(196, 62);
+			this->textBoxDbg_sent->TabIndex = 32;
+			this->textBoxDbg_sent->Text = L"Sent text";
+			this->textBoxDbg_sent->Visible = false;
 			// 
 			// label12
 			// 
 			this->label12->AutoSize = true;
 			this->label12->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(200)), static_cast<System::Int32>(static_cast<System::Byte>(200)),
 				static_cast<System::Int32>(static_cast<System::Byte>(200)));
-			this->label12->Location = System::Drawing::Point(114, 104);
+			this->label12->Location = System::Drawing::Point(114, 66);
 			this->label12->Name = L"label12";
 			this->label12->Size = System::Drawing::Size(47, 17);
 			this->label12->TabIndex = 31;
@@ -842,7 +870,7 @@ namespace CppWinFormJoy {
 			this->label11->AutoSize = true;
 			this->label11->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(200)), static_cast<System::Int32>(static_cast<System::Byte>(200)),
 				static_cast<System::Int32>(static_cast<System::Byte>(200)));
-			this->label11->Location = System::Drawing::Point(114, 74);
+			this->label11->Location = System::Drawing::Point(114, 42);
 			this->label11->Name = L"label11";
 			this->label11->Size = System::Drawing::Size(50, 17);
 			this->label11->TabIndex = 30;
@@ -853,7 +881,7 @@ namespace CppWinFormJoy {
 			this->label10->AutoSize = true;
 			this->label10->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(200)), static_cast<System::Int32>(static_cast<System::Byte>(200)),
 				static_cast<System::Int32>(static_cast<System::Byte>(200)));
-			this->label10->Location = System::Drawing::Point(13, 104);
+			this->label10->Location = System::Drawing::Point(13, 66);
 			this->label10->Name = L"label10";
 			this->label10->Size = System::Drawing::Size(46, 17);
 			this->label10->TabIndex = 29;
@@ -864,7 +892,7 @@ namespace CppWinFormJoy {
 			this->label9->AutoSize = true;
 			this->label9->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(200)), static_cast<System::Int32>(static_cast<System::Byte>(200)),
 				static_cast<System::Int32>(static_cast<System::Byte>(200)));
-			this->label9->Location = System::Drawing::Point(13, 74);
+			this->label9->Location = System::Drawing::Point(13, 42);
 			this->label9->Name = L"label9";
 			this->label9->Size = System::Drawing::Size(49, 17);
 			this->label9->TabIndex = 28;
@@ -874,13 +902,14 @@ namespace CppWinFormJoy {
 			// 
 			this->textBoxDbg_lfamp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->textBoxDbg_lfamp->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+			this->textBoxDbg_lfamp->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBoxDbg_lfamp->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
 			this->textBoxDbg_lfamp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(250)),
 				static_cast<System::Int32>(static_cast<System::Byte>(250)), static_cast<System::Int32>(static_cast<System::Byte>(250)));
-			this->textBoxDbg_lfamp->Location = System::Drawing::Point(169, 102);
+			this->textBoxDbg_lfamp->Location = System::Drawing::Point(169, 66);
 			this->textBoxDbg_lfamp->MaxLength = 2;
 			this->textBoxDbg_lfamp->Name = L"textBoxDbg_lfamp";
-			this->textBoxDbg_lfamp->Size = System::Drawing::Size(35, 25);
+			this->textBoxDbg_lfamp->Size = System::Drawing::Size(35, 18);
 			this->textBoxDbg_lfamp->TabIndex = 23;
 			this->textBoxDbg_lfamp->Text = L"40";
 			this->textBoxDbg_lfamp->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
@@ -889,13 +918,14 @@ namespace CppWinFormJoy {
 			// 
 			this->textBoxDbg_lfreq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->textBoxDbg_lfreq->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+			this->textBoxDbg_lfreq->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBoxDbg_lfreq->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
 			this->textBoxDbg_lfreq->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(250)),
 				static_cast<System::Int32>(static_cast<System::Byte>(250)), static_cast<System::Int32>(static_cast<System::Byte>(250)));
-			this->textBoxDbg_lfreq->Location = System::Drawing::Point(64, 102);
+			this->textBoxDbg_lfreq->Location = System::Drawing::Point(64, 66);
 			this->textBoxDbg_lfreq->MaxLength = 2;
 			this->textBoxDbg_lfreq->Name = L"textBoxDbg_lfreq";
-			this->textBoxDbg_lfreq->Size = System::Drawing::Size(35, 25);
+			this->textBoxDbg_lfreq->Size = System::Drawing::Size(35, 18);
 			this->textBoxDbg_lfreq->TabIndex = 22;
 			this->textBoxDbg_lfreq->Text = L"40";
 			this->textBoxDbg_lfreq->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
@@ -904,13 +934,14 @@ namespace CppWinFormJoy {
 			// 
 			this->textBoxDbg_hamp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->textBoxDbg_hamp->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+			this->textBoxDbg_hamp->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBoxDbg_hamp->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
 			this->textBoxDbg_hamp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(250)), static_cast<System::Int32>(static_cast<System::Byte>(250)),
 				static_cast<System::Int32>(static_cast<System::Byte>(250)));
-			this->textBoxDbg_hamp->Location = System::Drawing::Point(169, 72);
+			this->textBoxDbg_hamp->Location = System::Drawing::Point(169, 42);
 			this->textBoxDbg_hamp->MaxLength = 2;
 			this->textBoxDbg_hamp->Name = L"textBoxDbg_hamp";
-			this->textBoxDbg_hamp->Size = System::Drawing::Size(35, 25);
+			this->textBoxDbg_hamp->Size = System::Drawing::Size(35, 18);
 			this->textBoxDbg_hamp->TabIndex = 21;
 			this->textBoxDbg_hamp->Text = L"01";
 			this->textBoxDbg_hamp->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
@@ -919,13 +950,14 @@ namespace CppWinFormJoy {
 			// 
 			this->textBoxDbg_hfreq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->textBoxDbg_hfreq->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+			this->textBoxDbg_hfreq->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBoxDbg_hfreq->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
 			this->textBoxDbg_hfreq->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(250)),
 				static_cast<System::Int32>(static_cast<System::Byte>(250)), static_cast<System::Int32>(static_cast<System::Byte>(250)));
-			this->textBoxDbg_hfreq->Location = System::Drawing::Point(64, 72);
+			this->textBoxDbg_hfreq->Location = System::Drawing::Point(64, 42);
 			this->textBoxDbg_hfreq->MaxLength = 2;
 			this->textBoxDbg_hfreq->Name = L"textBoxDbg_hfreq";
-			this->textBoxDbg_hfreq->Size = System::Drawing::Size(35, 25);
+			this->textBoxDbg_hfreq->Size = System::Drawing::Size(35, 18);
 			this->textBoxDbg_hfreq->TabIndex = 20;
 			this->textBoxDbg_hfreq->Text = L"00";
 			this->textBoxDbg_hfreq->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
@@ -935,7 +967,7 @@ namespace CppWinFormJoy {
 			this->label8->AutoSize = true;
 			this->label8->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label8->Location = System::Drawing::Point(13, 51);
+			this->label8->Location = System::Drawing::Point(13, 21);
 			this->label8->Name = L"label8";
 			this->label8->Size = System::Drawing::Size(64, 17);
 			this->label8->TabIndex = 23;
@@ -1603,6 +1635,7 @@ namespace CppWinFormJoy {
 			this->ClientSize = System::Drawing::Size(485, 449);
 			this->groupRst->Visible = false;
 			this->groupBox_chg_sn->Visible = false;
+			this->textBoxDbg_sent->Visible = false;
 			this->textBoxDbg_reply->Visible = false;
 			this->groupDbg->Visible = false;
 			debug_is_on = 0;
@@ -1616,8 +1649,8 @@ namespace CppWinFormJoy {
 		}
 
 		msclr::interop::marshal_context context;
-		unsigned char test[7];
-		memset(test, 0, 7);
+		unsigned char test[31];
+		memset(test, 0, sizeof(test));
 
 		std::stringstream ss_cmd;
 		std::stringstream ss_hfreq;
@@ -1625,14 +1658,14 @@ namespace CppWinFormJoy {
 		std::stringstream ss_lfreq;
 		std::stringstream ss_lamp;
 		std::stringstream ss_subcmd;
-		std::stringstream ss_subarg;
+		std::stringstream ss_arguments;
 		int i_cmd;
 		int i_hfreq;
 		int i_hamp;
 		int i_lfreq;
 		int i_lamp;
 		int i_subcmd;
-		int i_subarg;
+		char i_getarg;
 
 		ss_cmd << std::hex << context.marshal_as<std::string>(this->textBoxDbg_cmd->Text);
 		ss_hfreq << std::hex << context.marshal_as<std::string>(this->textBoxDbg_hfreq->Text);
@@ -1640,7 +1673,6 @@ namespace CppWinFormJoy {
 		ss_lfreq << std::hex << context.marshal_as<std::string>(this->textBoxDbg_lfreq->Text);
 		ss_lamp << std::hex << context.marshal_as<std::string>(this->textBoxDbg_lfamp->Text);
 		ss_subcmd << std::hex << context.marshal_as<std::string>(this->textBoxDbg_subcmd->Text);
-		ss_subarg << std::hex << context.marshal_as<std::string>(this->textBoxDbg_SubcmdArg->Text);
 		
 		ss_cmd >> i_cmd;
 		ss_hfreq >> i_hfreq;
@@ -1648,7 +1680,6 @@ namespace CppWinFormJoy {
 		ss_lfreq >> i_lfreq;
 		ss_lamp >> i_lamp;
 		ss_subcmd >> i_subcmd;
-		ss_subarg >> i_subarg;
 	
 		test[0] = i_cmd;
 		test[1] = i_hfreq;
@@ -1656,9 +1687,38 @@ namespace CppWinFormJoy {
 		test[3] = i_lfreq;
 		test[4] = i_lamp;
 		test[5] = i_subcmd;
-		test[6] = i_subarg;
+
+		u8 get_i =0;
+		ss_arguments << std::hex << context.marshal_as<std::string>(this->textBoxDbg_SubcmdArg->Text);
+
+		//Get Low nibble if odd number of characters
+		if (ss_arguments.tellp() % 2 ){
+			ss_arguments.get(i_getarg);
+			if (i_getarg >= 'A' && i_getarg <= 'F')
+				test[6] = (i_getarg - '7') & 0xF;
+			else if (i_getarg <= '9' && i_getarg >= '0')
+				test[6] = (i_getarg - '0') & 0xF;
+			get_i++;
+		}
+
+		while (ss_arguments.get(i_getarg)) {
+			//Get High nibble
+			if (i_getarg >= 'A' && i_getarg <= 'F')
+				test[6 + get_i] = ((i_getarg - '7') << 4) & 0xF0;
+			else if (i_getarg <= '9' && i_getarg > '0')
+				test[6 + get_i] = ((i_getarg - '0') << 4) &0xF0;
+			//Get Low nibble
+			ss_arguments.get(i_getarg);
+				if (i_getarg >= 'A' && i_getarg <= 'F')
+					test[6 + get_i] += (i_getarg - '7') & 0xF;
+				else if (i_getarg <= '9' && i_getarg >= '0')
+					test[6 + get_i] += (i_getarg - '0') & 0xF;
+			get_i++;
+	
+		}
 
 		send_custom_command(handle, test);
+		this->textBoxDbg_sent->Visible = true;
 		this->textBoxDbg_reply->Visible = true;
 	}
 
@@ -1667,6 +1727,7 @@ namespace CppWinFormJoy {
 			this->groupDbg->Visible = false;
 			this->groupRst->Visible = true;
 			this->groupBox_chg_sn->Visible = false;
+			this->textBoxDbg_sent->Visible = false;
 			this->textBoxDbg_reply->Visible = false;
 			this->ClientSize = System::Drawing::Size(738, 449);
 			debug_is_on = 2;
@@ -2139,6 +2200,42 @@ namespace CppWinFormJoy {
 		this->errorProvider2->SetError(test, String::Empty);
 	}
 
+	private: System::Void textBoxDbg_SubcmdArg_Validating(System::Object^ sender, CancelEventArgs^ e)
+	{
+		TextBox^ test = (TextBox^)sender;
+		bool cancel = false;
+		int number = -1;
+		array<Char>^ mn_str_sn = test->Text->ToCharArray();
+
+		for (int i = 0; i < mn_str_sn->Length; i++) {
+			if ((u8)(mn_str_sn[i] >> 8) == 0x00)
+			{
+				if (('0' <= (u8)mn_str_sn[i] && (u8)mn_str_sn[i] <= '9') || ('A' <= (u8)mn_str_sn[i] && (u8)mn_str_sn[i] <= 'F')) {
+					cancel = false;
+				}
+				else {
+					cancel = true;
+					this->errorProvider1->SetError(test, "The input must be a valid HEX number!");
+				}
+			}
+			else
+			{
+				cancel = true;
+				this->errorProvider1->SetError(test, "The input must be a valid HEX number!");
+			}
+			if (cancel)
+				break;
+		}
+		e->Cancel = cancel;
+	}
+	private: System::Void textBoxDbg_SubcmdArg_Validated(System::Object^ sender, System::EventArgs^ e)
+	{
+		//Control has validated, clear any error message.
+		TextBox^ test = (TextBox^)sender;
+		//this->btnChangeSn->Enabled = true;
+		this->errorProvider1->SetError(test, String::Empty);
+	}
+
 	private: System::Void textBox_chg_sn_Validating(System::Object^ sender, CancelEventArgs^ e)
 	{
 		TextBox^ test = (TextBox^)sender;
@@ -2216,6 +2313,7 @@ namespace CppWinFormJoy {
 	private: System::Void label_sn_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (debug_is_on == 0 || debug_is_on == 1 || debug_is_on == 2) {
 			this->ClientSize = System::Drawing::Size(738, 449);
+			this->textBoxDbg_sent->Visible = false;
 			this->textBoxDbg_reply->Visible = false;
 			this->groupRst->Visible = false;
 			this->groupBox_chg_sn->Visible = true;

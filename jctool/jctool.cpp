@@ -11,7 +11,6 @@
 
 using namespace CppWinFormJoy;
 
-//#pragma comment(lib, "hid")
 #pragma comment(lib, "SetupAPI")
 
 #pragma pack(push, 1)
@@ -411,10 +410,10 @@ int send_rumble(hid_device *handle) {
 
 int send_custom_command(hid_device *handle, u8* arg) {
 	int res;
-	u8 buf_cmd[12];
-	u8 buf[0x170];
+	u8 buf_cmd[36];
+	u8 buf_reply[0x170];
 		memset(buf_cmd, 0, sizeof(buf_cmd));
-		memset(buf, 0, sizeof(buf));
+		memset(buf_reply, 0, sizeof(buf_reply));
 
 		buf_cmd[0] = arg[0];
 		buf_cmd[1] = timming_byte;
@@ -425,28 +424,45 @@ int send_custom_command(hid_device *handle, u8* arg) {
 		timming_byte++;
 		if (timming_byte > 0xF)
 			timming_byte = 0x0;
+
 		buf_cmd[10] = arg[5];
-		buf_cmd[11] = arg[6];
+
+		String^ output_report_sys = String::Format(L"Cmd:  {0:X2}   Subcmd: {1:X2}\r\n", buf_cmd[0], buf_cmd[10]);
+		int byte8_2 = 1;
+		for (int i = 6; i < 31; i++) {
+			buf_cmd[5 + i] = arg[i];
+			output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
+			if (byte8_2 == 4)
+				output_report_sys += L" ";
+			if (byte8_2 == 8)
+			{
+
+				byte8_2 = 0;
+				output_report_sys += L"\r\n";
+			}
+			byte8_2++;
+		}
+		FormJoy::myform1->textBoxDbg_sent->Text = output_report_sys;
+	
 
 		//Packet size header + subcommand and uint8 argument
 		res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
 
-		res = hid_read_timeout(handle, buf, sizeof(buf), 200);
+		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
 		String^ input_report_sys;
 
 		int byte8 = 2;
 
 		if (res > 12) {
-			if (buf[0] == 0x21 || buf[0] == 0x30 || buf[0] == 0x33 || buf[0] == 0x31) {
-				input_report_sys += String::Format(L"ID: {0:X2} ", buf[0]);
-				input_report_sys += String::Format(L"Batt: {0:X} Subcmd reply:\r\n", buf[2] >> 4);
+			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31) {
+				input_report_sys += String::Format(L"ID: {0:X2}     Subcmd Reply:\r\n", buf_reply[0]);
 				int len = 49;
-				if (buf[0] == 0x33 || buf[0] == 0x31)
+				if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
 					len = 362;
 				byte8 = 1;
 				for (int i = 13; i < len; i++) {
-					input_report_sys += String::Format(L"{0:X2} ", buf[i]);
+					input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
 					if (byte8 == 4)
 						input_report_sys += L" ";
 					if (byte8 == 8)
@@ -459,15 +475,15 @@ int send_custom_command(hid_device *handle, u8* arg) {
 				}
 			}
 			else {
-				input_report_sys += String::Format(L"ID: {0:X2} Subcmd reply:\r\n", buf[0]);
+				input_report_sys += String::Format(L"ID: {0:X2} Subcmd reply:\r\n", buf_reply[0]);
 
 				for (int i = 13; i < res; i++)
-					input_report_sys += String::Format(L"{0:X2} ", buf[i]);
+					input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
 			}
 		}
 		else if (res > 0){
 			for (int i = 0; i < res; i++)
-				input_report_sys += String::Format(L"{0:X2} ", buf[i]);
+				input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
 		}
 		else {
 			input_report_sys += L"No reply";
@@ -595,7 +611,6 @@ int usb_deinit(hid_device *handle) {
 	memset(buf_cmd, 0, sizeof(buf_cmd));
 	memset(buf_cmd2, 0, sizeof(buf_cmd2));
 
-	//buf_cmd[0] = 1;
 	Sleep(16);
 	buf_cmd[0] = 0x80;
 	buf_cmd[1] = 0x05;
@@ -652,8 +667,6 @@ int usb_command(hid_device *handle) {
 		timming_byte = 0x0;
 	res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
 	res = hid_read(handle, buf_cmd2, 0);
-
-	Sleep(4000);
 
 	return 0;
 }
