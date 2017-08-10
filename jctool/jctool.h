@@ -40,7 +40,7 @@ extern int send_custom_command(hid_device *handle, u8* arg);
 extern int device_connection();
 extern int set_led_busy();
 int handle_ok;
-int allow_full_restore;
+bool allow_full_restore;
 hid_device *handle;
 hid_device *handle_l;
 int handler_close;

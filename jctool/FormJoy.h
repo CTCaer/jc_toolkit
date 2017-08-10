@@ -1212,7 +1212,7 @@ namespace CppWinFormJoy {
 			this->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->Name = L"FormJoy";
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
-			this->Text = L"Joy-Con Toolkit v1.5.1";
+			this->Text = L"Joy-Con Toolkit v1.5.1.1";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
 			this->groupBoxColor->ResumeLayout(false);
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxBattery))->EndInit();
@@ -1681,14 +1681,15 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void btnLoadBackup_Click(System::Object^  sender, System::EventArgs^  e) {
-		int validation_check = 1;
-		int mac_check = 1;
-		allow_full_restore = 1;
+		bool validation_check = true;
+		bool mac_check = true;
+		allow_full_restore = true;
+		bool ota_exists = true;
 		//Bootloader, device type, FW DS1, FW DS2
 		array<byte>^ validation_magic = { 0x01, 0x08, 0x00, 0xF0, 0x00, 0x00, 0x62, 0x08, 0xC0, 0x5D, 0x89, 0xFD, 0x04, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x40, 0x06,
 			(u8)handle_ok, 0xA0,
-			0x0A, 0x4A, 0x00, 0x00, 0x02, 0x0D,
-			0x0A, 0xFB, 0x00, 0x00, 0x02, 0x0D };
+			0x0A, 0xFB, 0x00, 0x00, 0x02, 0x0D,
+			0xAA, 0x55, 0xF0, 0x0F, 0x68, 0xE5, 0x97, 0xD2 };
 		Stream^ fileStream;
 		String^ str_dev_type;
 		String^ str_backup_dev_type;
@@ -1732,7 +1733,7 @@ namespace CppWinFormJoy {
 			//Backup Validation
 			for (int i = 0; i < 20; i++) {
 				if (validation_magic[i] != this->backup_spi[i]) {
-					validation_check = 0;
+					validation_check = false;
 					break;
 				}
 			}
@@ -1750,29 +1751,35 @@ namespace CppWinFormJoy {
 					return;
 				}
 			}
-			if (handle_ok == 1 || handle_ok == 2) {
+			for (int i = 28; i < 36; i++) {
+				if (validation_magic[i] != this->backup_spi[0x1FF4 + i - 22])
+				{
+					ota_exists = false;
+					break;
+				}
+			}
+
+			if (ota_exists) {
 				for (int i = 22; i < 28; i++) {
-					if (validation_magic[i] != this->backup_spi[0x10000 + i - 22]) {
-						validation_check = 0;
+					if (validation_magic[i] != this->backup_spi[0x10000 + i - 22] && i != 23) {
+						validation_check = false;
 						break;
 					}
-				}
-				for (int i = 28; i < 34; i++) {
-					if (validation_magic[i] != this->backup_spi[0x28000 + i - 28]) {
-						validation_check = 0;
-						break;
-					}
-				}
-			}
-			else if (handle_ok == 3) {
-				for (int i = 28; i < 34; i++) {
-					if (validation_magic[i] != this->backup_spi[0x10000 + i - 28]) {
-						validation_check = 0;
+					if (validation_magic[i] != this->backup_spi[0x28000 + i - 22] && i != 23) {
+						validation_check = false;
 						break;
 					}
 				}
 			}
-			if (validation_check == 0) {
+			else {
+				for (int i = 22; i < 28; i++) {
+					if (validation_magic[i] != this->backup_spi[0x10000 + i - 22] && i != 23) {
+						validation_check = false;
+						break;
+					}
+				}
+			}
+			if (!validation_check) {
 				MessageBox::Show(L"The SPI backup is corrupted!\n\nPlease try another backup.", L"Corrupt backup!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
 				this->textBox2->Text = L"No file loaded";
 				this->label7->Visible = false;
@@ -1789,10 +1796,10 @@ namespace CppWinFormJoy {
 
 			for (int i = 4; i < 10; i++) {
 				if (mac_addr[i] != this->backup_spi[0x1A - i + 4]) {
-					mac_check = 0;
+					mac_check = false;
 				}
 			}
-			if (mac_check == 0) {
+			if (!mac_check) {
 				if (MessageBox::Show(L"The SPI backup is from another \"" + str_dev_type + "\".\n\nDo you want to continue?", L"Different BT MAC address!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
 				{
 					this->textBox2->Text = String::Format("{0:x2}:{1:x2}:{2:x2}:{3:x2}:{4:x2}:{5:x2}", this->backup_spi[0x1A], this->backup_spi[0x19], this->backup_spi[0x18], this->backup_spi[0x17], this->backup_spi[0x16], this->backup_spi[0x15]);
@@ -1800,7 +1807,7 @@ namespace CppWinFormJoy {
 					this->comboBox1->Visible = true;
 					this->btn_restore->Visible = true;
 					this->btn_restore->Enabled = true;
-					allow_full_restore = 0;
+					allow_full_restore = false;
 				}
 				else {
 					this->textBox2->Text = L"No file loaded";
@@ -1897,7 +1904,7 @@ namespace CppWinFormJoy {
 			this->label7->Visible = true;
 			this->label7->Size = System::Drawing::Size(188, 230);
 			this->label7->Text = L"This basically restores the Factory Configuration\nand the User Calibration. It restores the only 2 4KB sectors that are usable in the writable 40KB region.\n\nTo preserve the factory configuration from accidental overwrite the full restore is disabled if the backup does not match your device.";
-			if (allow_full_restore == 0)
+			if (!allow_full_restore)
 				this->btn_restore->Enabled = false;
 		}
 	}
