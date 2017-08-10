@@ -100,6 +100,13 @@ namespace CppWinFormJoy {
 
 			this->toolTip1->SetToolTip(this->label_sn, "Click here to change your S/N");
 			
+			//Initialise locations on start for easy designing
+			this->menuStrip1->Size = System::Drawing::Size(485, 24);
+			this->groupRst->Location = System::Drawing::Point(494, 36);
+			this->groupBox_chg_sn->Location = System::Drawing::Point(494, 36);
+			this->ClientSize = System::Drawing::Size(485, 449);
+			
+			//Done drawing!
 			send_rumble(handle);
 		}
 
@@ -632,7 +639,7 @@ namespace CppWinFormJoy {
 			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->menuToolStripMenuItem });
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
-			this->menuStrip1->Size = System::Drawing::Size(485, 24);
+			this->menuStrip1->Size = System::Drawing::Size(1217, 24);
 			this->menuStrip1->TabIndex = 0;
 			this->menuStrip1->Text = L"menuStrip1";
 			// 
@@ -984,7 +991,7 @@ namespace CppWinFormJoy {
 			this->groupRst->Controls->Add(this->btnLoadBackup);
 			this->groupRst->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupRst->Location = System::Drawing::Point(494, 36);
+			this->groupRst->Location = System::Drawing::Point(736, 38);
 			this->groupRst->Name = L"groupRst";
 			this->groupRst->Size = System::Drawing::Size(220, 399);
 			this->groupRst->TabIndex = 24;
@@ -1151,7 +1158,7 @@ namespace CppWinFormJoy {
 			this->groupBox_chg_sn->Controls->Add(this->textBox_chg_sn);
 			this->groupBox_chg_sn->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox_chg_sn->Location = System::Drawing::Point(494, 36);
+			this->groupBox_chg_sn->Location = System::Drawing::Point(979, 38);
 			this->groupBox_chg_sn->Name = L"groupBox_chg_sn";
 			this->groupBox_chg_sn->Size = System::Drawing::Size(220, 399);
 			this->groupBox_chg_sn->TabIndex = 25;
@@ -1211,7 +1218,7 @@ namespace CppWinFormJoy {
 			this->textBox_chg_sn->Name = L"textBox_chg_sn";
 			this->textBox_chg_sn->Size = System::Drawing::Size(186, 25);
 			this->textBox_chg_sn->TabIndex = 0;
-			this->textBox_chg_sn->Text = L"WWWWWWWWWWWWWWW";
+			this->textBox_chg_sn->Text = L"";
 			// 
 			// FormJoy
 			// 
@@ -1219,7 +1226,7 @@ namespace CppWinFormJoy {
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->ClientSize = System::Drawing::Size(485, 449);
+			this->ClientSize = System::Drawing::Size(1217, 449);
 			this->Controls->Add(this->groupBox_chg_sn);
 			this->Controls->Add(this->groupRst);
 			this->Controls->Add(this->groupDbg);
@@ -1242,9 +1249,10 @@ namespace CppWinFormJoy {
 			this->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.Icon")));
 			this->MainMenuStrip = this->menuStrip1;
 			this->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
+			this->MaximizeBox = false;
 			this->Name = L"FormJoy";
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
-			this->Text = L"Joy-Con Toolkit v1.5.1.1";
+			this->Text = L"Joy-Con Toolkit v1.5.2";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
 			this->groupBoxColor->ResumeLayout(false);
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxBattery))->EndInit();
@@ -1414,7 +1422,7 @@ namespace CppWinFormJoy {
 		}
 
 		System::IO::MemoryStream^ ms = gcnew System::IO::MemoryStream(10000000);
-		ms->Write(imagebytes, 0, imagebytes->LongLength);
+		ms->Write(imagebytes, 0, imagebytes->Length);
 		Bitmap^ MyImage = dynamic_cast<Bitmap^>(Image::FromStream(ms));
 
 		float color_coeff = 0.0;
