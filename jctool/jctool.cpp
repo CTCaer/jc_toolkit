@@ -450,17 +450,21 @@ int send_custom_command(hid_device *handle, u8* arg) {
 
 		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
+		String^ input_report_cmd;
 		String^ input_report_sys;
 
 		int byte8 = 2;
 
 		if (res > 12) {
-			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31) {
-				input_report_sys += String::Format(L"ID: {0:X2}     Subcmd Reply:\r\n", buf_reply[0]);
+			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
+				input_report_cmd += String::Format(L"\r\nInput report: 0x{0:X2}\r\n", buf_reply[0]);
+				input_report_sys += String::Format(L"Subcmd Reply:\r\n", buf_reply[0]);
 				int len = 49;
 				if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
 					len = 362;
 				byte8 = 1;
+				for (int i = 1; i < 13; i++)
+					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
 				for (int i = 13; i < len; i++) {
 					input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
 					if (byte8 == 4)
@@ -489,6 +493,7 @@ int send_custom_command(hid_device *handle, u8* arg) {
 			input_report_sys += L"No reply";
 		}
 		FormJoy::myform1->textBoxDbg_reply->Text = input_report_sys;
+		FormJoy::myform1->textBoxDbg_reply_cmd->Text = input_report_cmd;
 
 	return 0;
 }
