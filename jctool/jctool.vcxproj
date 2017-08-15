@@ -93,6 +93,9 @@
       <SubType>Designer</SubType>
       <LogicalName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CppWinFormJoy.FormJoy.resources</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="images.resx">
+      <LogicalName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CppWinFormJoy.images.resources</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

@@ -45,3 +45,11 @@ hid_device *handle;
 hid_device *handle_l;
 int handler_close;
 int debug_is_on;
+
+namespace CppWinFormJoy {
+	class images
+	{
+		//For annoying designer..
+		//Todo.
+	};
+}

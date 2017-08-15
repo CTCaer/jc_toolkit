@@ -191,7 +191,7 @@ namespace CppWinFormJoy {
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply;
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply_cmd;
 	private: System::ComponentModel::IContainer^  components;
-	System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(FormJoy::typeid));
+	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 
 	private:
@@ -208,6 +208,7 @@ namespace CppWinFormJoy {
 		void InitializeComponent(void)
 		{
 			this->components = (gcnew System::ComponentModel::Container());
+			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(FormJoy::typeid));
 			this->btnWriteBody = (gcnew System::Windows::Forms::Button());
 			this->groupBoxColor = (gcnew System::Windows::Forms::GroupBox());
 			this->btbRestoreEnable = (gcnew System::Windows::Forms::Button());
