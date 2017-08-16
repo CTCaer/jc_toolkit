@@ -44,7 +44,7 @@ bool allow_full_restore;
 hid_device *handle;
 hid_device *handle_l;
 int handler_close;
-int debug_is_on;
+int option_is_on;
 
 namespace CppWinFormJoy {
 	class images

@@ -210,17 +210,20 @@ int get_battery(hid_device *handle, u8* test_buf) {
 		timming_byte++;
 		if (timming_byte > 0xF)
 			timming_byte = 0x0;
+		pkt->subcmd = 0x50;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 		//printf("write %d\n", res);
 		res = hid_read(handle, buf, sizeof(buf));
 
-		if (*(uint8_t*)&buf[0x0] == 0x21)
+		if (*(uint16_t*)&buf[0xD] == 0x50D0)
 			break;
 		error_reading++;
 		if (error_reading == 125)
 			break;
 	}
-		test_buf[0] = buf[0x2];
+	test_buf[0] = buf[0x2];
+	test_buf[1] = buf[0xF];
+	test_buf[2] = buf[0x10];
 
 	return 0;
 
@@ -306,73 +309,43 @@ int send_rumble(hid_device *handle) {
 	res = hid_read(handle, buf2, 0);
 
 	//New vibration like switch
-	if (1) {
-		Sleep(16);
-		//Send confirmation 
-		memset(buf, 0, sizeof(buf));
-		hdr->cmd = 0x01;
-		hdr->rumble[0] = timming_byte;
-		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
-		hdr->rumble[1] = 0xc2; hdr->rumble[2] = 0xc8; hdr->rumble[3] = 0x03; hdr->rumble[4] = 0x72;
-		hdr->rumble[5] = 0xc2; hdr->rumble[6] = 0xc8; hdr->rumble[7] = 0x03; hdr->rumble[8] = 0x72;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+	Sleep(16);
+	//Send confirmation 
+	memset(buf, 0, sizeof(buf));
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	hdr->rumble[1] = 0xc2; hdr->rumble[2] = 0xc8; hdr->rumble[3] = 0x03; hdr->rumble[4] = 0x72;
+	hdr->rumble[5] = 0xc2; hdr->rumble[6] = 0xc8; hdr->rumble[7] = 0x03; hdr->rumble[8] = 0x72;
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf2, 0);
+	res = hid_read(handle, buf2, 0);
 
-		Sleep(81);
-		hdr->rumble[0] = timming_byte;
-		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
-		hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-		hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+	Sleep(81);
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
+	hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf2, 0);
+	res = hid_read(handle, buf2, 0);
 
-		Sleep(5);
-		hdr->rumble[0] = timming_byte;
-		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
-		hdr->rumble[1] = 0xc3; hdr->rumble[2] = 0xc8; hdr->rumble[3] = 0x60; hdr->rumble[4] = 0x64;
-		hdr->rumble[5] = 0xc3; hdr->rumble[6] = 0xc8; hdr->rumble[7] = 0x60; hdr->rumble[8] = 0x64;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+	Sleep(5);
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	hdr->rumble[1] = 0xc3; hdr->rumble[2] = 0xc8; hdr->rumble[3] = 0x60; hdr->rumble[4] = 0x64;
+	hdr->rumble[5] = 0xc3; hdr->rumble[6] = 0xc8; hdr->rumble[7] = 0x60; hdr->rumble[8] = 0x64;
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf2, 0);
-		Sleep(5);
-	}
+	res = hid_read(handle, buf2, 0);
+	Sleep(5);
 
-	//old style vibration
-	if (0) {
-		//Send confirmation 
-		memset(buf, 0, sizeof(buf));
-		hdr->cmd = 0x01;
-		hdr->rumble[0] = timming_byte;
-		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
-		hdr->rumble[1] = 0x20; hdr->rumble[2] = 0xb1; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-		hdr->rumble[5] = 0x20; hdr->rumble[6] = 0xb1; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
-		//hid_set_nonblocking(handle, 1);
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		//hid_set_nonblocking(handle, 1);
-		res = hid_read(handle, buf2, 0);
-		Sleep(64);
-		//Stop vibration
-		hdr->rumble[0] = timming_byte;
-		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
-		hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x54;
-		hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x54;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		//hid_set_nonblocking(handle, 1);
-		res = hid_read(handle, buf2, 0);
-		Sleep(64);
-	}
 	//Disable vibration
 	memset(buf, 0, sizeof(buf));
 	hdr = (brcm_hdr *)buf;
@@ -410,96 +383,109 @@ int send_rumble(hid_device *handle) {
 
 int send_custom_command(hid_device *handle, u8* arg) {
 	int res;
+	int byte_seperator = 1;
+	String^ input_report_cmd;
+	String^ input_report_sys;
+	String^ output_report_sys;
 	u8 buf_cmd[36];
 	u8 buf_reply[0x170];
-		memset(buf_cmd, 0, sizeof(buf_cmd));
-		memset(buf_reply, 0, sizeof(buf_reply));
+	memset(buf_cmd, 0, sizeof(buf_cmd));
+	memset(buf_reply, 0, sizeof(buf_reply));
 
-		buf_cmd[0] = arg[0];
-		buf_cmd[1] = timming_byte;
-		buf_cmd[2] = buf_cmd[6] = arg[1];
-		buf_cmd[3] = buf_cmd[7] = arg[2];
-		buf_cmd[4] = buf_cmd[8] = arg[3];
-		buf_cmd[5] = buf_cmd[9] = arg[4];
-		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
+	buf_cmd[0] = arg[0];
+	buf_cmd[1] = timming_byte;
+	buf_cmd[2] = buf_cmd[6] = arg[1];
+	buf_cmd[3] = buf_cmd[7] = arg[2];
+	buf_cmd[4] = buf_cmd[8] = arg[3];
+	buf_cmd[5] = buf_cmd[9] = arg[4];
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
 
-		buf_cmd[10] = arg[5];
+	buf_cmd[10] = arg[5];
 
-		String^ output_report_sys = String::Format(L"Cmd:  {0:X2}   Subcmd: {1:X2}\r\n", buf_cmd[0], buf_cmd[10]);
-		int byte8_2 = 1;
-		for (int i = 6; i < 31; i++) {
-			buf_cmd[5 + i] = arg[i];
-			output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
-			if (byte8_2 == 4)
-				output_report_sys += L" ";
-			if (byte8_2 == 8)
-			{
+	output_report_sys = String::Format(L"Cmd:  {0:X2}   Subcmd: {1:X2}\r\n", buf_cmd[0], buf_cmd[10]);
+	for (int i = 6; i < 31; i++) {
+		buf_cmd[5 + i] = arg[i];
+		output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
+		if (byte_seperator == 4)
+			output_report_sys += L" ";
+		if (byte_seperator == 8)
+		{
 
-				byte8_2 = 0;
-				output_report_sys += L"\r\n";
-			}
-			byte8_2++;
+			byte_seperator = 0;
+			output_report_sys += L"\r\n";
 		}
-		FormJoy::myform1->textBoxDbg_sent->Text = output_report_sys;
-	
+		byte_seperator++;
+	}
+	FormJoy::myform1->textBoxDbg_sent->Text = output_report_sys;
 
-		//Packet size header + subcommand and uint8 argument
-		res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+	//Packet size header + subcommand and uint8 argument
+	res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
 
-		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+	res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
-		String^ input_report_cmd;
-		String^ input_report_sys;
-
-		int byte8 = 2;
-
-		if (res > 12) {
-			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
-				input_report_cmd += String::Format(L"\r\nInput report: 0x{0:X2}\r\n", buf_reply[0]);
-				input_report_sys += String::Format(L"Subcmd Reply:\r\n", buf_reply[0]);
-				int len = 49;
-				if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
-					len = 362;
-				byte8 = 1;
-				for (int i = 1; i < 13; i++)
-					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
-				for (int i = 13; i < len; i++) {
-					input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
-					if (byte8 == 4)
-						input_report_sys += L" ";
-					if (byte8 == 8)
-					{
-						
-						byte8 = 0;
-						input_report_sys += L"\r\n";
-					}
-					byte8++;
+	byte_seperator = 1;
+	if (res > 12) {
+		if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
+			input_report_cmd += String::Format(L"\r\nInput report: 0x{0:X2}\r\n", buf_reply[0]);
+			input_report_sys += String::Format(L"Subcmd Reply:\r\n", buf_reply[0]);
+			int len = 49;
+			if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
+				len = 362;
+			for (int i = 1; i < 13; i++) {
+				input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
+				if (byte_seperator == 4)
+					input_report_cmd += L" ";
+				if (byte_seperator == 8)
+				{
+					byte_seperator = 0;
+					input_report_cmd += L"\r\n";
 				}
+				byte_seperator++;
 			}
-			else {
-				input_report_sys += String::Format(L"ID: {0:X2} Subcmd reply:\r\n", buf_reply[0]);
-
-				for (int i = 13; i < res; i++)
-					input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
-			}
-		}
-		else if (res > 0){
-			for (int i = 0; i < res; i++)
+			byte_seperator = 1;
+			for (int i = 13; i < len; i++) {
 				input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
+				if (byte_seperator == 4)
+					input_report_sys += L" ";
+				if (byte_seperator == 8)
+				{
+					byte_seperator = 0;
+					input_report_sys += L"\r\n";
+				}
+				byte_seperator++;
+			}
 		}
 		else {
-			input_report_sys += L"No reply";
+			input_report_sys += String::Format(L"ID: {0:X2} Subcmd reply:\r\n", buf_reply[0]);
+			for (int i = 13; i < res; i++) {
+				input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
+				if (byte_seperator == 4)
+					input_report_sys += L" ";
+				if (byte_seperator == 8)
+				{
+					byte_seperator = 0;
+					input_report_sys += L"\r\n";
+				}
+				byte_seperator++;
+			}
 		}
-		FormJoy::myform1->textBoxDbg_reply->Text = input_report_sys;
-		FormJoy::myform1->textBoxDbg_reply_cmd->Text = input_report_cmd;
+	}
+	else if (res >= 0 && res <= 12) {
+		for (int i = 0; i < res; i++)
+			input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
+	}
+	else {
+		input_report_sys += L"No reply";
+	}
+	FormJoy::myform1->textBoxDbg_reply->Text = input_report_sys;
+	FormJoy::myform1->textBoxDbg_reply_cmd->Text = input_report_cmd;
 
 	return 0;
 }
 
 int play_tune(hid_device *handle) {
-
 	int res;
 	u8 buf[0x100];
 	u8 buf2[0x100];
@@ -539,6 +525,7 @@ int play_tune(hid_device *handle) {
 	}
 
 	//Disable vibration
+	Sleep(15);
 	memset(buf, 0, sizeof(buf));
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);

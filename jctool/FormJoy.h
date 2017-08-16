@@ -20,7 +20,7 @@ namespace CppWinFormJoy {
 		FormJoy(void)
 		{
 			handler_close = 0;
-			debug_is_on = 0;
+			option_is_on = 0;
 			set_led_busy();
 
 			InitializeComponent();
@@ -106,6 +106,8 @@ namespace CppWinFormJoy {
 			this->groupBox_chg_sn->Location = System::Drawing::Point(494, 36);
 			this->ClientSize = System::Drawing::Size(485, 449);
 			
+			disable_expert_mode = 1;
+
 			//Done drawing!
 			send_rumble(handle);
 		}
@@ -123,6 +125,7 @@ namespace CppWinFormJoy {
 		}
 
 	array<byte>^ backup_spi;
+	private: int disable_expert_mode;
 	private: System::Windows::Forms::GroupBox^  groupBoxColor;
 	private: System::Windows::Forms::Button^ btnWriteBody;
 	private: System::Windows::Forms::TextBox^ textBoxSN;
@@ -191,6 +194,8 @@ namespace CppWinFormJoy {
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply;
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply_cmd;
 	private: System::ComponentModel::IContainer^  components;
+private: System::Windows::Forms::Label^  label_batt_percent;
+private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 
@@ -211,6 +216,7 @@ namespace CppWinFormJoy {
 			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(FormJoy::typeid));
 			this->btnWriteBody = (gcnew System::Windows::Forms::Button());
 			this->groupBoxColor = (gcnew System::Windows::Forms::GroupBox());
+			this->label_batt_percent = (gcnew System::Windows::Forms::Label());
 			this->btbRestoreEnable = (gcnew System::Windows::Forms::Button());
 			this->pictureBoxBattery = (gcnew System::Windows::Forms::PictureBox());
 			this->pictureBoxPreview = (gcnew System::Windows::Forms::PictureBox());
@@ -276,6 +282,7 @@ namespace CppWinFormJoy {
 			this->btnChangeSn = (gcnew System::Windows::Forms::Button());
 			this->textBox_chg_sn = (gcnew System::Windows::Forms::TextBox());
 			this->toolTip1 = (gcnew System::Windows::Forms::ToolTip(this->components));
+			this->btn_enable_expert_mode = (gcnew System::Windows::Forms::Button());
 			this->groupBoxColor->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxBattery))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
@@ -313,6 +320,7 @@ namespace CppWinFormJoy {
 			// 
 			this->groupBoxColor->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->groupBoxColor->Controls->Add(this->label_batt_percent);
 			this->groupBoxColor->Controls->Add(this->btbRestoreEnable);
 			this->groupBoxColor->Controls->Add(this->pictureBoxBattery);
 			this->groupBoxColor->Controls->Add(this->pictureBoxPreview);
@@ -333,6 +341,17 @@ namespace CppWinFormJoy {
 			this->groupBoxColor->TabIndex = 0;
 			this->groupBoxColor->TabStop = false;
 			this->groupBoxColor->Text = L"Device colors";
+			// 
+			// label_batt_percent
+			// 
+			this->label_batt_percent->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->label_batt_percent->Location = System::Drawing::Point(141, 284);
+			this->label_batt_percent->Name = L"label_batt_percent";
+			this->label_batt_percent->Size = System::Drawing::Size(40, 17);
+			this->label_batt_percent->TabIndex = 19;
+			this->label_batt_percent->Text = L"0%";
+			this->label_batt_percent->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// btbRestoreEnable
 			// 
@@ -356,7 +375,7 @@ namespace CppWinFormJoy {
 			// pictureBoxBattery
 			// 
 			this->pictureBoxBattery->Cursor = System::Windows::Forms::Cursors::Arrow;
-			this->pictureBoxBattery->Location = System::Drawing::Point(141, 266);
+			this->pictureBoxBattery->Location = System::Drawing::Point(144, 266);
 			this->pictureBoxBattery->Name = L"pictureBoxBattery";
 			this->pictureBoxBattery->Size = System::Drawing::Size(48, 18);
 			this->pictureBoxBattery->TabIndex = 17;
@@ -836,8 +855,8 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_reply_cmd->BorderStyle = System::Windows::Forms::BorderStyle::None;
 			this->textBoxDbg_reply_cmd->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
-			this->textBoxDbg_reply_cmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
-				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->textBoxDbg_reply_cmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
+				static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
 			this->textBoxDbg_reply_cmd->Location = System::Drawing::Point(13, 280);
 			this->textBoxDbg_reply_cmd->Multiline = true;
 			this->textBoxDbg_reply_cmd->Name = L"textBoxDbg_reply_cmd";
@@ -854,8 +873,8 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_reply->BorderStyle = System::Windows::Forms::BorderStyle::None;
 			this->textBoxDbg_reply->Font = (gcnew System::Drawing::Font(L"Lucida Console", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
-			this->textBoxDbg_reply->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
-				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->textBoxDbg_reply->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(206)));
 			this->textBoxDbg_reply->Location = System::Drawing::Point(13, 325);
 			this->textBoxDbg_reply->Multiline = true;
 			this->textBoxDbg_reply->Name = L"textBoxDbg_reply";
@@ -1242,6 +1261,20 @@ namespace CppWinFormJoy {
 			this->textBox_chg_sn->TabIndex = 0;
 			this->textBox_chg_sn->Text = L"";
 			// 
+			// btn_enable_expert_mode
+			// 
+			this->btn_enable_expert_mode->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->btn_enable_expert_mode->FlatAppearance->BorderSize = 0;
+			this->btn_enable_expert_mode->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btn_enable_expert_mode->Location = System::Drawing::Point(500, 438);
+			this->btn_enable_expert_mode->Margin = System::Windows::Forms::Padding(0);
+			this->btn_enable_expert_mode->Name = L"btn_enable_expert_mode";
+			this->btn_enable_expert_mode->Size = System::Drawing::Size(10, 8);
+			this->btn_enable_expert_mode->TabIndex = 27;
+			this->btn_enable_expert_mode->UseVisualStyleBackColor = false;
+			this->btn_enable_expert_mode->Click += gcnew System::EventHandler(this, &FormJoy::btn_enable_expert_mode_Click);
+			// 
 			// FormJoy
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(7, 17);
@@ -1249,6 +1282,7 @@ namespace CppWinFormJoy {
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->ClientSize = System::Drawing::Size(1217, 449);
+			this->Controls->Add(this->btn_enable_expert_mode);
 			this->Controls->Add(this->groupBox_chg_sn);
 			this->Controls->Add(this->groupRst);
 			this->Controls->Add(this->groupDbg);
@@ -1499,54 +1533,78 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void update_battery() {
-			unsigned char batt_info[1];
-			memset(batt_info, 0, sizeof(batt_info));
-			get_battery(handle, batt_info);
+		unsigned char batt_info[3];
+		memset(batt_info, 0, sizeof(batt_info));
+		get_battery(handle, batt_info);
 
-			int batt = ((u8)batt_info[0] & 0xF0) >> 4;
+		int batt_percent = 0;
+		int batt = ((u8)batt_info[0] & 0xF0) >> 4;
+		
+		//Calculate aproximate battery percent from regulated voltage
+		u16 batt_volt = (u8)batt_info[1] + ((u8)batt_info[2] << 8);
+		if (batt_volt < 0x560)
+			batt_percent = 1;
+		else if (batt_volt > 0x55F && batt_volt < 0x5A0) {
+			batt_percent = ((batt_volt - 0x60) & 0xFF) / 7.0f + 1;
+		}
+		else if (batt_volt > 0x59F && batt_volt < 0x5E0) {
+			batt_percent = ((batt_volt - 0xA0) & 0xFF) / 2.625f + 11;
+		}
+		else if (batt_volt > 0x5DF && batt_volt < 0x618) {
+			batt_percent = (batt_volt - 0x5E0) / 1.8965f + 36;
+		}
+		else if (batt_volt > 0x617 && batt_volt < 0x658) {
+			batt_percent = ((batt_volt - 0x18) & 0xFF) / 1.8529f + 66;
+		}
+		else if (batt_volt > 0x657)
+			batt_percent = 100;
 
-			if (batt == 0) {
+		this->label_batt_percent->Text = String::Format("{0:D}%", batt_percent);
+
+		switch (batt) {
+			case 0:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Empty\n\nLol, how?");
-			}
-			else if (batt == 1) {
+				break;
+			case 1:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0_chr")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Empty, Charging.");
-			}
-			else if (batt == 2) {
+				break;
+			case 2:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Low\n\nPlease charge your device!");
-			}
-			else if (batt == 3) {
+				break;
+			case 3:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25_chr")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Low\n\nCharging");
-			}
-			else if (batt == 4) {
+				break;
+			case 4:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Medium");
-			}
-			else if (batt == 5) {
+				break;
+			case 5:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50_chr")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Medium\n\nCharging");
-			}
-			else if (batt == 6) {
+				break;
+			case 6:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Good");
-			}
-			else if (batt == 7) {
+				break;
+			case 7:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75_chr")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Good\n\nCharging");
-			}
-			else if (batt == 8) {
-
+				break;
+			case 8:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Full");
-			}
-			else if (batt == 9) {
+				break;
+			case 9:
 				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100_chr")));
 				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Almost full\n\nCharging");
-			}
+				break;
 		}
+	
+	}
 
 	private: array<int>^ getCustomColorFromConfig(String^ custom_type)
 	{
@@ -1626,12 +1684,12 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void debugToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
-		if (debug_is_on == 0 || debug_is_on == 2 || debug_is_on == 3) {
+		if (option_is_on == 0 || option_is_on == 2 || option_is_on == 3) {
 			this->ClientSize = System::Drawing::Size(738, 449);
 			this->groupRst->Visible = false;
 			this->groupBox_chg_sn->Visible = false;
 			this->groupDbg->Visible = true;
-			debug_is_on = 1;
+			option_is_on = 1;
 		}
 		else {
 			this->ClientSize = System::Drawing::Size(485, 449);
@@ -1639,8 +1697,9 @@ namespace CppWinFormJoy {
 			this->groupBox_chg_sn->Visible = false;
 			this->textBoxDbg_sent->Visible = false;
 			this->textBoxDbg_reply->Visible = false;
+			this->textBoxDbg_reply_cmd->Visible = false;
 			this->groupDbg->Visible = false;
-			debug_is_on = 0;
+			option_is_on = 0;
 		}
 	}
 
@@ -1725,21 +1784,21 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void btbRestoreEnable_Click(System::Object^  sender, System::EventArgs^  e) {
-		if (debug_is_on == 0 || debug_is_on == 1 || debug_is_on == 3) {
+		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 3) {
 			this->groupDbg->Visible = false;
 			this->groupRst->Visible = true;
 			this->groupBox_chg_sn->Visible = false;
 			this->textBoxDbg_sent->Visible = false;
 			this->textBoxDbg_reply->Visible = false;
 			this->ClientSize = System::Drawing::Size(738, 449);
-			debug_is_on = 2;
+			option_is_on = 2;
 		}
 		else {
 			this->ClientSize = System::Drawing::Size(485, 449);
 			this->groupDbg->Visible = false;
 			this->groupRst->Visible = false;
 			this->groupBox_chg_sn->Visible = false;
-			debug_is_on = 0;
+			option_is_on = 0;
 		}
 	}
 
@@ -2121,6 +2180,7 @@ namespace CppWinFormJoy {
 					FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
 					Application::DoEvents();
 				}
+
 				std::stringstream offset_label;
 				offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << 0x2000 / 1024.0f;
 				offset_label << "KB of 8KB";
@@ -2156,7 +2216,7 @@ namespace CppWinFormJoy {
 		int number = -1;
 		if (Int32::TryParse(this->textBoxDbg_subcmd->Text, NumberStyles::HexNumber, CultureInfo::InvariantCulture, number))
 		{
-			if (number == 0x10 || number == 0x11 || number == 0x12) {
+			if ((number == 0x10 || number == 0x11 || number == 0x12) && disable_expert_mode) {
 				cancel = true;
 				this->errorProvider2->SetError(this->textBoxDbg_subcmd, "The subcommands:\n0x10: SPI Read\n0x11: SPI Write\n0x12: SPI Sector Erase\nare disabled!");
 			}else
@@ -2313,21 +2373,21 @@ namespace CppWinFormJoy {
 
 
 	private: System::Void label_sn_Click(System::Object^  sender, System::EventArgs^  e) {
-		if (debug_is_on == 0 || debug_is_on == 1 || debug_is_on == 2) {
+		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 2) {
 			this->ClientSize = System::Drawing::Size(738, 449);
 			this->textBoxDbg_sent->Visible = false;
 			this->textBoxDbg_reply->Visible = false;
 			this->groupRst->Visible = false;
 			this->groupBox_chg_sn->Visible = true;
 			this->groupDbg->Visible = false;
-			debug_is_on = 3;
+			option_is_on = 3;
 		}
 		else {
 			this->ClientSize = System::Drawing::Size(485, 449);
 			this->groupRst->Visible = false;
 			this->groupBox_chg_sn->Visible = false;
 			this->groupDbg->Visible = false;
-			debug_is_on = 0;
+			option_is_on = 0;
 		}
 	}
 
@@ -2346,6 +2406,10 @@ namespace CppWinFormJoy {
 		}
 	}
 
+private: System::Void btn_enable_expert_mode_Click(System::Object^  sender, System::EventArgs^  e) {
+	disable_expert_mode = 0;
+	this->groupDbg->Text = L"Expert Mode";
+}
 };
 }
 
