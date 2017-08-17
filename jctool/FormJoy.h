@@ -30,7 +30,7 @@ namespace CppWinFormJoy {
 			this->btnWriteBody->Enabled = false;
 
 			if (handle_ok != 3) {
-				this->textBoxSN->Text = gcnew String(get_sn(handle, 0x6001, 0xF).c_str());
+				this->textBoxSN->Text = gcnew String(get_sn(0x6001, 0xF).c_str());
 				this->textBox_chg_sn->Text = this->textBoxSN->Text;
 			}
 			else {
@@ -41,7 +41,7 @@ namespace CppWinFormJoy {
 			unsigned char device_info[10];
 			memset(device_info, 0, sizeof(device_info));
 
-			get_device_info(handle, device_info);
+			get_device_info(device_info);
 			
 			this->textBoxFW->Text = String::Format("{0:X}.{1:X2}", device_info[0], device_info[1]);
 			this->textBoxMAC->Text = String::Format("{0:X2}:{1:X2}:{2:X2}:{3:X2}:{4:X2}:{5:X2}", device_info[4], device_info[5], device_info[6], device_info[7], device_info[8], device_info[9]);
@@ -109,7 +109,7 @@ namespace CppWinFormJoy {
 			disable_expert_mode = 1;
 
 			//Done drawing!
-			send_rumble(handle);
+			send_rumble();
 		}
 
 	protected:
@@ -1371,11 +1371,11 @@ namespace CppWinFormJoy {
 			button_color[1] = (u8)colorDialog2->Color.G;
 			button_color[2] = (u8)colorDialog2->Color.B;
 
-			write_spi_data(handle, 0x6050, 0x3, body_color);
+			write_spi_data(0x6050, 0x3, body_color);
 			if (handle_ok != 3)
-				write_spi_data(handle, 0x6053, 0x3, button_color);
+				write_spi_data(0x6053, 0x3, button_color);
 
-			send_rumble(handle);
+			send_rumble();
 			MessageBox::Show(L"The colors were writen to the device!", L"Done!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 
 			//Check that the colors were written
@@ -1430,7 +1430,7 @@ namespace CppWinFormJoy {
 		int do_backup = 0;
 		unsigned char device_info[10];
 		memset(device_info, 0, sizeof(device_info));
-		get_device_info(handle, device_info);
+		get_device_info(device_info);
 
 		String^ filename = L"spi_";
 		if (handle_ok == 1)
@@ -1460,14 +1460,14 @@ namespace CppWinFormJoy {
 			handler_close = 1;
 			this->groupBoxColor->Visible = false;
 			Application::DoEvents();
-			send_rumble(handle);
+			send_rumble();
 			set_led_busy();
 
-			int error = dump_spi(handle, (context.marshal_as<std::string>(filename)).c_str());
+			int error = dump_spi((context.marshal_as<std::string>(filename)).c_str());
 			this->groupBoxColor->Visible = true;
 			handler_close = 0;
 			if (!error) {
-				send_rumble(handle);
+				send_rumble();
 				MessageBox::Show(L"Done dumping SPI!", L"SPI Dumping", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 			}
 		}
@@ -1534,9 +1534,9 @@ namespace CppWinFormJoy {
 		unsigned char button_color[0x3];
 		memset(button_color, 0, 0x3);
 
-		get_spi_data(handle, 0x6050, 0x3, body_color);
+		get_spi_data(0x6050, 0x3, body_color);
 		if (handle_ok != 3)
-			get_spi_data(handle, 0x6053, 0x3, button_color);
+			get_spi_data(0x6053, 0x3, button_color);
 
 		update_joycon_color((u8)body_color[0], (u8)body_color[1], (u8)body_color[2], (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
 
@@ -1553,7 +1553,7 @@ namespace CppWinFormJoy {
 	private: System::Void update_battery() {
 		unsigned char batt_info[3];
 		memset(batt_info, 0, sizeof(batt_info));
-		get_battery(handle, batt_info);
+		get_battery(batt_info);
 
 		int batt_percent = 0;
 		int batt = ((u8)batt_info[0] & 0xF0) >> 4;
@@ -1796,9 +1796,11 @@ namespace CppWinFormJoy {
 	
 		}
 
-		send_custom_command(handle, test);
+		send_custom_command(test);
 		this->textBoxDbg_sent->Visible = true;
 		this->textBoxDbg_reply->Visible = true;
+
+		update_battery();
 	}
 
 	private: System::Void btbRestoreEnable_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -1932,7 +1934,7 @@ namespace CppWinFormJoy {
 
 			unsigned char mac_addr[10];
 			memset(mac_addr, 0, sizeof(mac_addr));
-			get_device_info(handle, mac_addr);
+			get_device_info(mac_addr);
 
 			for (int i = 4; i < 10; i++) {
 				if (mac_addr[i] != this->backup_spi[0x1A - i + 4]) {
@@ -2068,13 +2070,13 @@ namespace CppWinFormJoy {
 					button_color[i] = this->backup_spi[0x6053 + i];
 				}
 
-				write_spi_data(handle, 0x6050, 0x3, body_color);
-				write_spi_data(handle, 0x6053, 0x3, button_color);
+				write_spi_data(0x6050, 0x3, body_color);
+				write_spi_data(0x6053, 0x3, button_color);
 
 				//Check that the colors were written
 				update_colors_from_spi(true);
 				update_battery();
-				send_rumble(handle);
+				send_rumble();
 
 				MessageBox::Show(L"The colors were restored!", L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 
@@ -2092,18 +2094,18 @@ namespace CppWinFormJoy {
 					sn[i] = this->backup_spi[0x6000 + i];
 				}
 
-				write_spi_data(handle, 0x6000, 0x10, sn);
+				write_spi_data(0x6000, 0x10, sn);
 
 				String^ new_sn;
 				if (handle_ok != 3) {
-					new_sn = gcnew String(get_sn(handle, 0x6001, 0xF).c_str());
+					new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
 					MessageBox::Show(L"The serial number was restored and changed to \"" + new_sn + L"\"!", L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 				}
 				else {
 					MessageBox::Show(L"The serial number was restored!", L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 				}
 				update_battery();
-				send_rumble(handle);
+				send_rumble();
 			}
 
 		}
@@ -2127,14 +2129,14 @@ namespace CppWinFormJoy {
 				}
 
 				if (handle_ok != 2 && this->checkBox1->Checked == true)
-					write_spi_data(handle, 0x8010, 0xB, l_stick);
+					write_spi_data(0x8010, 0xB, l_stick);
 				if (handle_ok != 1 && this->checkBox2->Checked == true)
-					write_spi_data(handle, 0x801B, 0xB, r_stick);
+					write_spi_data(0x801B, 0xB, r_stick);
 				if (this->checkBox3->Checked == true)
-					write_spi_data(handle, 0x8026, 0x1A, sensor);
+					write_spi_data(0x8026, 0x1A, sensor);
 
 				update_battery();
-				send_rumble(handle);
+				send_rumble();
 				MessageBox::Show(L"The user calibration was restored!", L"Calibration Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 			}
 
@@ -2150,14 +2152,14 @@ namespace CppWinFormJoy {
 				memset(sensor, 0xFF, 0x1A);
 
 				if (handle_ok != 2 && this->checkBox1->Checked == true)
-					write_spi_data(handle, 0x8010, 0xB, l_stick);
+					write_spi_data(0x8010, 0xB, l_stick);
 				if (handle_ok != 1 && this->checkBox2->Checked == true)
-					write_spi_data(handle, 0x801B, 0xB, r_stick);
+					write_spi_data(0x801B, 0xB, r_stick);
 				if (this->checkBox3->Checked == true)
-					write_spi_data(handle, 0x8026, 0x1A, sensor);
+					write_spi_data(0x8026, 0x1A, sensor);
 
 				update_battery();
-				send_rumble(handle);
+				send_rumble();
 				MessageBox::Show(L"The user calibration was factory resetted!", L"Calibration Reset Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 			}
 
@@ -2179,7 +2181,7 @@ namespace CppWinFormJoy {
 					memset(full_restore_data, 0, 0x10);
 					for (int j = 0; j < 0x10; j++)
 						full_restore_data[j] = this->backup_spi[0x6000 + i + j];
-					write_spi_data(handle, 0x6000 + i, 0x10, full_restore_data);
+					write_spi_data(0x6000 + i, 0x10, full_restore_data);
 
 					std::stringstream offset_label;
 					offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << i / 1024.0f;
@@ -2192,7 +2194,7 @@ namespace CppWinFormJoy {
 					memset(full_restore_data, 0, 0x10);
 					for (int j = 0; j < 0x10; j++)
 						full_restore_data[j] = this->backup_spi[0x8000 + i + j];
-					write_spi_data(handle, 0x8000 + i, 0x10, full_restore_data);
+					write_spi_data(0x8000 + i, 0x10, full_restore_data);
 
 					std::stringstream offset_label;
 					offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << 4 + (i / 1024.0f);
@@ -2201,7 +2203,7 @@ namespace CppWinFormJoy {
 					Application::DoEvents();
 				}
 				//Erase S/N backup storage
-				write_spi_data(handle, 0xF000, 0x10, sn_backup_erase);
+				write_spi_data(0xF000, 0x10, sn_backup_erase);
 
 				std::stringstream offset_label;
 				offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << 0x2000 / 1024.0f;
@@ -2215,9 +2217,9 @@ namespace CppWinFormJoy {
 				//Set shipment. This will force a full pair with Switch
 				custom_cmd[1] = 0x08;
 				custom_cmd[2] = 0x01;
-				send_custom_command(handle, custom_cmd);
+				send_custom_command(custom_cmd);
 				update_battery();
-				send_rumble(handle);
+				send_rumble();
 
 				MessageBox::Show(L"The full restore was completed!\n\nIt is recommended to turn off the controller and exit Joy-Con Toolkit.\nAfter that press any button on the controller and run the app again.", L"Full Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Warning);
 				this->groupBoxColor->Visible = true;
@@ -2377,7 +2379,7 @@ namespace CppWinFormJoy {
 					memset(sn_backup, 0x00, sizeof(sn_backup));
 					
 					//Check if sn is original
-					get_spi_data(handle, 0x6000, 0x10, spi_sn);
+					get_spi_data(0x6000, 0x10, spi_sn);
 					for (int i = 0; i < 3; i++) {
 						if (spi_sn[i] != sn_magic[i]) {
 							sn_ok = 0;
@@ -2385,9 +2387,9 @@ namespace CppWinFormJoy {
 						}
 					}
 					//Check if already made
-					get_spi_data(handle, 0xF000, 0x1, sn_backup);
+					get_spi_data(0xF000, 0x1, sn_backup);
 					if (sn_ok && sn_backup[0] == 0xFF)
-						write_spi_data(handle, 0xF000, 0x10, spi_sn);
+						write_spi_data(0xF000, 0x10, spi_sn);
 
 					array<Char>^ mn_str_sn = this->textBox_chg_sn->Text->ToCharArray();
 					unsigned char sn[32];
@@ -2401,10 +2403,10 @@ namespace CppWinFormJoy {
 						sn[length + i] = (unsigned char)(mn_str_sn[i] & 0xFF);
 					}
 
-					write_spi_data(handle, 0x6000, 0x10, sn);
+					write_spi_data(0x6000, 0x10, sn);
 					update_battery();
-					send_rumble(handle);
-					String^ new_sn = gcnew String(get_sn(handle, 0x6001, 0xF).c_str());
+					send_rumble();
+					String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
 					MessageBox::Show(L"The S/N was written to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!\n\nIf you still ignored the warnings about creating a backup, the S/N in the left of the main window will not change. Copy it somewhere safe!\n\nLastly, a backup of your S/N was created inside the SPI.");
 				}
 			}
@@ -2425,12 +2427,12 @@ namespace CppWinFormJoy {
 				memset(spi_sn, 0x11, sizeof(spi_sn));
 
 				//Check if there is an SN backup
-				get_spi_data(handle, 0xF000, 0x10, spi_sn);
+				get_spi_data(0xF000, 0x10, spi_sn);
 				if (spi_sn[0] != 0x00) {
 						sn_ok = 0;
 					}
 				if (sn_ok) {
-					write_spi_data(handle, 0x6000, 0x10, spi_sn);
+					write_spi_data(0x6000, 0x10, spi_sn);
 				}
 				else {
 					MessageBox::Show(L"No S/N backup found inside your controller\'s SPI.\n\nThis can happen if the first time you changed your S/N was with an older version of Joy-Con Toolkit.\nOtherwise, you never changed your S/N.", L"Error!", MessageBoxButtons::OK, MessageBoxIcon::Error);
@@ -2438,8 +2440,8 @@ namespace CppWinFormJoy {
 				}
 
 				update_battery();
-				send_rumble(handle);
-				String^ new_sn = gcnew String(get_sn(handle, 0x6001, 0xF).c_str());
+				send_rumble();
+				String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
 				MessageBox::Show(L"The S/N was restored to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!");
 			
 			}
@@ -2476,9 +2478,9 @@ namespace CppWinFormJoy {
 		if (MessageBox::Show(L"HOORAY!!\n\nYou found the easter egg!\n\nMake sure you have a good signal and get the device near your ear.\n\nThen press OK to hear the tune!\n\nIf the tune is slow or choppy:\n1. Close the app\n2. Press the sync button once to turn off the device\n3. Get close to your BT adapter and maintain LoS\n4. Press any other button and run the app again.", L"Easter egg!", MessageBoxButtons::OKCancel, MessageBoxIcon::Information) == System::Windows::Forms::DialogResult::OK)
 		{
 			set_led_busy();
-			play_tune(handle);
+			play_tune();
 			update_battery();
-			send_rumble(handle);
+			send_rumble();
 			MessageBox::Show(L"The HD Rumble music has ended.", L"Easter egg!");
 		}
 	}

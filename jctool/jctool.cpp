@@ -59,7 +59,7 @@ int set_led_busy() {
 	return 0;
 }
 
-std::string get_sn(hid_device *handle, u32 offset, const u16 read_len) {
+std::string get_sn(u32 offset, const u16 read_len) {
 	int res;
 	u8 buf[0x100];
 	std::string test = "";
@@ -96,7 +96,7 @@ std::string get_sn(hid_device *handle, u32 offset, const u16 read_len) {
 	
 }
 
-int get_spi_data(hid_device *handle, u32 offset, const u16 read_len, u8 *test_buf) {
+int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
 	int res;
 	u8 buf[0x100];
 	while (1) {
@@ -127,7 +127,7 @@ int get_spi_data(hid_device *handle, u32 offset, const u16 read_len, u8 *test_bu
 	return 0;
 }
 
-int write_spi_data(hid_device *handle, u32 offset, const u16 write_len, u8* test_buf) {
+int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
 	int res;
 	u8 buf[0x100];
 	int error_writing = 0;
@@ -162,7 +162,7 @@ int write_spi_data(hid_device *handle, u32 offset, const u16 write_len, u8* test
 
 }
 
-int get_device_info(hid_device *handle, u8* test_buf) {
+int get_device_info(u8* test_buf) {
 	int res;
 	u8 buf[0x100];
 	int error_reading = 0;
@@ -197,7 +197,7 @@ int get_device_info(hid_device *handle, u8* test_buf) {
 
 }
 
-int get_battery(hid_device *handle, u8* test_buf) {
+int get_battery(u8* test_buf) {
 	int res;
 	u8 buf[0x100];
 	int error_reading = 0;
@@ -229,7 +229,7 @@ int get_battery(hid_device *handle, u8* test_buf) {
 
 }
 
-int dump_spi(hid_device *handle, const char *dev_name) {
+int dump_spi(const char *dev_name) {
 	std::string file_dev_name = dev_name;
 	int i=0;
 
@@ -288,7 +288,7 @@ int dump_spi(hid_device *handle, const char *dev_name) {
 	return 0;
 }
 
-int send_rumble(hid_device *handle) {
+int send_rumble() {
 	int res;
 	u8 buf[0x100];
 	u8 buf2[0x100];
@@ -381,7 +381,7 @@ int send_rumble(hid_device *handle) {
 
 }
 
-int send_custom_command(hid_device *handle, u8* arg) {
+int send_custom_command(u8* arg) {
 	int res;
 	int byte_seperator = 1;
 	String^ input_report_cmd;
@@ -485,7 +485,7 @@ int send_custom_command(hid_device *handle, u8* arg) {
 	return 0;
 }
 
-int play_tune(hid_device *handle) {
+int play_tune() {
 	int res;
 	u8 buf[0x100];
 	u8 buf2[0x100];
@@ -682,17 +682,14 @@ void usb_device_print(struct hid_device_info *dev)
 */
 int device_connection(){
 	handle_ok = 0;
-	handle = hid_open(0x57e, 0x2006, nullptr);
-	if (handle)
+	if (handle = hid_open(0x57e, 0x2006, nullptr))
 		handle_ok = 1;
 	if (!handle_ok) {
-		handle = hid_open(0x57e, 0x2007, nullptr);
-		if (handle)
+		if (handle = hid_open(0x57e, 0x2007, nullptr))
 			handle_ok = 2;
 	}
 	if (!handle_ok) {
-		handle = hid_open(0x57e, 0x2009, nullptr);
-		if (handle)
+		if (handle = hid_open(0x57e, 0x2009, nullptr))
 			handle_ok = 3;
 	}
 	/*
