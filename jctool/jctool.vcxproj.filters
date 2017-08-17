@@ -41,6 +41,9 @@
     <ClInclude Include="tune.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="luts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FormJoy.resx">

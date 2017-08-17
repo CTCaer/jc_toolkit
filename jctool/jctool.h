@@ -36,6 +36,7 @@ extern int get_battery(u8* test_buf);
 extern int dump_spi(const char *dev_name);
 extern int send_rumble();
 extern int play_tune();
+extern int play_hd_rumble_file(int file_type, u16 sample_rate, int samples);
 extern int send_custom_command(u8* arg);
 extern int device_connection();
 extern int set_led_busy();

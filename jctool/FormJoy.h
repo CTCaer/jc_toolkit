@@ -6,6 +6,7 @@
 
 #include "jctool.h"
 #include "overrides.h"
+#include "luts.h"
 
 namespace CppWinFormJoy {
 
@@ -104,8 +105,12 @@ namespace CppWinFormJoy {
 			this->menuStrip1->Size = System::Drawing::Size(485, 24);
 			this->groupRst->Location = System::Drawing::Point(494, 36);
 			this->groupBox_chg_sn->Location = System::Drawing::Point(494, 36);
+			this->groupBoxVib->Location = System::Drawing::Point(494, 36);
 			this->ClientSize = System::Drawing::Size(485, 449);
 			
+			sample_rate = 0;
+			samples = 0;
+			file_type = 0;
 			disable_expert_mode = 1;
 
 			//Done drawing!
@@ -124,7 +129,13 @@ namespace CppWinFormJoy {
 			}
 		}
 
-	array<byte>^ backup_spi;
+	private: array<byte>^ backup_spi;
+	public: array<byte>^ vib_loaded_file;
+	public: array<byte>^ vib_file_converted;
+	private: u16 sample_rate;
+	private: u32 samples;
+	//file type: 1 = Raw, 2 = bnvib (0x4), 3 = bnvib special (0xC), 4 = bnvib special (0x10)
+	private: int file_type;
 	private: int disable_expert_mode;
 	private: System::Windows::Forms::GroupBox^  groupBoxColor;
 	private: System::Windows::Forms::Button^ btnWriteBody;
@@ -192,11 +203,28 @@ namespace CppWinFormJoy {
 	private: System::Windows::Forms::ToolTip^  toolTip1;
 	public: System::Windows::Forms::TextBox^  textBoxDbg_sent;
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply;
+	private: System::Windows::Forms::GroupBox^  groupBoxVib;
+	private: System::Windows::Forms::Button^  btnVibPlay;
+	private: System::Windows::Forms::Button^  btnLoadVib;
+	private: System::Windows::Forms::Label^  label_vib_loaded;
+	private: System::Windows::Forms::Label^  label_samplerate;
+	public: System::Windows::Forms::Label^  label_samples;
+	private: System::Windows::Forms::ToolStripMenuItem^  hDRumblePlayerToolStripMenuItem;
+	private: System::Windows::Forms::Label^  label_hdrumble_filename;
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply_cmd;
 	private: System::ComponentModel::IContainer^  components;
+	private: System::Windows::Forms::TrackBar^  trackBar_lf_amp;
+	private: System::Windows::Forms::TrackBar^  trackBar_hf_freq;
+	private: System::Windows::Forms::TrackBar^  trackBar_hf_amp;
+	private: System::Windows::Forms::TrackBar^  trackBar_lf_freq;
+	private: System::Windows::Forms::Label^  label_eq_info;
+	private: System::Windows::Forms::Button^  btnVib_reset_eq;
+	private: System::Windows::Forms::GroupBox^  groupBox_vib_eq;
 	private: System::Windows::Forms::Label^  label_batt_percent;
 	private: System::Windows::Forms::Button^  btn_enable_expert_mode;
+	private: System::Windows::Forms::Label^  label_play_time;
 	private: System::Windows::Forms::Button^  btnRestore_SN;
+	private: System::Windows::Forms::GroupBox^  groupBox_vib_info;
 	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 
@@ -284,6 +312,22 @@ namespace CppWinFormJoy {
 			this->btnChangeSn = (gcnew System::Windows::Forms::Button());
 			this->textBox_chg_sn = (gcnew System::Windows::Forms::TextBox());
 			this->toolTip1 = (gcnew System::Windows::Forms::ToolTip(this->components));
+			this->groupBoxVib = (gcnew System::Windows::Forms::GroupBox());
+			this->groupBox_vib_info = (gcnew System::Windows::Forms::GroupBox());
+			this->label_hdrumble_filename = (gcnew System::Windows::Forms::Label());
+			this->label_play_time = (gcnew System::Windows::Forms::Label());
+			this->label_vib_loaded = (gcnew System::Windows::Forms::Label());
+			this->label_samplerate = (gcnew System::Windows::Forms::Label());
+			this->label_samples = (gcnew System::Windows::Forms::Label());
+			this->groupBox_vib_eq = (gcnew System::Windows::Forms::GroupBox());
+			this->btnVib_reset_eq = (gcnew System::Windows::Forms::Button());
+			this->label_eq_info = (gcnew System::Windows::Forms::Label());
+			this->trackBar_hf_amp = (gcnew System::Windows::Forms::TrackBar());
+			this->trackBar_lf_amp = (gcnew System::Windows::Forms::TrackBar());
+			this->trackBar_hf_freq = (gcnew System::Windows::Forms::TrackBar());
+			this->trackBar_lf_freq = (gcnew System::Windows::Forms::TrackBar());
+			this->btnVibPlay = (gcnew System::Windows::Forms::Button());
+			this->btnLoadVib = (gcnew System::Windows::Forms::Button());
 			this->btn_enable_expert_mode = (gcnew System::Windows::Forms::Button());
 			this->groupBoxColor->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxBattery))->BeginInit();
@@ -296,6 +340,13 @@ namespace CppWinFormJoy {
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider1))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider2))->BeginInit();
 			this->groupBox_chg_sn->SuspendLayout();
+			this->groupBoxVib->SuspendLayout();
+			this->groupBox_vib_info->SuspendLayout();
+			this->groupBox_vib_eq->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_amp))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_amp))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_freq))->BeginInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_freq))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// btnWriteBody
@@ -663,7 +714,7 @@ namespace CppWinFormJoy {
 			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->menuToolStripMenuItem });
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
-			this->menuStrip1->Size = System::Drawing::Size(1217, 24);
+			this->menuStrip1->Size = System::Drawing::Size(1473, 25);
 			this->menuStrip1->TabIndex = 0;
 			this->menuStrip1->Text = L"menuStrip1";
 			// 
@@ -1279,6 +1330,241 @@ namespace CppWinFormJoy {
 			this->textBox_chg_sn->TabIndex = 0;
 			this->textBox_chg_sn->Text = L"";
 			// 
+			// groupBoxVib
+			// 
+			this->groupBoxVib->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->groupBoxVib->Controls->Add(this->groupBox_vib_info);
+			this->groupBoxVib->Controls->Add(this->groupBox_vib_eq);
+			this->groupBoxVib->Controls->Add(this->btnVibPlay);
+			this->groupBoxVib->Controls->Add(this->btnLoadVib);
+			this->groupBoxVib->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->groupBoxVib->Location = System::Drawing::Point(1228, 38);
+			this->groupBoxVib->Name = L"groupBoxVib";
+			this->groupBoxVib->Size = System::Drawing::Size(220, 399);
+			this->groupBoxVib->TabIndex = 26;
+			this->groupBoxVib->TabStop = false;
+			this->groupBoxVib->Text = L"HD Rumble Player";
+			// 
+			// groupBox_vib_info
+			// 
+			this->groupBox_vib_info->Controls->Add(this->label_hdrumble_filename);
+			this->groupBox_vib_info->Controls->Add(this->label_play_time);
+			this->groupBox_vib_info->Controls->Add(this->label_vib_loaded);
+			this->groupBox_vib_info->Controls->Add(this->label_samplerate);
+			this->groupBox_vib_info->Controls->Add(this->label_samples);
+			this->groupBox_vib_info->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->groupBox_vib_info->Location = System::Drawing::Point(6, 62);
+			this->groupBox_vib_info->Name = L"groupBox_vib_info";
+			this->groupBox_vib_info->Size = System::Drawing::Size(208, 130);
+			this->groupBox_vib_info->TabIndex = 14;
+			this->groupBox_vib_info->TabStop = false;
+			this->groupBox_vib_info->Text = L"Info";
+			// 
+			// label_hdrumble_filename
+			// 
+			this->label_hdrumble_filename->AutoSize = true;
+			this->label_hdrumble_filename->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->label_hdrumble_filename->Location = System::Drawing::Point(6, 20);
+			this->label_hdrumble_filename->Name = L"label_hdrumble_filename";
+			this->label_hdrumble_filename->Size = System::Drawing::Size(92, 17);
+			this->label_hdrumble_filename->TabIndex = 5;
+			this->label_hdrumble_filename->Text = L"No file loaded";
+			// 
+			// label_play_time
+			// 
+			this->label_play_time->AutoSize = true;
+			this->label_play_time->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->label_play_time->Location = System::Drawing::Point(6, 62);
+			this->label_play_time->Name = L"label_play_time";
+			this->label_play_time->Size = System::Drawing::Size(96, 17);
+			this->label_play_time->TabIndex = 13;
+			this->label_play_time->Text = L"Total play time:";
+			// 
+			// label_vib_loaded
+			// 
+			this->label_vib_loaded->AutoSize = true;
+			this->label_vib_loaded->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->label_vib_loaded->Location = System::Drawing::Point(6, 41);
+			this->label_vib_loaded->Name = L"label_vib_loaded";
+			this->label_vib_loaded->Size = System::Drawing::Size(38, 17);
+			this->label_vib_loaded->TabIndex = 2;
+			this->label_vib_loaded->Text = L"Type:";
+			// 
+			// label_samplerate
+			// 
+			this->label_samplerate->AutoSize = true;
+			this->label_samplerate->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->label_samplerate->Location = System::Drawing::Point(6, 104);
+			this->label_samplerate->Name = L"label_samplerate";
+			this->label_samplerate->Size = System::Drawing::Size(81, 17);
+			this->label_samplerate->TabIndex = 3;
+			this->label_samplerate->Text = L"Sample rate:";
+			// 
+			// label_samples
+			// 
+			this->label_samples->AutoSize = true;
+			this->label_samples->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->label_samples->Location = System::Drawing::Point(6, 83);
+			this->label_samples->Name = L"label_samples";
+			this->label_samples->Size = System::Drawing::Size(64, 17);
+			this->label_samples->TabIndex = 4;
+			this->label_samples->Text = L"Samples: ";
+			// 
+			// groupBox_vib_eq
+			// 
+			this->groupBox_vib_eq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->groupBox_vib_eq->Controls->Add(this->btnVib_reset_eq);
+			this->groupBox_vib_eq->Controls->Add(this->label_eq_info);
+			this->groupBox_vib_eq->Controls->Add(this->trackBar_hf_amp);
+			this->groupBox_vib_eq->Controls->Add(this->trackBar_lf_amp);
+			this->groupBox_vib_eq->Controls->Add(this->trackBar_hf_freq);
+			this->groupBox_vib_eq->Controls->Add(this->trackBar_lf_freq);
+			this->groupBox_vib_eq->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->groupBox_vib_eq->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->groupBox_vib_eq->Location = System::Drawing::Point(6, 196);
+			this->groupBox_vib_eq->Name = L"groupBox_vib_eq";
+			this->groupBox_vib_eq->Size = System::Drawing::Size(208, 197);
+			this->groupBox_vib_eq->TabIndex = 12;
+			this->groupBox_vib_eq->TabStop = false;
+			this->groupBox_vib_eq->Text = L"Equalizer";
+			this->groupBox_vib_eq->Visible = false;
+			// 
+			// btnVib_reset_eq
+			// 
+			this->btnVib_reset_eq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnVib_reset_eq->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnVib_reset_eq->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btnVib_reset_eq->Location = System::Drawing::Point(66, 27);
+			this->btnVib_reset_eq->Name = L"btnVib_reset_eq";
+			this->btnVib_reset_eq->Size = System::Drawing::Size(75, 30);
+			this->btnVib_reset_eq->TabIndex = 11;
+			this->btnVib_reset_eq->Text = L"Reset EQ";
+			this->btnVib_reset_eq->UseVisualStyleBackColor = false;
+			this->btnVib_reset_eq->Click += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
+			// 
+			// label_eq_info
+			// 
+			this->label_eq_info->AutoSize = true;
+			this->label_eq_info->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
+			this->label_eq_info->Location = System::Drawing::Point(7, 68);
+			this->label_eq_info->Name = L"label_eq_info";
+			this->label_eq_info->Size = System::Drawing::Size(192, 26);
+			this->label_eq_info->TabIndex = 10;
+			this->label_eq_info->Text = L"  Low Frequency      High Frequency \r\n Gain        Pitch        Gain        Pitch"
+				L"";
+			this->label_eq_info->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+			// 
+			// trackBar_hf_amp
+			// 
+			this->trackBar_hf_amp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->trackBar_hf_amp->LargeChange = 1;
+			this->trackBar_hf_amp->Location = System::Drawing::Point(113, 91);
+			this->trackBar_hf_amp->Maximum = 20;
+			this->trackBar_hf_amp->Name = L"trackBar_hf_amp";
+			this->trackBar_hf_amp->Orientation = System::Windows::Forms::Orientation::Vertical;
+			this->trackBar_hf_amp->RightToLeft = System::Windows::Forms::RightToLeft::No;
+			this->trackBar_hf_amp->Size = System::Drawing::Size(45, 104);
+			this->trackBar_hf_amp->TabIndex = 8;
+			this->trackBar_hf_amp->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
+			this->trackBar_hf_amp->Value = 10;
+			this->trackBar_hf_amp->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
+			// 
+			// trackBar_lf_amp
+			// 
+			this->trackBar_lf_amp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->trackBar_lf_amp->LargeChange = 1;
+			this->trackBar_lf_amp->Location = System::Drawing::Point(15, 91);
+			this->trackBar_lf_amp->Maximum = 20;
+			this->trackBar_lf_amp->Name = L"trackBar_lf_amp";
+			this->trackBar_lf_amp->Orientation = System::Windows::Forms::Orientation::Vertical;
+			this->trackBar_lf_amp->RightToLeft = System::Windows::Forms::RightToLeft::No;
+			this->trackBar_lf_amp->Size = System::Drawing::Size(45, 104);
+			this->trackBar_lf_amp->TabIndex = 6;
+			this->trackBar_lf_amp->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
+			this->trackBar_lf_amp->Value = 10;
+			this->trackBar_lf_amp->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
+			// 
+			// trackBar_hf_freq
+			// 
+			this->trackBar_hf_freq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->trackBar_hf_freq->LargeChange = 1;
+			this->trackBar_hf_freq->Location = System::Drawing::Point(162, 91);
+			this->trackBar_hf_freq->Maximum = 20;
+			this->trackBar_hf_freq->Name = L"trackBar_hf_freq";
+			this->trackBar_hf_freq->Orientation = System::Windows::Forms::Orientation::Vertical;
+			this->trackBar_hf_freq->RightToLeft = System::Windows::Forms::RightToLeft::No;
+			this->trackBar_hf_freq->Size = System::Drawing::Size(45, 104);
+			this->trackBar_hf_freq->TabIndex = 9;
+			this->trackBar_hf_freq->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
+			this->trackBar_hf_freq->Value = 10;
+			this->trackBar_hf_freq->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
+			// 
+			// trackBar_lf_freq
+			// 
+			this->trackBar_lf_freq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->trackBar_lf_freq->LargeChange = 1;
+			this->trackBar_lf_freq->Location = System::Drawing::Point(64, 91);
+			this->trackBar_lf_freq->Maximum = 20;
+			this->trackBar_lf_freq->Name = L"trackBar_lf_freq";
+			this->trackBar_lf_freq->Orientation = System::Windows::Forms::Orientation::Vertical;
+			this->trackBar_lf_freq->RightToLeft = System::Windows::Forms::RightToLeft::No;
+			this->trackBar_lf_freq->Size = System::Drawing::Size(45, 104);
+			this->trackBar_lf_freq->TabIndex = 7;
+			this->trackBar_lf_freq->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
+			this->trackBar_lf_freq->Value = 10;
+			this->trackBar_lf_freq->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
+			// 
+			// btnVibPlay
+			// 
+			this->btnVibPlay->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnVibPlay->Enabled = false;
+			this->btnVibPlay->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnVibPlay->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btnVibPlay->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
+			this->btnVibPlay->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
+				static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->btnVibPlay->Location = System::Drawing::Point(113, 26);
+			this->btnVibPlay->Name = L"btnVibPlay";
+			this->btnVibPlay->Size = System::Drawing::Size(99, 32);
+			this->btnVibPlay->TabIndex = 1;
+			this->btnVibPlay->Text = L"Play";
+			this->btnVibPlay->UseVisualStyleBackColor = false;
+			this->btnVibPlay->Click += gcnew System::EventHandler(this, &FormJoy::btnVibPlay_Click);
+			// 
+			// btnLoadVib
+			// 
+			this->btnLoadVib->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnLoadVib->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnLoadVib->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btnLoadVib->Location = System::Drawing::Point(8, 26);
+			this->btnLoadVib->Name = L"btnLoadVib";
+			this->btnLoadVib->Size = System::Drawing::Size(99, 32);
+			this->btnLoadVib->TabIndex = 0;
+			this->btnLoadVib->Text = L"Load Rumble";
+			this->btnLoadVib->UseVisualStyleBackColor = false;
+			this->btnLoadVib->Click += gcnew System::EventHandler(this, &FormJoy::btnLoadVib_Click);
+			// 
 			// btn_enable_expert_mode
 			// 
 			this->btn_enable_expert_mode->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
@@ -1299,8 +1585,9 @@ namespace CppWinFormJoy {
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->ClientSize = System::Drawing::Size(1217, 449);
+			this->ClientSize = System::Drawing::Size(1473, 449);
 			this->Controls->Add(this->btn_enable_expert_mode);
+			this->Controls->Add(this->groupBoxVib);
 			this->Controls->Add(this->groupBox_chg_sn);
 			this->Controls->Add(this->groupRst);
 			this->Controls->Add(this->groupDbg);
@@ -1343,6 +1630,15 @@ namespace CppWinFormJoy {
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider2))->EndInit();
 			this->groupBox_chg_sn->ResumeLayout(false);
 			this->groupBox_chg_sn->PerformLayout();
+			this->groupBoxVib->ResumeLayout(false);
+			this->groupBox_vib_info->ResumeLayout(false);
+			this->groupBox_vib_info->PerformLayout();
+			this->groupBox_vib_eq->ResumeLayout(false);
+			this->groupBox_vib_eq->PerformLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_amp))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_amp))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_freq))->EndInit();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_freq))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -1799,6 +2095,7 @@ namespace CppWinFormJoy {
 		send_custom_command(test);
 		this->textBoxDbg_sent->Visible = true;
 		this->textBoxDbg_reply->Visible = true;
+		this->textBoxDbg_reply_cmd->Visible = true;
 
 		update_battery();
 	}
@@ -2483,6 +2780,179 @@ namespace CppWinFormJoy {
 			send_rumble();
 			MessageBox::Show(L"The HD Rumble music has ended.", L"Easter egg!");
 		}
+	}
+
+	private: System::Void btnLoadVib_Click(System::Object^  sender, System::EventArgs^  e) {
+		Stream^ fileStream;
+		array<byte>^ file_magic = { 0x52, 0x52, 0x41, 0x57, 0x4, 0xC, 0x3, 0x10};
+
+		OpenFileDialog^ openFileDialog1 = gcnew OpenFileDialog;
+		openFileDialog1->InitialDirectory = System::IO::Path::Combine(System::IO::Path::GetDirectoryName(Application::ExecutablePath), "RumbleDirectory");
+		openFileDialog1->Filter = "Binary HD Rumble (*.bnvib)|*.bnvib|Raw HD Rumble (*.jcvib)|*.jcvib";
+		openFileDialog1->FilterIndex = 1;
+		openFileDialog1->RestoreDirectory = true;
+		if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK && (fileStream = openFileDialog1->OpenFile()) != nullptr)
+		{	
+			this->label_hdrumble_filename->Text = openFileDialog1->SafeFileName;
+			this->label_vib_loaded->Text = L"";
+			this->label_samplerate->Text = L"";
+			this->label_play_time->Text = L"";
+			this->label_samples->Text = L"";
+			System::IO::MemoryStream^ ms = gcnew System::IO::MemoryStream(fileStream->Length);;
+			fileStream->CopyTo(ms);
+			this->vib_loaded_file = ms->ToArray();
+			this->vib_file_converted = ms->ToArray();
+			fileStream->Close();
+
+			//check for file_type
+			if (this->vib_loaded_file[0] == file_magic[0]) {
+				for (int i = 1; i < 4; i++) {
+					if (this->vib_loaded_file[i] == file_magic[i]) {
+						file_type = 1;
+						this->groupBox_vib_eq->Visible = true;
+						this->groupBox_vib_eq->Enabled = false;
+					}
+					else {
+						file_type = 0;
+						this->groupBox_vib_eq->Visible = false;
+
+						break;
+					}
+				}
+				if (file_type == 1) {
+					this->label_vib_loaded->Text = L"Type: Raw HD Rumble";
+					this->btnVibPlay->Enabled = true;
+					sample_rate = (this->vib_loaded_file[0x4] << 8) + this->vib_loaded_file[0x5];
+					samples = (this->vib_loaded_file[0x6] << 24) + (this->vib_loaded_file[0x7] << 16) + (this->vib_loaded_file[0x8] << 8) + this->vib_loaded_file[0x9];
+					this->label_samplerate->Text = L"Sample rate: " + sample_rate + L"ms";
+					this->label_play_time->Text = L"Total play time: " + (sample_rate * samples) / 1000.0f + L"s";
+					this->label_samples->Text = L"Samples: " + samples;
+				}
+				else {
+					this->label_vib_loaded->Text = L"Type: Unknown format";
+					this->btnVibPlay->Enabled = false;
+				}
+			}
+			else if (this->vib_loaded_file[4] == file_magic[6]) {
+				if (this->vib_loaded_file[0] == file_magic[4]) {
+					file_type = 2;
+					this->groupBox_vib_eq->Visible = true;
+					this->groupBox_vib_eq->Enabled = true;
+					this->label_vib_loaded->Text = L"Type: Binary HD Rumble";
+					u32 vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
+					sample_rate = 1000 / (this->vib_loaded_file[0x6] + (this->vib_loaded_file[0x7] << 8));
+					samples = vib_size / 4;
+					this->label_samplerate->Text = L"Sample rate: " + sample_rate + L"ms";
+					this->label_play_time->Text = L"Total play time: " + (sample_rate * samples) / 1000.0f + L"s";
+					this->label_samples->Text = L"Samples: " + samples;
+
+					this->btnVibPlay->Enabled = true;
+				}
+				else if (this->vib_file_converted[0] == file_magic[5]) {
+					file_type = 3;
+					this->label_vib_loaded->Text = L"Type: [0xC] Binary HD Rumble";
+					this->btnVibPlay->Enabled = false;
+					this->groupBox_vib_eq->Visible = true;
+					this->groupBox_vib_eq->Enabled = false;
+				}
+				else if (this->vib_file_converted[0] == file_magic[7]) {
+					file_type = 4;
+					this->label_vib_loaded->Text = L"Type: [0x10] Binary HD Rumble";
+					this->btnVibPlay->Enabled = false;
+					this->groupBox_vib_eq->Visible = true;
+					this->groupBox_vib_eq->Enabled = false;
+				}
+			}
+			else {
+				file_type = 0;
+				this->label_vib_loaded->Text = L"Type: Unknown format";
+				this->btnVibPlay->Enabled = false;
+				this->groupBox_vib_eq->Visible = false;
+			}
+			this->btnVib_reset_eq->PerformClick();
+		}
+	}
+
+
+
+
+	private: System::Void btnVibPlay_Click(System::Object^  sender, System::EventArgs^  e) {
+		if (!device_connection()) {
+			MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try to replay the HD Rumble file!", L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+			return;
+		}
+
+		this->btnVibPlay->Enabled = false;
+		this->btnLoadVib->Enabled = false;
+		this->groupBox_vib_eq->Enabled = false;
+		this->btnVibPlay->Text = L"Playing...";
+
+
+		play_hd_rumble_file(file_type, sample_rate, samples);
+		this->btnVibPlay->Text = L"Play";
+		this->btnVibPlay->Enabled = true;
+		this->btnLoadVib->Enabled = true;
+		this->groupBox_vib_eq->Enabled = true;
+		update_battery();
+
+	}
+
+			
+	private: System::Void btnVib_reset_eq_Click(System::Object^  sender, System::EventArgs^  e) {
+		this->trackBar_lf_amp->Value = 10;
+		this->trackBar_lf_freq->Value = 10;
+		this->trackBar_hf_amp->Value = 10;
+		this->trackBar_hf_freq->Value = 10;
+	}
+
+	private: System::Void TrackBar_ValueChanged(System::Object^ sender, System::EventArgs^ e)
+	{
+		float lf_gain = 1.0f - ((this->trackBar_lf_amp->Value - 10.0f) / 20.0f);
+		float lf_pitch = 1.0f - ((this->trackBar_lf_freq->Value - 10.0f) / 20.0f);
+		float hf_gain = 1.0f - ((this->trackBar_hf_amp->Value - 10.0f) / 20.0f);
+		float hf_pitch = 1.0f - ((this->trackBar_hf_freq->Value - 10.0f) / 20.0f);
+		this->toolTip1->SetToolTip(this->trackBar_lf_amp, String::Format("{0:d}%", (int)(lf_gain * 100.01f)));
+		this->toolTip1->SetToolTip(this->trackBar_lf_freq, String::Format("{0:d}%", (int)(lf_pitch * 100.01f)));
+		this->toolTip1->SetToolTip(this->trackBar_hf_amp, String::Format("{0:d}%", (int)(hf_gain * 100.01f)));
+		this->toolTip1->SetToolTip(this->trackBar_hf_freq, String::Format("{0:d}%", (int)(hf_pitch * 100.01f)));
+
+		//Convert to RAW vibration, apply EQ and clamp inside safe values
+		if (file_type == 2) {
+			u32 vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
+			for (int i = 0; i < vib_size; i = i + 4)
+			{
+				u8 tempLA = (this->trackBar_lf_amp->Value == 10 ? this->vib_loaded_file[0xC + i] : CLAMP(this->vib_loaded_file[0xC + i] * lf_gain, 0.0f, 255.0f));
+				u8 tempLF = (this->trackBar_lf_freq->Value == 10 ? this->vib_loaded_file[0xD + i] : CLAMP(this->vib_loaded_file[0xD + i] * lf_pitch, 0.0f, 191.0f)) - 0x40;
+				u8 tempHA = (this->trackBar_hf_amp->Value == 10 ? this->vib_loaded_file[0xE + i] : CLAMP(this->vib_loaded_file[0xE + i] * hf_gain, 0.0f, 255.0f));
+				u16 tempHF = ((this->trackBar_hf_freq->Value == 10 ? this->vib_loaded_file[0xF + i] : CLAMP(this->vib_loaded_file[0xF + i] * hf_gain, 0.0f, 223.0f)) - 0x60) * 4;
+
+				int j;
+				float temp = tempLA / 255.0f;
+				for (j = 0; j < 100; j++) {
+					float check = (lut_joy_amp.amp_float[j] + lut_joy_amp.amp_float[j + 1]) / 2.0f;
+					if (temp < check)
+						break;
+				}
+				if (temp > (lut_joy_amp.amp_float[99] + lut_joy_amp.amp_float[100]) / 2.0f)
+					j = 100;
+				this->vib_file_converted[0xE + i] = ((lut_joy_amp.la[j] >> 8) & 0xFF) + tempLF;
+				this->vib_file_converted[0xF + i] = lut_joy_amp.la[j] & 0xFF;
+
+
+				temp = tempHA / 255.0f;
+				for (j = 0; j < 100; j++) {
+					float check = (lut_joy_amp.amp_float[j] + lut_joy_amp.amp_float[j + 1]) / 2.0f;
+					if (temp < check)
+						break;
+				}
+				if (temp > (lut_joy_amp.amp_float[99] + lut_joy_amp.amp_float[100]) / 2.0f)
+					j = 100;
+				this->vib_file_converted[0xC + i] = tempHF & 0xFF;
+				this->vib_file_converted[0xD + i] = ((tempHF >> 8) & 0xFF) + lut_joy_amp.ha[j];
+
+			}
+		}
+		//MessageBox::Show(L"test run on load");
 	}
 
 private: System::Void btn_enable_expert_mode_Click(System::Object^  sender, System::EventArgs^  e) {

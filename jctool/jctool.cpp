@@ -560,6 +560,92 @@ int play_tune() {
 
 }
 
+int play_hd_rumble_file(int file_type, u16 sample_rate, int samples) {
+	int res;
+	u8 buf[0x100];
+	u8 buf2[0x100];
+
+	//Enable Vibration
+	memset(buf, 0, sizeof(buf));
+	auto hdr = (brcm_hdr *)buf;
+	auto pkt = (brcm_cmd_01 *)(hdr + 1);
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	pkt->subcmd = 0x48;
+	pkt->spi_read.offset = 0x01;
+	pkt->spi_read.size = 0x00;
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle, buf2, 0);
+
+	for (int i = 0; i < samples * 4; i = i + 4) {
+		Sleep(sample_rate);
+		memset(buf, 0, sizeof(buf));
+		hdr = (brcm_hdr *)buf;
+		pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x10;
+		hdr->rumble[0] = timming_byte;
+		timming_byte++;
+		if (timming_byte > 0xF)
+			timming_byte = 0x0;
+		if (file_type == 1) {
+			hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0A + i];
+			hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0B + i];
+			hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0C + i];
+			hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0D + i];
+		}
+		else if (file_type == 2) {
+			hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_file_converted[0x0C + i];
+			hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_file_converted[0x0D + i];
+			hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_file_converted[0x0E + i];
+			hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_file_converted[0x0F + i];
+		}
+		res = hid_write(handle, buf, sizeof(*hdr));
+		//FormJoy::myform1->label_samples->Text = L"Samples: " + i / 4 + L"/" + samples;
+
+		Application::DoEvents();
+	}
+
+	//FormJoy::myform1->label_samples->Text = L"Samples: " + samples;
+	//Application::DoEvents();
+
+	Sleep(sample_rate);
+	//Disable vibration
+	memset(buf, 0, sizeof(buf));
+	hdr = (brcm_hdr *)buf;
+	pkt = (brcm_cmd_01 *)(hdr + 1);
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
+	hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+	pkt->subcmd = 0x48;
+	pkt->spi_read.offset = 0x00;
+	pkt->spi_read.size = 0x00;
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle, buf, 0);
+
+	memset(buf, 0, sizeof(buf));
+	hdr = (brcm_hdr *)buf;
+	pkt = (brcm_cmd_01 *)(hdr + 1);
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	pkt->subcmd = 0x30;
+	pkt->spi_read.offset = 0x01;
+	pkt->spi_read.size = 0x00;
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle, buf, 0);
+
+	return 0;
+}
+
 /*
 //usb test
 int usb_init(hid_device *handle) {

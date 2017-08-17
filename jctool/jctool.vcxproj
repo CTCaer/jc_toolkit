@@ -78,6 +78,7 @@
     <ClInclude Include="FormJoy.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="luts.h" />
     <ClInclude Include="tune.h" />
     <ClInclude Include="Overrides.h">
       <DependentUpon>FormJoy.h</DependentUpon>
