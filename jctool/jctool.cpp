@@ -56,6 +56,27 @@ int set_led_busy() {
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
 
+	//Set breathing HOME Led
+	if (handle_ok != 1) {
+		memset(buf, 0, sizeof(buf));
+		auto hdr = (brcm_hdr *)buf;
+		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x01;
+		hdr->rumble[0] = timming_byte;
+		timming_byte++;
+		if (timming_byte > 0xF)
+			timming_byte = 0x0;
+		pkt->subcmd = 0x38;
+
+		buf[11] = 0x28;
+		buf[12] = 0x20;
+		buf[13] = 0xF2;
+		buf[14] = buf[15] = 0xF0;
+
+		res = hid_write(handle, buf, 16);
+		res = hid_read(handle, buf, 0);
+	}
+
 	return 0;
 }
 
@@ -376,6 +397,28 @@ int send_rumble() {
 	pkt->spi_read.size = 0x00;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
+
+	//Heartbeat HOME Led
+	if (handle_ok != 1) {
+		memset(buf, 0, sizeof(buf));
+		auto hdr = (brcm_hdr *)buf;
+		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x01;
+		hdr->rumble[0] = timming_byte;
+		timming_byte++;
+		if (timming_byte > 0xF)
+			timming_byte = 0x0;
+		pkt->subcmd = 0x38;
+
+		buf[11] = 0xF1;
+		buf[12] = 0x00;
+		buf[13] = buf[14] = buf[15] = buf[16] = buf[17] = buf[18] = 0xF0;
+		buf[19] = buf[22] = buf[25] = buf[28] = buf[31] = 0x00;
+		buf[20] = buf[21] = buf[23] = buf[24] = buf[26] = buf[27] = buf[29] = buf[30] = buf[32] = buf[33] = 0xFF;
+
+		res = hid_write(handle, buf, 34);
+		res = hid_read(handle, buf, 0);
+	}
 
 	return 0;
 
