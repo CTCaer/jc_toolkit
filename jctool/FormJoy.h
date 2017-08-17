@@ -194,8 +194,9 @@ namespace CppWinFormJoy {
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply;
 	public: System::Windows::Forms::TextBox^  textBoxDbg_reply_cmd;
 	private: System::ComponentModel::IContainer^  components;
-private: System::Windows::Forms::Label^  label_batt_percent;
-private: System::Windows::Forms::Button^  btn_enable_expert_mode;
+	private: System::Windows::Forms::Label^  label_batt_percent;
+	private: System::Windows::Forms::Button^  btn_enable_expert_mode;
+	private: System::Windows::Forms::Button^  btnRestore_SN;
 	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 
@@ -277,6 +278,7 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 			this->errorProvider1 = (gcnew System::Windows::Forms::ErrorProvider(this->components));
 			this->errorProvider2 = (gcnew System::Windows::Forms::ErrorProvider(this->components));
 			this->groupBox_chg_sn = (gcnew System::Windows::Forms::GroupBox());
+			this->btnRestore_SN = (gcnew System::Windows::Forms::Button());
 			this->label13 = (gcnew System::Windows::Forms::Label());
 			this->label_sn_change_warning = (gcnew System::Windows::Forms::Label());
 			this->btnChangeSn = (gcnew System::Windows::Forms::Button());
@@ -1193,6 +1195,7 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 			// 
 			this->groupBox_chg_sn->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->groupBox_chg_sn->Controls->Add(this->btnRestore_SN);
 			this->groupBox_chg_sn->Controls->Add(this->label13);
 			this->groupBox_chg_sn->Controls->Add(this->label_sn_change_warning);
 			this->groupBox_chg_sn->Controls->Add(this->btnChangeSn);
@@ -1207,12 +1210,28 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 			this->groupBox_chg_sn->Text = L"Change S/N";
 			this->groupBox_chg_sn->Visible = false;
 			// 
+			// btnRestore_SN
+			// 
+			this->btnRestore_SN->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnRestore_SN->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btnRestore_SN->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btnRestore_SN->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
+			this->btnRestore_SN->Location = System::Drawing::Point(17, 359);
+			this->btnRestore_SN->Name = L"btnRestore_SN";
+			this->btnRestore_SN->Size = System::Drawing::Size(87, 30);
+			this->btnRestore_SN->TabIndex = 34;
+			this->btnRestore_SN->Text = L"Restore";
+			this->btnRestore_SN->UseVisualStyleBackColor = false;
+			this->btnRestore_SN->Click += gcnew System::EventHandler(this, &FormJoy::btnRestore_SN_Click);
+			// 
 			// label13
 			// 
 			this->label13->AutoSize = true;
 			this->label13->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label13->Location = System::Drawing::Point(14, 167);
+			this->label13->Location = System::Drawing::Point(14, 293);
 			this->label13->Name = L"label13";
 			this->label13->Size = System::Drawing::Size(63, 17);
 			this->label13->TabIndex = 33;
@@ -1224,10 +1243,9 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
 			this->label_sn_change_warning->Location = System::Drawing::Point(14, 28);
 			this->label_sn_change_warning->Name = L"label_sn_change_warning";
-			this->label_sn_change_warning->Size = System::Drawing::Size(189, 124);
+			this->label_sn_change_warning->Size = System::Drawing::Size(189, 262);
 			this->label_sn_change_warning->TabIndex = 32;
-			this->label_sn_change_warning->Text = L"Make a backup first!\r\n\r\nIf you lose your serial number, bad things will happen!\r\n"
-				L"\r\nMaximum 15 non-extended ASCII characters.";
+			this->label_sn_change_warning->Text = resources->GetString(L"label_sn_change_warning.Text");
 			// 
 			// btnChangeSn
 			// 
@@ -1239,11 +1257,11 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 			this->btnChangeSn->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
 			this->btnChangeSn->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
 				static_cast<System::Int32>(static_cast<System::Byte>(0)));
-			this->btnChangeSn->Location = System::Drawing::Point(110, 232);
+			this->btnChangeSn->Location = System::Drawing::Point(116, 359);
 			this->btnChangeSn->Name = L"btnChangeSn";
-			this->btnChangeSn->Size = System::Drawing::Size(93, 30);
+			this->btnChangeSn->Size = System::Drawing::Size(87, 30);
 			this->btnChangeSn->TabIndex = 1;
-			this->btnChangeSn->Text = L"Change SN";
+			this->btnChangeSn->Text = L"Change";
 			this->btnChangeSn->UseVisualStyleBackColor = false;
 			this->btnChangeSn->Click += gcnew System::EventHandler(this, &FormJoy::btnChangeSn_Click);
 			// 
@@ -1254,7 +1272,7 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 			this->textBox_chg_sn->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
 			this->textBox_chg_sn->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->textBox_chg_sn->Location = System::Drawing::Point(17, 191);
+			this->textBox_chg_sn->Location = System::Drawing::Point(17, 317);
 			this->textBox_chg_sn->MaxLength = 15;
 			this->textBox_chg_sn->Name = L"textBox_chg_sn";
 			this->textBox_chg_sn->Size = System::Drawing::Size(186, 25);
@@ -2153,6 +2171,8 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 				this->groupBoxColor->Visible = false;
 				this->label6->Text = L"Restoring Factory Configuration and User Calibration...\n\nDon\'t disconnect your device!";
 				unsigned char full_restore_data[0x10];
+				unsigned char sn_backup_erase[0x10];
+				memset(sn_backup_erase, 0xFF, sizeof(sn_backup_erase));
 
 				//Factory Configuration Sector 0x6000
 				for (int i = 0x00; i < 0x1000; i = i + 0x10) {
@@ -2180,6 +2200,8 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 					FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
 					Application::DoEvents();
 				}
+				//Erase S/N backup storage
+				write_spi_data(handle, 0xF000, 0x10, sn_backup_erase);
 
 				std::stringstream offset_label;
 				offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << 0x2000 / 1024.0f;
@@ -2347,6 +2369,26 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 			{
 				if (MessageBox::Show(L"Did you make a backup?", L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
 				{
+					int sn_ok = 1;
+					unsigned char sn_magic[0x3] = { 0x00, 0x00, 0x58 };
+					unsigned char spi_sn[0x10];
+					unsigned char sn_backup[0x1];
+					memset(spi_sn, 0x11, sizeof(spi_sn));
+					memset(sn_backup, 0x00, sizeof(sn_backup));
+					
+					//Check if sn is original
+					get_spi_data(handle, 0x6000, 0x10, spi_sn);
+					for (int i = 0; i < 3; i++) {
+						if (spi_sn[i] != sn_magic[i]) {
+							sn_ok = 0;
+							break;
+						}
+					}
+					//Check if already made
+					get_spi_data(handle, 0xF000, 0x1, sn_backup);
+					if (sn_ok && sn_backup[0] == 0xFF)
+						write_spi_data(handle, 0xF000, 0x10, spi_sn);
+
 					array<Char>^ mn_str_sn = this->textBox_chg_sn->Text->ToCharArray();
 					unsigned char sn[32];
 
@@ -2363,7 +2405,7 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 					update_battery();
 					send_rumble(handle);
 					String^ new_sn = gcnew String(get_sn(handle, 0x6001, 0xF).c_str());
-					MessageBox::Show(L"The S/N was written to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!\n\nIf you still ignored the warnings about creating a backup, the S/N in the left of the main window will not change. Copy it somewhere safe!");
+					MessageBox::Show(L"The S/N was written to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!\n\nIf you still ignored the warnings about creating a backup, the S/N in the left of the main window will not change. Copy it somewhere safe!\n\nLastly, a backup of your S/N was created inside the SPI.");
 				}
 			}
 		}
@@ -2371,6 +2413,41 @@ private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 			MessageBox::Show(L"Changing S/N is not supported for Pro Controllers!", L"Error!", MessageBoxButtons::OK, MessageBoxIcon::Warning);
 	}
 
+	private: System::Void btnRestore_SN_Click(System::Object^  sender, System::EventArgs^  e) {
+		if (!device_connection()) {
+			MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try again!", L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+			return;
+		}
+		if (handle_ok != 3) {
+			if (MessageBox::Show(L"Do you really want to restore it from the S/N backup inside your controller\'s SPI?\n\nYou can also choose to restore it from a SPI backup you previously made, through the main Restore option.", L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes) {
+				int sn_ok = 1;
+				unsigned char spi_sn[0x10];
+				memset(spi_sn, 0x11, sizeof(spi_sn));
+
+				//Check if there is an SN backup
+				get_spi_data(handle, 0xF000, 0x10, spi_sn);
+				if (spi_sn[0] != 0x00) {
+						sn_ok = 0;
+					}
+				if (sn_ok) {
+					write_spi_data(handle, 0x6000, 0x10, spi_sn);
+				}
+				else {
+					MessageBox::Show(L"No S/N backup found inside your controller\'s SPI.\n\nThis can happen if the first time you changed your S/N was with an older version of Joy-Con Toolkit.\nOtherwise, you never changed your S/N.", L"Error!", MessageBoxButtons::OK, MessageBoxIcon::Error);
+					return;
+				}
+
+				update_battery();
+				send_rumble(handle);
+				String^ new_sn = gcnew String(get_sn(handle, 0x6001, 0xF).c_str());
+				MessageBox::Show(L"The S/N was restored to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!");
+			
+			}
+		}
+		else
+			MessageBox::Show(L"Restoring S/N is not supported for Pro Controllers!", L"Error!", MessageBoxButtons::OK, MessageBoxIcon::Warning);
+
+	}
 
 	private: System::Void label_sn_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 2) {
