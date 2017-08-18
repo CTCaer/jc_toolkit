@@ -573,13 +573,14 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->textBoxSN->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->textBoxSN->Location = System::Drawing::Point(72, 36);
+			this->textBoxSN->Location = System::Drawing::Point(72, 42);
 			this->textBoxSN->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->textBoxSN->MaxLength = 16;
 			this->textBoxSN->Name = L"textBoxSN";
 			this->textBoxSN->ReadOnly = true;
 			this->textBoxSN->Size = System::Drawing::Size(138, 20);
 			this->textBoxSN->TabIndex = 2;
+			this->textBoxSN->TabStop = false;
 			this->textBoxSN->Text = L"No S/N";
 			// 
 			// label_sn
@@ -592,7 +593,7 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->label_sn->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label_sn->Location = System::Drawing::Point(10, 36);
+			this->label_sn->Location = System::Drawing::Point(10, 42);
 			this->label_sn->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->label_sn->Name = L"label_sn";
 			this->label_sn->Size = System::Drawing::Size(39, 20);
@@ -619,7 +620,7 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->label_mac->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label_mac->Location = System::Drawing::Point(10, 77);
+			this->label_mac->Location = System::Drawing::Point(10, 83);
 			this->label_mac->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->label_mac->Name = L"label_mac";
 			this->label_mac->Size = System::Drawing::Size(46, 20);
@@ -635,7 +636,7 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->label_fw->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label_fw->Location = System::Drawing::Point(234, 36);
+			this->label_fw->Location = System::Drawing::Point(234, 42);
 			this->label_fw->Name = L"label_fw";
 			this->label_fw->Size = System::Drawing::Size(90, 20);
 			this->label_fw->TabIndex = 9;
@@ -650,12 +651,13 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->textBoxMAC->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->textBoxMAC->Location = System::Drawing::Point(72, 77);
+			this->textBoxMAC->Location = System::Drawing::Point(72, 83);
 			this->textBoxMAC->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->textBoxMAC->Name = L"textBoxMAC";
 			this->textBoxMAC->ReadOnly = true;
 			this->textBoxMAC->Size = System::Drawing::Size(138, 20);
 			this->textBoxMAC->TabIndex = 10;
+			this->textBoxMAC->TabStop = false;
 			this->textBoxMAC->Text = L"00:00:00:00:00:00";
 			// 
 			// textBoxFW
@@ -667,12 +669,13 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->textBoxFW->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->textBoxFW->Location = System::Drawing::Point(351, 36);
+			this->textBoxFW->Location = System::Drawing::Point(351, 42);
 			this->textBoxFW->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->textBoxFW->Name = L"textBoxFW";
 			this->textBoxFW->ReadOnly = true;
 			this->textBoxFW->Size = System::Drawing::Size(114, 20);
 			this->textBoxFW->TabIndex = 11;
+			this->textBoxFW->TabStop = false;
 			this->textBoxFW->Text = L"0.00";
 			// 
 			// textBoxDev
@@ -684,12 +687,13 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->textBoxDev->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->textBoxDev->Location = System::Drawing::Point(351, 77);
+			this->textBoxDev->Location = System::Drawing::Point(351, 83);
 			this->textBoxDev->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->textBoxDev->Name = L"textBoxDev";
 			this->textBoxDev->ReadOnly = true;
 			this->textBoxDev->Size = System::Drawing::Size(114, 20);
 			this->textBoxDev->TabIndex = 13;
+			this->textBoxDev->TabStop = false;
 			this->textBoxDev->Text = L"Controller";
 			// 
 			// label_dev
@@ -701,7 +705,7 @@ namespace CppWinFormJoy {
 				static_cast<System::Byte>(0)));
 			this->label_dev->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label_dev->Location = System::Drawing::Point(234, 77);
+			this->label_dev->Location = System::Drawing::Point(234, 83);
 			this->label_dev->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->label_dev->Name = L"label_dev";
 			this->label_dev->Size = System::Drawing::Size(83, 20);
@@ -933,6 +937,7 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_reply_cmd->ReadOnly = true;
 			this->textBoxDbg_reply_cmd->Size = System::Drawing::Size(196, 45);
 			this->textBoxDbg_reply_cmd->TabIndex = 34;
+			this->textBoxDbg_reply_cmd->TabStop = false;
 			this->textBoxDbg_reply_cmd->Text = L"Reply buttons and sticks";
 			this->textBoxDbg_reply_cmd->Visible = false;
 			// 
@@ -951,6 +956,7 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_reply->ReadOnly = true;
 			this->textBoxDbg_reply->Size = System::Drawing::Size(196, 69);
 			this->textBoxDbg_reply->TabIndex = 33;
+			this->textBoxDbg_reply->TabStop = false;
 			this->textBoxDbg_reply->Text = L"Reply text";
 			this->textBoxDbg_reply->Visible = false;
 			// 
@@ -969,6 +975,7 @@ namespace CppWinFormJoy {
 			this->textBoxDbg_sent->ReadOnly = true;
 			this->textBoxDbg_sent->Size = System::Drawing::Size(196, 47);
 			this->textBoxDbg_sent->TabIndex = 32;
+			this->textBoxDbg_sent->TabStop = false;
 			this->textBoxDbg_sent->Text = L"Sent text";
 			this->textBoxDbg_sent->Visible = false;
 			// 
@@ -1345,7 +1352,6 @@ namespace CppWinFormJoy {
 			this->textBox_chg_sn->Name = L"textBox_chg_sn";
 			this->textBox_chg_sn->Size = System::Drawing::Size(186, 25);
 			this->textBox_chg_sn->TabIndex = 0;
-			this->textBox_chg_sn->Text = L"";
 			// 
 			// groupBoxVib
 			// 
@@ -2180,7 +2186,7 @@ namespace CppWinFormJoy {
 		String^ str_backup_dev_type;
 
 		OpenFileDialog^ openFileDialog1 = gcnew OpenFileDialog;
-		openFileDialog1->InitialDirectory = System::IO::Path::Combine(System::IO::Path::GetDirectoryName(Application::ExecutablePath), "YourSubDirectoryName");
+		openFileDialog1->InitialDirectory = System::IO::Path::Combine(System::IO::Path::GetDirectoryName(Application::ExecutablePath), "BackupDirectory");
 		openFileDialog1->Filter = "SPI Backup (*.bin)|*.bin";
 		openFileDialog1->FilterIndex = 1;
 		openFileDialog1->RestoreDirectory = true;
@@ -2189,6 +2195,7 @@ namespace CppWinFormJoy {
 			System::IO::MemoryStream^ ms = gcnew System::IO::MemoryStream(1048576);;
 			fileStream->CopyTo(ms);
 			this->backup_spi = ms->ToArray();
+			fileStream->Close();
 
 			if (this->backup_spi->Length != 524288) {
 				MessageBox::Show(L"The file size must be 512KB (524288 Bytes)", L"Partial backup!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
@@ -2197,7 +2204,7 @@ namespace CppWinFormJoy {
 				this->label7->Visible = false;
 				this->btn_restore->Visible = false;
 				this->grpRstUser->Visible = false;
-				fileStream->Close();
+				
 				return;
 			}
 
@@ -2232,7 +2239,7 @@ namespace CppWinFormJoy {
 					this->comboBox1->Visible = false;
 					this->btn_restore->Visible = false;
 					this->grpRstUser->Visible = false;
-					fileStream->Close();
+
 					return;
 				}
 			}
@@ -2271,7 +2278,7 @@ namespace CppWinFormJoy {
 				this->comboBox1->Visible = false;
 				this->btn_restore->Visible = false;
 				this->grpRstUser->Visible = false;
-				fileStream->Close();
+				
 				return;
 			}
 
@@ -2309,7 +2316,6 @@ namespace CppWinFormJoy {
 				this->btn_restore->Visible = true;
 				this->btn_restore->Enabled = true;
 			}
-			fileStream->Close();
 		}
 	}
 
@@ -2346,7 +2352,7 @@ namespace CppWinFormJoy {
 		if (this->comboBox1->SelectedIndex == 1) {
 			this->label7->Visible = true;
 			this->label7->Size = System::Drawing::Size(188, 230);
-			this->label7->Text = L"This will restore your S/N from the selected backup.\n\nMake sure that this backup was your original one!";
+			this->label7->Text = L"This will restore your S/N from the selected backup.\n\nMake sure that this backup was your original one!\n\nIf somehow you completely lost your S/N, check the plastic sliver it was wrapped inside the box. It is printed on a white label.";
 		}
 		else if (this->comboBox1->SelectedIndex == 2) {
 			this->grpRstUser->Visible = true;
