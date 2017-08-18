@@ -267,6 +267,7 @@ namespace CppWinFormJoy {
 			this->textBoxDev = (gcnew System::Windows::Forms::TextBox());
 			this->label_dev = (gcnew System::Windows::Forms::Label());
 			this->menuStrip1 = (gcnew System::Windows::Forms::MenuStrip());
+			this->hDRumblePlayerToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->menuToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->debugToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->aboutToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -711,12 +712,28 @@ namespace CppWinFormJoy {
 			// 
 			this->menuStrip1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->menuToolStripMenuItem });
+			this->menuStrip1->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
+			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+				this->hDRumblePlayerToolStripMenuItem,
+					this->menuToolStripMenuItem
+			});
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
 			this->menuStrip1->Size = System::Drawing::Size(1473, 25);
 			this->menuStrip1->TabIndex = 0;
 			this->menuStrip1->Text = L"menuStrip1";
+			// 
+			// hDRumblePlayerToolStripMenuItem
+			// 
+			this->hDRumblePlayerToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->hDRumblePlayerToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->hDRumblePlayerToolStripMenuItem->Name = L"hDRumblePlayerToolStripMenuItem";
+			this->hDRumblePlayerToolStripMenuItem->Size = System::Drawing::Size(125, 21);
+			this->hDRumblePlayerToolStripMenuItem->Text = L"HD Rumble Player";
+			this->hDRumblePlayerToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::btnPlayVibEnable_Click);
 			// 
 			// menuToolStripMenuItem
 			// 
@@ -727,21 +744,21 @@ namespace CppWinFormJoy {
 				this->debugToolStripMenuItem,
 					this->aboutToolStripMenuItem
 			});
-			this->menuToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
-				static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->menuToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->menuToolStripMenuItem->Name = L"menuToolStripMenuItem";
-			this->menuToolStripMenuItem->Size = System::Drawing::Size(50, 20);
-			this->menuToolStripMenuItem->Text = L"Menu";
+			this->menuToolStripMenuItem->Size = System::Drawing::Size(61, 21);
+			this->menuToolStripMenuItem->Text = L"More...";
 			// 
 			// debugToolStripMenuItem
 			// 
 			this->debugToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
 			this->debugToolStripMenuItem->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
-			this->debugToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
-				static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->debugToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->debugToolStripMenuItem->Name = L"debugToolStripMenuItem";
-			this->debugToolStripMenuItem->Size = System::Drawing::Size(109, 22);
+			this->debugToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->debugToolStripMenuItem->Text = L"Debug";
 			this->debugToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::debugToolStripMenuItem_Click);
 			// 
@@ -750,10 +767,10 @@ namespace CppWinFormJoy {
 			this->aboutToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
 			this->aboutToolStripMenuItem->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
-			this->aboutToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
-				static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->aboutToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->aboutToolStripMenuItem->Name = L"aboutToolStripMenuItem";
-			this->aboutToolStripMenuItem->Size = System::Drawing::Size(109, 22);
+			this->aboutToolStripMenuItem->Size = System::Drawing::Size(152, 22);
 			this->aboutToolStripMenuItem->Text = L"About";
 			this->aboutToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::aboutToolStripMenuItem_Click);
 			// 
@@ -1998,23 +2015,71 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void debugToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
-		if (option_is_on == 0 || option_is_on == 2 || option_is_on == 3) {
+		if (option_is_on == 0 || option_is_on == 2 || option_is_on == 3 || option_is_on == 4) {
+			reset_window_option();
 			this->ClientSize = System::Drawing::Size(738, 449);
-			this->groupRst->Visible = false;
-			this->groupBox_chg_sn->Visible = false;
 			this->groupDbg->Visible = true;
 			option_is_on = 1;
 		}
 		else {
+			reset_window_option();
 			this->ClientSize = System::Drawing::Size(485, 449);
-			this->groupRst->Visible = false;
-			this->groupBox_chg_sn->Visible = false;
-			this->textBoxDbg_sent->Visible = false;
-			this->textBoxDbg_reply->Visible = false;
-			this->textBoxDbg_reply_cmd->Visible = false;
-			this->groupDbg->Visible = false;
 			option_is_on = 0;
 		}
+	}
+
+	private: System::Void btbRestoreEnable_Click(System::Object^  sender, System::EventArgs^  e) {
+		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 3 || option_is_on == 4) {
+			reset_window_option();
+			this->groupRst->Visible = true;
+			this->ClientSize = System::Drawing::Size(738, 449);
+			option_is_on = 2;
+		}
+		else {
+			reset_window_option();
+			this->ClientSize = System::Drawing::Size(485, 449);
+			option_is_on = 0;
+		}
+	}
+
+	private: System::Void label_sn_Click(System::Object^  sender, System::EventArgs^  e) {
+		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 2 || option_is_on == 4) {
+			reset_window_option();
+
+			this->ClientSize = System::Drawing::Size(738, 449);
+			this->groupBox_chg_sn->Visible = true;
+			option_is_on = 3;
+		}
+		else {
+			reset_window_option();
+			this->ClientSize = System::Drawing::Size(485, 449);
+			option_is_on = 0;
+		}
+	}
+
+	private: System::Void btnPlayVibEnable_Click(System::Object^  sender, System::EventArgs^  e) {
+		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 2 || option_is_on == 3) {
+			reset_window_option();
+
+			this->ClientSize = System::Drawing::Size(738, 449);
+			this->groupBoxVib->Visible = true;
+			option_is_on = 4;
+		}
+		else {
+			reset_window_option();
+			this->ClientSize = System::Drawing::Size(485, 449);
+			option_is_on = 0;
+		}
+	}
+
+	private: System::Void reset_window_option() {
+		this->groupDbg->Visible = false;
+		this->groupRst->Visible = false;
+		this->groupBox_chg_sn->Visible = false;
+		this->textBoxDbg_sent->Visible = false;
+		this->textBoxDbg_reply->Visible = false;
+		this->textBoxDbg_reply_cmd->Visible = false;
+		this->groupBoxVib->Visible = false;
 	}
 
 	private: System::Void btnDbg_send_cmd_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -2098,25 +2163,6 @@ namespace CppWinFormJoy {
 		this->textBoxDbg_reply_cmd->Visible = true;
 
 		update_battery();
-	}
-
-	private: System::Void btbRestoreEnable_Click(System::Object^  sender, System::EventArgs^  e) {
-		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 3) {
-			this->groupDbg->Visible = false;
-			this->groupRst->Visible = true;
-			this->groupBox_chg_sn->Visible = false;
-			this->textBoxDbg_sent->Visible = false;
-			this->textBoxDbg_reply->Visible = false;
-			this->ClientSize = System::Drawing::Size(738, 449);
-			option_is_on = 2;
-		}
-		else {
-			this->ClientSize = System::Drawing::Size(485, 449);
-			this->groupDbg->Visible = false;
-			this->groupRst->Visible = false;
-			this->groupBox_chg_sn->Visible = false;
-			option_is_on = 0;
-		}
 	}
 
 	private: System::Void btnLoadBackup_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -2746,25 +2792,6 @@ namespace CppWinFormJoy {
 		else
 			MessageBox::Show(L"Restoring S/N is not supported for Pro Controllers!", L"Error!", MessageBoxButtons::OK, MessageBoxIcon::Warning);
 
-	}
-
-	private: System::Void label_sn_Click(System::Object^  sender, System::EventArgs^  e) {
-		if (option_is_on == 0 || option_is_on == 1 || option_is_on == 2) {
-			this->ClientSize = System::Drawing::Size(738, 449);
-			this->textBoxDbg_sent->Visible = false;
-			this->textBoxDbg_reply->Visible = false;
-			this->groupRst->Visible = false;
-			this->groupBox_chg_sn->Visible = true;
-			this->groupDbg->Visible = false;
-			option_is_on = 3;
-		}
-		else {
-			this->ClientSize = System::Drawing::Size(485, 449);
-			this->groupRst->Visible = false;
-			this->groupBox_chg_sn->Visible = false;
-			this->groupDbg->Visible = false;
-			option_is_on = 0;
-		}
 	}
 
 	private: System::Void pictureBoxBattery_Click(System::Object^  sender, System::EventArgs^  e) {
