@@ -515,7 +515,7 @@ int send_custom_command(u8* arg) {
 			}
 		}
 	}
-	else if (res >= 0 && res <= 12) {
+	else if (res > 0 && res <= 12) {
 		for (int i = 0; i < res; i++)
 			input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
 	}
@@ -603,7 +603,7 @@ int play_tune() {
 
 }
 
-int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait) {
+int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
 	int res;
 	u8 buf[0x100];
 	u8 buf2[0x100];
@@ -652,7 +652,13 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 		}
 	}
 	else if (file_type == 3 || file_type == 4) {
-		for (int i = 0; i < samples * 4; i = i + 4) {
+		u8 vib_off = 0;
+		if (file_type == 3)
+			vib_off = 8;
+		else if (file_type == 4)
+			vib_off = 12;
+
+		for (int i = 0; i < loop_start * 4; i = i + 4) {
 			Sleep(sample_rate);
 			memset(buf, 0, sizeof(buf));
 			hdr = (brcm_hdr *)buf;
@@ -662,20 +668,66 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			timming_byte++;
 			if (timming_byte > 0xF)
 				timming_byte = 0x0;
-			//file_type is loop bnvib
-			if (file_type == 3) {
-				hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0A + i];
-				hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0B + i];
-				hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0C + i];
-				hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0D + i];
+			
+			hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
+			hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
+			hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
+			hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+			
+			res = hid_write(handle, buf, sizeof(*hdr));
+			Application::DoEvents();
+		}
+		for (int j = 0; j < 1 + loop_times; j++) {
+			for (int i = loop_start * 4; i < loop_end * 4; i = i + 4) {
+				Sleep(sample_rate);
+				memset(buf, 0, sizeof(buf));
+				hdr = (brcm_hdr *)buf;
+				pkt = (brcm_cmd_01 *)(hdr + 1);
+				hdr->cmd = 0x10;
+				hdr->rumble[0] = timming_byte;
+				timming_byte++;
+				if (timming_byte > 0xF)
+					timming_byte = 0x0;
+				
+				hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
+				hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
+				hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
+				hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+
+				res = hid_write(handle, buf, sizeof(*hdr));
+				Application::DoEvents();
 			}
-			//file_type is loop+ bnvib
-			else {
-				hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_file_converted[0x0C + i];
-				hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_file_converted[0x0D + i];
-				hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_file_converted[0x0E + i];
-				hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_file_converted[0x0F + i];
-			}
+			Sleep(sample_rate);
+			//Disable vibration
+			memset(buf, 0, sizeof(buf));
+			hdr = (brcm_hdr *)buf;
+			pkt = (brcm_cmd_01 *)(hdr + 1);
+			hdr->cmd = 0x10;
+			hdr->rumble[0] = timming_byte;
+			timming_byte++;
+			if (timming_byte > 0xF)
+				timming_byte = 0x0;
+			hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
+			hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+			res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+			Sleep(loop_wait * sample_rate);
+		}
+		for (int i = loop_end * 4; i < samples * 4; i = i + 4) {
+			Sleep(sample_rate);
+			memset(buf, 0, sizeof(buf));
+			hdr = (brcm_hdr *)buf;
+			pkt = (brcm_cmd_01 *)(hdr + 1);
+			hdr->cmd = 0x10;
+			hdr->rumble[0] = timming_byte;
+			timming_byte++;
+			if (timming_byte > 0xF)
+				timming_byte = 0x0;
+			
+			hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
+			hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
+			hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
+			hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+
 			res = hid_write(handle, buf, sizeof(*hdr));
 			Application::DoEvents();
 		}
