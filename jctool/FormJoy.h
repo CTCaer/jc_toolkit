@@ -108,9 +108,12 @@ namespace CppWinFormJoy {
 			this->groupBoxVib->Location = System::Drawing::Point(494, 36);
 			this->ClientSize = System::Drawing::Size(485, 449);
 			
-			sample_rate = 0;
-			samples = 0;
-			file_type = 0;
+			vib_file_type = 0;
+			vib_sample_rate = 0;
+			vib_samples = 0;
+			vib_loop_start = 0;
+			vib_loop_end = 0;
+			vib_loop_wait = 0;
 			disable_expert_mode = 1;
 
 			//Done drawing!
@@ -132,11 +135,19 @@ namespace CppWinFormJoy {
 	private: array<byte>^ backup_spi;
 	public: array<byte>^ vib_loaded_file;
 	public: array<byte>^ vib_file_converted;
-	private: u16 sample_rate;
-	private: u32 samples;
-	//file type: 1 = Raw, 2 = bnvib (0x4), 3 = bnvib special (0xC), 4 = bnvib special (0x10)
-	private: int file_type;
+	private: u16 vib_sample_rate;
+	private: u32 vib_samples;
+	private: u32 vib_loop_start;
+	private: u32 vib_loop_end;
+	private: u32 vib_loop_wait;
+	private: int vib_converted;
+	//file type: 1 = Raw, 2 = bnvib (0x4), 3 = bnvib loop (0xC), 4 = bnvib loop (0x10)
+	private: int vib_file_type;
 	private: int disable_expert_mode;
+	private: float lf_gain;
+	private: float lf_pitch;
+	private: float hf_gain;
+	private: float hf_pitch;
 	private: System::Windows::Forms::GroupBox^  groupBoxColor;
 	private: System::Windows::Forms::Button^ btnWriteBody;
 	private: System::Windows::Forms::TextBox^ textBoxSN;
@@ -762,7 +773,7 @@ namespace CppWinFormJoy {
 			this->debugToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->debugToolStripMenuItem->Name = L"debugToolStripMenuItem";
-			this->debugToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->debugToolStripMenuItem->Size = System::Drawing::Size(115, 22);
 			this->debugToolStripMenuItem->Text = L"Debug";
 			this->debugToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::debugToolStripMenuItem_Click);
 			// 
@@ -774,7 +785,7 @@ namespace CppWinFormJoy {
 			this->aboutToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->aboutToolStripMenuItem->Name = L"aboutToolStripMenuItem";
-			this->aboutToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->aboutToolStripMenuItem->Size = System::Drawing::Size(115, 22);
 			this->aboutToolStripMenuItem->Text = L"About";
 			this->aboutToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::aboutToolStripMenuItem_Click);
 			// 
@@ -1475,7 +1486,7 @@ namespace CppWinFormJoy {
 			this->btnVib_reset_eq->TabIndex = 11;
 			this->btnVib_reset_eq->Text = L"Reset EQ";
 			this->btnVib_reset_eq->UseVisualStyleBackColor = false;
-			this->btnVib_reset_eq->Click += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
+			this->btnVib_reset_eq->Click += gcnew System::EventHandler(this, &FormJoy::btnVib_reset_eq_Click);
 			// 
 			// label_eq_info
 			// 
@@ -1503,7 +1514,6 @@ namespace CppWinFormJoy {
 			this->trackBar_hf_amp->Size = System::Drawing::Size(45, 104);
 			this->trackBar_hf_amp->TabIndex = 8;
 			this->trackBar_hf_amp->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
-			this->trackBar_hf_amp->Value = 10;
 			this->trackBar_hf_amp->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
 			// 
 			// trackBar_lf_amp
@@ -1519,7 +1529,6 @@ namespace CppWinFormJoy {
 			this->trackBar_lf_amp->Size = System::Drawing::Size(45, 104);
 			this->trackBar_lf_amp->TabIndex = 6;
 			this->trackBar_lf_amp->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
-			this->trackBar_lf_amp->Value = 10;
 			this->trackBar_lf_amp->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
 			// 
 			// trackBar_hf_freq
@@ -1535,7 +1544,6 @@ namespace CppWinFormJoy {
 			this->trackBar_hf_freq->Size = System::Drawing::Size(45, 104);
 			this->trackBar_hf_freq->TabIndex = 9;
 			this->trackBar_hf_freq->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
-			this->trackBar_hf_freq->Value = 10;
 			this->trackBar_hf_freq->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
 			// 
 			// trackBar_lf_freq
@@ -1551,7 +1559,6 @@ namespace CppWinFormJoy {
 			this->trackBar_lf_freq->Size = System::Drawing::Size(45, 104);
 			this->trackBar_lf_freq->TabIndex = 7;
 			this->trackBar_lf_freq->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
-			this->trackBar_lf_freq->Value = 10;
 			this->trackBar_lf_freq->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
 			// 
 			// btnVibPlay
@@ -1591,6 +1598,8 @@ namespace CppWinFormJoy {
 			// btn_enable_expert_mode
 			// 
 			this->btn_enable_expert_mode->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->btn_enable_expert_mode->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->btn_enable_expert_mode->FlatAppearance->BorderSize = 0;
 			this->btn_enable_expert_mode->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
@@ -2826,6 +2835,7 @@ namespace CppWinFormJoy {
 		openFileDialog1->RestoreDirectory = true;
 		if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK && (fileStream = openFileDialog1->OpenFile()) != nullptr)
 		{	
+			vib_converted = 0;
 			this->label_hdrumble_filename->Text = openFileDialog1->SafeFileName;
 			this->label_vib_loaded->Text = L"";
 			this->label_samplerate->Text = L"";
@@ -2837,29 +2847,29 @@ namespace CppWinFormJoy {
 			this->vib_file_converted = ms->ToArray();
 			fileStream->Close();
 
-			//check for file_type
+			//check for vib_file_type
 			if (this->vib_loaded_file[0] == file_magic[0]) {
 				for (int i = 1; i < 4; i++) {
 					if (this->vib_loaded_file[i] == file_magic[i]) {
-						file_type = 1;
+						vib_file_type = 1;
 						this->groupBox_vib_eq->Visible = true;
 						this->groupBox_vib_eq->Enabled = false;
 					}
 					else {
-						file_type = 0;
+						vib_file_type = 0;
 						this->groupBox_vib_eq->Visible = false;
 
 						break;
 					}
 				}
-				if (file_type == 1) {
+				if (vib_file_type == 1) {
 					this->label_vib_loaded->Text = L"Type: Raw HD Rumble";
 					this->btnVibPlay->Enabled = true;
-					sample_rate = (this->vib_loaded_file[0x4] << 8) + this->vib_loaded_file[0x5];
-					samples = (this->vib_loaded_file[0x6] << 24) + (this->vib_loaded_file[0x7] << 16) + (this->vib_loaded_file[0x8] << 8) + this->vib_loaded_file[0x9];
-					this->label_samplerate->Text = L"Sample rate: " + sample_rate + L"ms";
-					this->label_play_time->Text = L"Total play time: " + (sample_rate * samples) / 1000.0f + L"s";
-					this->label_samples->Text = L"Samples: " + samples;
+					vib_sample_rate = (this->vib_loaded_file[0x4] << 8) + this->vib_loaded_file[0x5];
+					vib_samples = (this->vib_loaded_file[0x6] << 24) + (this->vib_loaded_file[0x7] << 16) + (this->vib_loaded_file[0x8] << 8) + this->vib_loaded_file[0x9];
+					this->label_samplerate->Text = L"Sample rate: " + vib_sample_rate + L"ms";
+					this->label_play_time->Text = L"Total play time: " + (vib_sample_rate * vib_samples) / 1000.0f + L"s";
+					this->label_samples->Text = L"Samples: " + vib_samples;
 				}
 				else {
 					this->label_vib_loaded->Text = L"Type: Unknown format";
@@ -2868,36 +2878,36 @@ namespace CppWinFormJoy {
 			}
 			else if (this->vib_loaded_file[4] == file_magic[6]) {
 				if (this->vib_loaded_file[0] == file_magic[4]) {
-					file_type = 2;
+					vib_file_type = 2;
 					this->groupBox_vib_eq->Visible = true;
 					this->groupBox_vib_eq->Enabled = true;
 					this->label_vib_loaded->Text = L"Type: Binary HD Rumble";
 					u32 vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
-					sample_rate = 1000 / (this->vib_loaded_file[0x6] + (this->vib_loaded_file[0x7] << 8));
-					samples = vib_size / 4;
-					this->label_samplerate->Text = L"Sample rate: " + sample_rate + L"ms";
-					this->label_play_time->Text = L"Total play time: " + (sample_rate * samples) / 1000.0f + L"s";
-					this->label_samples->Text = L"Samples: " + samples;
+					vib_sample_rate = 1000 / (this->vib_loaded_file[0x6] + (this->vib_loaded_file[0x7] << 8));
+					vib_samples = vib_size / 4;
+					this->label_samplerate->Text = L"Sample rate: " + vib_sample_rate + L"ms";
+					this->label_play_time->Text = L"Total play time: " + (vib_sample_rate * vib_samples) / 1000.0f + L"s";
+					this->label_samples->Text = L"Samples: " + vib_samples;
 
 					this->btnVibPlay->Enabled = true;
 				}
 				else if (this->vib_file_converted[0] == file_magic[5]) {
-					file_type = 3;
-					this->label_vib_loaded->Text = L"Type: [0xC] Binary HD Rumble";
+					vib_file_type = 3;
+					this->label_vib_loaded->Text = L"Type: Loop Binary HD Rumble";
 					this->btnVibPlay->Enabled = false;
 					this->groupBox_vib_eq->Visible = true;
 					this->groupBox_vib_eq->Enabled = false;
 				}
 				else if (this->vib_file_converted[0] == file_magic[7]) {
-					file_type = 4;
-					this->label_vib_loaded->Text = L"Type: [0x10] Binary HD Rumble";
+					vib_file_type = 4;
+					this->label_vib_loaded->Text = L"Type: Loop and Wait Binary";
 					this->btnVibPlay->Enabled = false;
 					this->groupBox_vib_eq->Visible = true;
 					this->groupBox_vib_eq->Enabled = false;
 				}
 			}
 			else {
-				file_type = 0;
+				vib_file_type = 0;
 				this->label_vib_loaded->Text = L"Type: Unknown format";
 				this->btnVibPlay->Enabled = false;
 				this->groupBox_vib_eq->Visible = false;
@@ -2915,17 +2925,68 @@ namespace CppWinFormJoy {
 			return;
 		}
 
+		if (vib_file_type == 2 && !vib_converted) {
+			//Convert to RAW vibration, apply EQ and clamp inside safe values
+			this->btnVibPlay->Text = L"Loading...";
+			u32 vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
+
+			//Convert to raw
+			for (int i = 0; i < (int)vib_size; i = i + 4)
+			{
+				//Apply amp eq
+				u8 tempLA = (this->trackBar_lf_amp->Value == 10 ? this->vib_loaded_file[0xC + i] : (u8)CLAMP((float)this->vib_loaded_file[0xC + i] * lf_gain, 0.0f, 255.0f));
+				u8 tempHA = (this->trackBar_hf_amp->Value == 10 ? this->vib_loaded_file[0xE + i] : (u8)CLAMP((float)this->vib_loaded_file[0xE + i] * hf_gain, 0.0f, 255.0f));
+
+				//Apply safe limit. The sum of LF and HF amplitudes should be lower than 1.0
+				float apply_safe_limit = (float)this->vib_file_converted[0xC + i] / 255.0f + (float)this->vib_file_converted[0xE + i] / 255.0f;
+				//u8 tempLA = (apply_safe_limit > 1.0f ? (u8)((float)this->vib_file_converted[0xC + i] * (0.55559999f / apply_safe_limit)) : (u8)((float)this->vib_file_converted[0xC + i] * 0.55559999f));
+				tempLA = (apply_safe_limit > 1.0f ? (u8)((float)this->vib_file_converted[0xC + i] * (1.0f / apply_safe_limit)) : this->vib_file_converted[0xC + i]);
+				tempHA = (apply_safe_limit > 1.0f ? (u8)((float)this->vib_file_converted[0xE + i] * (1.0f / apply_safe_limit)) : this->vib_file_converted[0xE + i]);
+
+				//Apply eq and convert frequencies to raw range
+				u8 tempLF = (this->trackBar_lf_freq->Value == 10 ? this->vib_loaded_file[0xD + i] : (u8)CLAMP((float)this->vib_loaded_file[0xD + i] * lf_pitch, 0.0f, 191.0f)) - 0x40;
+				u16 tempHF = ((this->trackBar_hf_freq->Value == 10 ? this->vib_loaded_file[0xF + i] : (u8)CLAMP((float)this->vib_loaded_file[0xF + i] * hf_gain, 0.0f, 223.0f)) - 0x60) * 4;
+
+				//Encode amplitudes with the look up table and direct encode frequencies
+				int j;
+				float temp = tempLA / 255.0f;
+				for (j = 1; j < 101; j++) {
+					if (temp < lut_joy_amp.amp_float[j]) {
+						j--;
+						break;
+					}
+				}
+				this->vib_file_converted[0xE + i] = ((lut_joy_amp.la[j] >> 8) & 0xFF) + tempLF;
+				this->vib_file_converted[0xF + i] = lut_joy_amp.la[j] & 0xFF;
+
+				temp = tempHA / 255.0f;
+				for (j = 1; j < 101; j++) {
+					if (temp < lut_joy_amp.amp_float[j]) {
+						j--;
+						break;
+					}
+				}
+				this->vib_file_converted[0xC + i] = tempHF & 0xFF;
+				this->vib_file_converted[0xD + i] = ((tempHF >> 8) & 0xFF) + lut_joy_amp.ha[j];
+
+			}
+			vib_converted = 1;
+		}
+
+
 		this->btnVibPlay->Enabled = false;
 		this->btnLoadVib->Enabled = false;
 		this->groupBox_vib_eq->Enabled = false;
 		this->btnVibPlay->Text = L"Playing...";
 
 
-		play_hd_rumble_file(file_type, sample_rate, samples);
+		play_hd_rumble_file(vib_file_type, vib_sample_rate, vib_samples, vib_loop_start, vib_loop_end, vib_loop_wait);
 		this->btnVibPlay->Text = L"Play";
 		this->btnVibPlay->Enabled = true;
 		this->btnLoadVib->Enabled = true;
-		this->groupBox_vib_eq->Enabled = true;
+		if (vib_file_type == 2) {
+			this->groupBox_vib_eq->Enabled = true;
+		}
 		update_battery();
 
 	}
@@ -2940,52 +3001,15 @@ namespace CppWinFormJoy {
 
 	private: System::Void TrackBar_ValueChanged(System::Object^ sender, System::EventArgs^ e)
 	{
-		float lf_gain = 1.0f - ((this->trackBar_lf_amp->Value - 10.0f) / 20.0f);
-		float lf_pitch = 1.0f - ((this->trackBar_lf_freq->Value - 10.0f) / 20.0f);
-		float hf_gain = 1.0f - ((this->trackBar_hf_amp->Value - 10.0f) / 20.0f);
-		float hf_pitch = 1.0f - ((this->trackBar_hf_freq->Value - 10.0f) / 20.0f);
+		lf_gain = 1.0f - ((10.0f - this->trackBar_lf_amp->Value) / 10.0f);
+		lf_pitch = 1.0f - (10.0f - (this->trackBar_lf_freq->Value) / 10.0f);
+		hf_gain = 1.0f - ((10.0f - this->trackBar_hf_amp->Value) / 10.0f);
+		hf_pitch = 1.0f - ((10.0f - this->trackBar_hf_freq->Value) / 10.0f);
 		this->toolTip1->SetToolTip(this->trackBar_lf_amp, String::Format("{0:d}%", (int)(lf_gain * 100.01f)));
 		this->toolTip1->SetToolTip(this->trackBar_lf_freq, String::Format("{0:d}%", (int)(lf_pitch * 100.01f)));
 		this->toolTip1->SetToolTip(this->trackBar_hf_amp, String::Format("{0:d}%", (int)(hf_gain * 100.01f)));
 		this->toolTip1->SetToolTip(this->trackBar_hf_freq, String::Format("{0:d}%", (int)(hf_pitch * 100.01f)));
-
-		//Convert to RAW vibration, apply EQ and clamp inside safe values
-		if (file_type == 2) {
-			u32 vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
-			for (int i = 0; i < vib_size; i = i + 4)
-			{
-				u8 tempLA = (this->trackBar_lf_amp->Value == 10 ? this->vib_loaded_file[0xC + i] : CLAMP(this->vib_loaded_file[0xC + i] * lf_gain, 0.0f, 255.0f));
-				u8 tempLF = (this->trackBar_lf_freq->Value == 10 ? this->vib_loaded_file[0xD + i] : CLAMP(this->vib_loaded_file[0xD + i] * lf_pitch, 0.0f, 191.0f)) - 0x40;
-				u8 tempHA = (this->trackBar_hf_amp->Value == 10 ? this->vib_loaded_file[0xE + i] : CLAMP(this->vib_loaded_file[0xE + i] * hf_gain, 0.0f, 255.0f));
-				u16 tempHF = ((this->trackBar_hf_freq->Value == 10 ? this->vib_loaded_file[0xF + i] : CLAMP(this->vib_loaded_file[0xF + i] * hf_gain, 0.0f, 223.0f)) - 0x60) * 4;
-
-				int j;
-				float temp = tempLA / 255.0f;
-				for (j = 0; j < 100; j++) {
-					float check = (lut_joy_amp.amp_float[j] + lut_joy_amp.amp_float[j + 1]) / 2.0f;
-					if (temp < check)
-						break;
-				}
-				if (temp > (lut_joy_amp.amp_float[99] + lut_joy_amp.amp_float[100]) / 2.0f)
-					j = 100;
-				this->vib_file_converted[0xE + i] = ((lut_joy_amp.la[j] >> 8) & 0xFF) + tempLF;
-				this->vib_file_converted[0xF + i] = lut_joy_amp.la[j] & 0xFF;
-
-
-				temp = tempHA / 255.0f;
-				for (j = 0; j < 100; j++) {
-					float check = (lut_joy_amp.amp_float[j] + lut_joy_amp.amp_float[j + 1]) / 2.0f;
-					if (temp < check)
-						break;
-				}
-				if (temp > (lut_joy_amp.amp_float[99] + lut_joy_amp.amp_float[100]) / 2.0f)
-					j = 100;
-				this->vib_file_converted[0xC + i] = tempHF & 0xFF;
-				this->vib_file_converted[0xD + i] = ((tempHF >> 8) & 0xFF) + lut_joy_amp.ha[j];
-
-			}
-		}
-		//MessageBox::Show(L"test run on load");
+		vib_converted = 0;
 	}
 
 private: System::Void btn_enable_expert_mode_Click(System::Object^  sender, System::EventArgs^  e) {
