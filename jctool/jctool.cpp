@@ -905,6 +905,7 @@ int test_chamber() {
 	//Add your testing code.
 
 	}
+
 int device_connection(){
 	handle_ok = 0;
 	if (handle = hid_open(0x57e, 0x2006, nullptr))
