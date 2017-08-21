@@ -904,6 +904,7 @@ int test_chamber() {
 
 	//Add your testing code.
 
+	return 0;
 	}
 
 int device_connection(){
