@@ -3318,26 +3318,50 @@ namespace CppWinFormJoy {
 			get_spi_data(0x8010, 0x16, user_cal);
 			
 			if (handle_ok != 2) {
-
+				this->textBox_lstick_fcal->Text = String::Format(L"L Stick Factory:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+					(factory_cal[4] << 8) & 0xF00 | factory_cal[3],
+					(factory_cal[5] << 4) | (factory_cal[4] >> 4),
+					((factory_cal[4] << 8) & 0xF00 | factory_cal[3]) - ((factory_cal[7] << 8) & 0xF00 | factory_cal[6]),
+					((factory_cal[5] << 4) | (factory_cal[4] >> 4)) - ((factory_cal[8] << 4) | (factory_cal[7] >> 4)),
+					((factory_cal[4] << 8) & 0xF00 | factory_cal[3]) + ((factory_cal[1] << 8) & 0xF00 | factory_cal[0]),
+					((factory_cal[5] << 4) | (factory_cal[4] >> 4)) + ((factory_cal[2] << 4) | (factory_cal[2] >> 4)));
 			}
 			else {
 				this->textBox_lstick_fcal->Text = L"L Stick Factory:\r\nNo calibration";
 			}
 			if (handle_ok != 1) {
-
+				this->textBox_rstick_fcal->Text = String::Format(L"R Stick Factory:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+					(factory_cal[10] << 8) & 0xF00 | factory_cal[9],
+					(factory_cal[11] << 4) | (factory_cal[10] >> 4),
+					((factory_cal[10] << 8) & 0xF00 | factory_cal[9]) - ((factory_cal[13] << 8) & 0xF00 | factory_cal[12]),
+					((factory_cal[11] << 4) | (factory_cal[10] >> 4)) - ((factory_cal[14] << 4) | (factory_cal[13] >> 4)),
+					((factory_cal[10] << 8) & 0xF00 | factory_cal[9]) + ((factory_cal[16] << 8) & 0xF00 | factory_cal[15]),
+					((factory_cal[11] << 4) | (factory_cal[10] >> 4)) + ((factory_cal[17] << 4) | (factory_cal[16] >> 4)));
 			}
 			else {
 				this->textBox_rstick_fcal->Text = L"R Stick Factory:\r\nNo calibration";
 			}
 
 			if ((user_cal[0] | user_cal[1] << 8) == 0xA1B2) {
-
+				this->textBox_lstick_ucal->Text = String::Format(L"L Stick User:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+					(user_cal[6] << 8) & 0xF00 | user_cal[5],
+					(user_cal[7] << 4) | (user_cal[6] >> 4),
+					((user_cal[6] << 8) & 0xF00 | user_cal[5]) - ((user_cal[9] << 8) & 0xF00 | user_cal[8]),
+					((user_cal[7] << 4) | (user_cal[6] >> 4)) - ((user_cal[10] << 4) | (user_cal[9] >> 4)),
+					((user_cal[6] << 8) & 0xF00 | user_cal[5]) + ((user_cal[3] << 8) & 0xF00 | user_cal[2]),
+					((user_cal[7] << 4) | (user_cal[6] >> 4)) + ((user_cal[4] << 4) | (user_cal[3] >> 4)));
 			}
 			else {
 				this->textBox_lstick_ucal->Text = L"L Stick User:\r\nNo calibration";
 			}
 			if ((user_cal[0xB] | user_cal[0xC] << 8) == 0xA1B2) {
-
+				this->textBox_rstick_ucal->Text = String::Format(L"R Stick User:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+					(user_cal[14] << 8) & 0xF00 | user_cal[13],
+					(user_cal[15] << 4) | (user_cal[14] >> 4),
+					((user_cal[14] << 8) & 0xF00 | user_cal[13]) - ((user_cal[17] << 8) & 0xF00 | user_cal[16]),
+					((user_cal[15] << 4) | (user_cal[14] >> 4)) - ((user_cal[18] << 4) | (user_cal[17] >> 4)),
+					((user_cal[14] << 8) & 0xF00 | user_cal[13]) + ((user_cal[20] << 8) & 0xF00 | user_cal[19]),
+					((user_cal[15] << 4) | (user_cal[14] >> 4)) + ((user_cal[21] << 4) | (user_cal[20] >> 4)));
 			}
 			else {
 				this->textBox_rstick_ucal->Text = L"R Stick User:\r\nNo calibration";
