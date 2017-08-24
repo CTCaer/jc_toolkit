@@ -528,6 +528,131 @@ int send_custom_command(u8* arg) {
 	return 0;
 }
 
+int button_test() {
+	int res;
+	int byte_seperator = 1;
+	int limit_output = 0;
+	String^ input_report_cmd;
+	String^ input_report_sys;
+	u8 buf_cmd[36];
+	u8 buf_reply[0x170];
+	memset(buf_cmd, 0, sizeof(buf_cmd));
+	auto hdr = (brcm_hdr *)buf_cmd;
+	auto pkt = (brcm_cmd_01 *)(hdr + 1);
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	pkt->subcmd = 0x03;
+	pkt->spi_read.offset = 0x30;
+	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+
+	memset(buf_cmd, 0, sizeof(buf_cmd));
+	hdr = (brcm_hdr *)buf_cmd;
+	pkt = (brcm_cmd_01 *)(hdr + 1);
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	pkt->subcmd = 0x40;
+	pkt->spi_read.offset = 0x01;
+	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+
+	while (enable_button_test) {
+		input_report_cmd = L"";
+		input_report_sys = L"";
+
+		memset(buf_cmd, 0, sizeof(buf_cmd));
+		//Sleep(64);
+		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+
+		byte_seperator = 1;
+		if (res > 12) {
+			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
+				input_report_cmd += String::Format(L"Input: {0:X2}  ", buf_reply[0]);
+				if (((buf_reply[2] >> 1) & 0x3) == 3)
+					input_report_cmd += String::Format(L"Connection: BT\r\n");
+				else if (((buf_reply[2] >> 1) & 0x3) == 0)
+					input_report_cmd += String::Format(L"Connection: USB\r\n");
+				else
+					input_report_cmd += String::Format(L"Connection: Unknown\r\n");
+				input_report_cmd += String::Format(L"Battery: {0:X}/4  ", buf_reply[2] >> 5);
+				input_report_cmd += String::Format(L"Charging: {0:X}\r\n", (buf_reply[2] >> 4) & 0x1);
+				input_report_sys += String::Format(L"6-Axis Sensor:\r\n", buf_reply[0]);
+				input_report_cmd += String::Format(L"\r\n\Buttons: ");
+
+				for (int i = 3; i < 6; i++)
+					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
+
+				input_report_cmd += String::Format(L"\r\nL Stick: X: {1:X3}  Y: {0:X3}\r\nR Stick: X: {3:X3}  Y: {2:X3} ", 
+					buf_reply[6] | (u16)((buf_reply[7] & 0xF) << 8),
+					(buf_reply[7] >> 4) | (buf_reply[8] << 4),
+					buf_reply[9] | (u16)((buf_reply[10] & 0xF) << 8),
+					(buf_reply[10] >> 4) | (buf_reply[11] << 4));
+
+				byte_seperator = 1;
+				int len = 49;
+				if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
+					len = 362;
+
+				for (int i = 13; i < len; i++) {
+					input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
+					if (byte_seperator == 4)
+						input_report_sys += L" ";
+					if (byte_seperator == 8)
+					{
+						byte_seperator = 0;
+						input_report_sys += L"\r\n";
+					}
+					byte_seperator++;
+				}
+			}
+			if (limit_output == 1) {
+
+				FormJoy::myform1->textBox_btn_test_reply->Text = input_report_cmd;
+				FormJoy::myform1->textBox_btn_test_subreply->Text = input_report_sys;
+			}
+			else if (limit_output > 4){
+				limit_output = 0;
+			}
+			limit_output++;
+		}
+
+		Application::DoEvents();
+	}
+	memset(buf_cmd, 0, sizeof(buf_cmd));
+	hdr = (brcm_hdr *)buf_cmd;
+	pkt = (brcm_cmd_01 *)(hdr + 1);
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	pkt->subcmd = 0x03;
+	pkt->spi_read.offset = 0x3F;
+	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+
+	memset(buf_cmd, 0, sizeof(buf_cmd));
+	hdr = (brcm_hdr *)buf_cmd;
+	pkt = (brcm_cmd_01 *)(hdr + 1);
+	hdr->cmd = 0x01;
+	hdr->rumble[0] = timming_byte;
+	timming_byte++;
+	if (timming_byte > 0xF)
+		timming_byte = 0x0;
+	pkt->subcmd = 0x03;
+	pkt->spi_read.offset = 0x3F;
+	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+
+	return 0;
+}
+
 int play_tune() {
 	int res;
 	u8 buf[0x100];
