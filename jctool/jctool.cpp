@@ -583,12 +583,12 @@ int button_test() {
 				input_report_cmd += String::Format(L"Battery: {0:X}/4  ", buf_reply[2] >> 5);
 				input_report_cmd += String::Format(L"Charging: {0:X}\r\n", (buf_reply[2] >> 4) & 0x1);
 				input_report_sys += String::Format(L"6-Axis Sensor:\r\n", buf_reply[0]);
-				input_report_cmd += String::Format(L"\r\n\Buttons: ");
+				input_report_cmd += String::Format(L"\r\nButtons: ");
 
 				for (int i = 3; i < 6; i++)
 					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
 
-				input_report_cmd += String::Format(L"\r\nL Stick: X: {1:X3}  Y: {0:X3}\r\nR Stick: X: {3:X3}  Y: {2:X3} ", 
+				input_report_cmd += String::Format(L"\r\nL Stick: X: {0:X3}  Y: {1:X3}\r\nR Stick: X: {3:X3}  Y: {2:X3} ", 
 					buf_reply[6] | (u16)((buf_reply[7] & 0xF) << 8),
 					(buf_reply[7] >> 4) | (buf_reply[8] << 4),
 					buf_reply[9] | (u16)((buf_reply[10] & 0xF) << 8),

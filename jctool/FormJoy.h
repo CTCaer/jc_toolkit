@@ -1734,7 +1734,7 @@ namespace CppWinFormJoy {
 			this->btn_run_btn_test->Name = L"btn_run_btn_test";
 			this->btn_run_btn_test->Size = System::Drawing::Size(75, 27);
 			this->btn_run_btn_test->TabIndex = 36;
-			this->btn_run_btn_test->Text = L"Run";
+			this->btn_run_btn_test->Text = L"Turn on";
 			this->btn_run_btn_test->UseVisualStyleBackColor = false;
 			this->btn_run_btn_test->Click += gcnew System::EventHandler(this, &FormJoy::button1_Click);
 			// 
@@ -3318,7 +3318,7 @@ namespace CppWinFormJoy {
 			get_spi_data(0x8010, 0x16, user_cal);
 			
 			if (handle_ok != 2) {
-				this->textBox_lstick_fcal->Text = String::Format(L"L Stick Factory:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+				this->textBox_lstick_fcal->Text = String::Format(L"L Stick Factory:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
 					(factory_cal[4] << 8) & 0xF00 | factory_cal[3],
 					(factory_cal[5] << 4) | (factory_cal[4] >> 4),
 					((factory_cal[4] << 8) & 0xF00 | factory_cal[3]) - ((factory_cal[7] << 8) & 0xF00 | factory_cal[6]),
@@ -3343,7 +3343,7 @@ namespace CppWinFormJoy {
 			}
 
 			if ((user_cal[0] | user_cal[1] << 8) == 0xA1B2) {
-				this->textBox_lstick_ucal->Text = String::Format(L"L Stick User:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+				this->textBox_lstick_ucal->Text = String::Format(L"L Stick User:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
 					(user_cal[6] << 8) & 0xF00 | user_cal[5],
 					(user_cal[7] << 4) | (user_cal[6] >> 4),
 					((user_cal[6] << 8) & 0xF00 | user_cal[5]) - ((user_cal[9] << 8) & 0xF00 | user_cal[8]),
