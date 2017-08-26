@@ -3330,7 +3330,7 @@ namespace CppWinFormJoy {
 				this->textBox_lstick_fcal->Text = L"L Stick Factory:\r\nNo calibration";
 			}
 			if (handle_ok != 1) {
-				this->textBox_rstick_fcal->Text = String::Format(L"R Stick Factory:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+				this->textBox_rstick_fcal->Text = String::Format(L"R Stick Factory:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
 					(factory_cal[10] << 8) & 0xF00 | factory_cal[9],
 					(factory_cal[11] << 4) | (factory_cal[10] >> 4),
 					((factory_cal[10] << 8) & 0xF00 | factory_cal[9]) - ((factory_cal[13] << 8) & 0xF00 | factory_cal[12]),
@@ -3355,7 +3355,7 @@ namespace CppWinFormJoy {
 				this->textBox_lstick_ucal->Text = L"L Stick User:\r\nNo calibration";
 			}
 			if ((user_cal[0xB] | user_cal[0xC] << 8) == 0xA1B2) {
-				this->textBox_rstick_ucal->Text = String::Format(L"R Stick User:\r\nCenter X,Y: ({1:X3}, {0:X3})\r\nX: [{3:X3} - {5:X3}] Y: [{2:X3} - {4:X3}]",
+				this->textBox_rstick_ucal->Text = String::Format(L"R Stick User:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
 					(user_cal[14] << 8) & 0xF00 | user_cal[13],
 					(user_cal[15] << 4) | (user_cal[14] >> 4),
 					((user_cal[14] << 8) & 0xF00 | user_cal[13]) - ((user_cal[17] << 8) & 0xF00 | user_cal[16]),

@@ -588,7 +588,7 @@ int button_test() {
 				for (int i = 3; i < 6; i++)
 					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
 
-				input_report_cmd += String::Format(L"\r\nL Stick: X: {0:X3}  Y: {1:X3}\r\nR Stick: X: {3:X3}  Y: {2:X3} ", 
+				input_report_cmd += String::Format(L"\r\nL Stick: X: {0:X3}  Y: {1:X3}\r\nR Stick: X: {2:X3}  Y: {3:X3} ", 
 					buf_reply[6] | (u16)((buf_reply[7] & 0xF) << 8),
 					(buf_reply[7] >> 4) | (buf_reply[8] << 4),
 					buf_reply[9] | (u16)((buf_reply[10] & 0xF) << 8),
