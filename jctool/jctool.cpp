@@ -530,7 +530,6 @@ int send_custom_command(u8* arg) {
 
 int button_test() {
 	int res;
-	int byte_seperator = 1;
 	int limit_output = 0;
 	String^ input_report_cmd;
 	String^ input_report_sys;
@@ -563,26 +562,24 @@ int button_test() {
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
 	while (enable_button_test) {
-		input_report_cmd = L"";
-		input_report_sys = L"";
 
 		memset(buf_cmd, 0, sizeof(buf_cmd));
 		//Sleep(64);
 		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
-		byte_seperator = 1;
 		if (res > 12) {
 			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
-				input_report_cmd += String::Format(L"Input: {0:X2}  ", buf_reply[0]);
 				if (((buf_reply[2] >> 1) & 0x3) == 3)
-					input_report_cmd += String::Format(L"Connection: BT\r\n");
+					input_report_cmd = String::Format(L"Conn: BT, ");
 				else if (((buf_reply[2] >> 1) & 0x3) == 0)
-					input_report_cmd += String::Format(L"Connection: USB\r\n");
+					input_report_cmd = String::Format(L"Conn: USB, ");
 				else
-					input_report_cmd += String::Format(L"Connection: Unknown\r\n");
-				input_report_cmd += String::Format(L"Battery: {0:X}/4  ", buf_reply[2] >> 5);
-				input_report_cmd += String::Format(L"Charging: {0:X}\r\n", (buf_reply[2] >> 4) & 0x1);
-				input_report_sys += String::Format(L"6-Axis Sensor:\r\n", buf_reply[0]);
+					input_report_cmd = String::Format(L"Conn: {0:X}?\r\n", (buf_reply[2] >> 1) & 0x3);
+				input_report_cmd += String::Format(L"Batt: {0:X}/4, ", buf_reply[2] >> 5);
+				if ((buf_reply[2] >> 4) & 0x1)
+					input_report_cmd += L"Chrg: Yes\r\n";
+				else
+					input_report_cmd += L"Chrg: No\r\n";
 				input_report_cmd += String::Format(L"\r\nButtons: ");
 
 				for (int i = 3; i < 6; i++)
@@ -594,22 +591,20 @@ int button_test() {
 					buf_reply[9] | (u16)((buf_reply[10] & 0xF) << 8),
 					(buf_reply[10] >> 4) | (buf_reply[11] << 4));
 
-				byte_seperator = 1;
 				int len = 49;
 				if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
 					len = 362;
 
-				for (int i = 13; i < len; i++) {
-					input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
-					if (byte_seperator == 4)
-						input_report_sys += L" ";
-					if (byte_seperator == 8)
-					{
-						byte_seperator = 0;
-						input_report_sys += L"\r\n";
-					}
-					byte_seperator++;
-				}
+				input_report_sys = String::Format(L"6-Axis Sensor:\r\nAccelerometer\r\n");
+				//The controller sends the sensor data 3 times with a little bit different values. Skip them
+				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"Y: {0:X4}\r\n", buf_reply[21] | (buf_reply[20] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[23] | (buf_reply[22] << 8) & 0xFF00);
+				
+				input_report_sys += String::Format(L"\r\nGyroscope\r\n");
+				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"Y: {0:X4}\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"Z: {0:X4}\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00);
 			}
 			if (limit_output == 1) {
 
@@ -645,8 +640,8 @@ int button_test() {
 	timming_byte++;
 	if (timming_byte > 0xF)
 		timming_byte = 0x0;
-	pkt->subcmd = 0x03;
-	pkt->spi_read.offset = 0x3F;
+	pkt->subcmd = 0x40;
+	pkt->spi_read.offset = 0x00;
 	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 

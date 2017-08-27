@@ -111,6 +111,7 @@ namespace CppWinFormJoy {
 			this->groupRst->Location = System::Drawing::Point(494, 36);
 			this->groupBox_chg_sn->Location = System::Drawing::Point(494, 36);
 			this->groupBoxVib->Location = System::Drawing::Point(494, 36);
+			this->groupBox_btn_test->Location = System::Drawing::Point(494, 36);
 			this->ClientSize = System::Drawing::Size(485, 449);
 			
 			vib_file_type = 0;
@@ -243,7 +244,7 @@ namespace CppWinFormJoy {
 	private: System::Windows::Forms::Button^  btnRestore_SN;
 	private: System::Windows::Forms::GroupBox^  groupBox_vib_info;
 	private: System::Windows::Forms::TextBox^  textBox_vib_loop_times;
-	private: System::Windows::Forms::GroupBox^  groupBox1;
+	private: System::Windows::Forms::GroupBox^  groupBox_btn_test;
 	public: System::Windows::Forms::TextBox^  textBox_btn_test_reply;
 	public: System::Windows::Forms::TextBox^  textBox_btn_test_subreply;
 	private: System::Windows::Forms::ToolStripMenuItem^  buttonTestToolStripMenuItem;
@@ -253,6 +254,12 @@ namespace CppWinFormJoy {
 	private: System::Windows::Forms::TextBox^  textBox_rstick_ucal;
 	private: System::Windows::Forms::TextBox^  textBox_lstick_fcal;
 	private: System::Windows::Forms::TextBox^  textBox_rstick_fcal;
+	private: System::Windows::Forms::TextBox^  textBox_device_parameters;
+	private: System::Windows::Forms::TextBox^  textBox_6axis_cal;
+	private: System::Windows::Forms::TextBox^  textBox_6axis_ucal;
+	private: System::Windows::Forms::TextBox^  textBox_device_parameters2;
+	private: System::Windows::Forms::GroupBox^  groupBox_dev_param;
+	private: System::Windows::Forms::Label^  label_btn_test_desc;
 	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 
@@ -362,13 +369,19 @@ namespace CppWinFormJoy {
 			this->btn_enable_expert_mode = (gcnew System::Windows::Forms::Button());
 			this->textBox_btn_test_reply = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_btn_test_subreply = (gcnew System::Windows::Forms::TextBox());
-			this->groupBox1 = (gcnew System::Windows::Forms::GroupBox());
+			this->groupBox_btn_test = (gcnew System::Windows::Forms::GroupBox());
+			this->label_btn_test_desc = (gcnew System::Windows::Forms::Label());
 			this->btn_run_btn_test = (gcnew System::Windows::Forms::Button());
 			this->groupBox2 = (gcnew System::Windows::Forms::GroupBox());
+			this->textBox_6axis_ucal = (gcnew System::Windows::Forms::TextBox());
+			this->textBox_6axis_cal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_lstick_fcal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_rstick_fcal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_rstick_ucal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_lstick_ucal = (gcnew System::Windows::Forms::TextBox());
+			this->textBox_device_parameters = (gcnew System::Windows::Forms::TextBox());
+			this->textBox_device_parameters2 = (gcnew System::Windows::Forms::TextBox());
+			this->groupBox_dev_param = (gcnew System::Windows::Forms::GroupBox());
 			this->groupBoxColor->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxBattery))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
@@ -387,8 +400,9 @@ namespace CppWinFormJoy {
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_amp))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_freq))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_freq))->BeginInit();
-			this->groupBox1->SuspendLayout();
+			this->groupBox_btn_test->SuspendLayout();
 			this->groupBox2->SuspendLayout();
+			this->groupBox_dev_param->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// btnWriteBody
@@ -765,7 +779,7 @@ namespace CppWinFormJoy {
 			});
 			this->menuStrip1->Location = System::Drawing::Point(0, 0);
 			this->menuStrip1->Name = L"menuStrip1";
-			this->menuStrip1->Size = System::Drawing::Size(1473, 25);
+			this->menuStrip1->Size = System::Drawing::Size(1662, 25);
 			this->menuStrip1->TabIndex = 0;
 			this->menuStrip1->Text = L"menuStrip1";
 			// 
@@ -1161,7 +1175,7 @@ namespace CppWinFormJoy {
 			this->groupRst->Controls->Add(this->btnLoadBackup);
 			this->groupRst->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupRst->Location = System::Drawing::Point(736, 38);
+			this->groupRst->Location = System::Drawing::Point(736, 36);
 			this->groupRst->Name = L"groupRst";
 			this->groupRst->Size = System::Drawing::Size(220, 399);
 			this->groupRst->TabIndex = 24;
@@ -1329,7 +1343,7 @@ namespace CppWinFormJoy {
 			this->groupBox_chg_sn->Controls->Add(this->textBox_chg_sn);
 			this->groupBox_chg_sn->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox_chg_sn->Location = System::Drawing::Point(979, 38);
+			this->groupBox_chg_sn->Location = System::Drawing::Point(964, 36);
 			this->groupBox_chg_sn->Name = L"groupBox_chg_sn";
 			this->groupBox_chg_sn->Size = System::Drawing::Size(220, 399);
 			this->groupBox_chg_sn->TabIndex = 25;
@@ -1415,7 +1429,7 @@ namespace CppWinFormJoy {
 			this->groupBoxVib->Controls->Add(this->btnLoadVib);
 			this->groupBoxVib->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBoxVib->Location = System::Drawing::Point(1228, 38);
+			this->groupBoxVib->Location = System::Drawing::Point(1192, 35);
 			this->groupBoxVib->Name = L"groupBoxVib";
 			this->groupBoxVib->Size = System::Drawing::Size(220, 399);
 			this->groupBoxVib->TabIndex = 26;
@@ -1681,15 +1695,15 @@ namespace CppWinFormJoy {
 				System::Drawing::GraphicsUnit::Point, static_cast<System::Byte>(161)));
 			this->textBox_btn_test_reply->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-			this->textBox_btn_test_reply->Location = System::Drawing::Point(6, 24);
+			this->textBox_btn_test_reply->Location = System::Drawing::Point(8, 24);
 			this->textBox_btn_test_reply->Multiline = true;
 			this->textBox_btn_test_reply->Name = L"textBox_btn_test_reply";
 			this->textBox_btn_test_reply->ReadOnly = true;
-			this->textBox_btn_test_reply->Size = System::Drawing::Size(196, 78);
+			this->textBox_btn_test_reply->Size = System::Drawing::Size(217, 78);
 			this->textBox_btn_test_reply->TabIndex = 35;
 			this->textBox_btn_test_reply->TabStop = false;
-			this->textBox_btn_test_reply->Text = L"Input: --  Connection: ---\r\nBattery: -/4  Charging: -\r\n\r\nButtons: -- -- -- \r\nL St"
-				L"ick: X: ---  Y: ---\r\nR Stick: X: ---  Y: ---";
+			this->textBox_btn_test_reply->Text = L"Conn:   , Batt:  /4, Chrg:   \r\n\r\nButtons:          \r\nL Stick: X:      Y:    \r\nR S"
+				L"tick: X:      Y:    ";
 			// 
 			// textBox_btn_test_subreply
 			// 
@@ -1699,29 +1713,41 @@ namespace CppWinFormJoy {
 			this->textBox_btn_test_subreply->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
 			this->textBox_btn_test_subreply->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->textBox_btn_test_subreply->Location = System::Drawing::Point(6, 108);
+			this->textBox_btn_test_subreply->Location = System::Drawing::Point(8, 103);
 			this->textBox_btn_test_subreply->Multiline = true;
 			this->textBox_btn_test_subreply->Name = L"textBox_btn_test_subreply";
 			this->textBox_btn_test_subreply->ReadOnly = true;
-			this->textBox_btn_test_subreply->Size = System::Drawing::Size(196, 69);
+			this->textBox_btn_test_subreply->Size = System::Drawing::Size(212, 120);
 			this->textBox_btn_test_subreply->TabIndex = 35;
 			this->textBox_btn_test_subreply->TabStop = false;
-			this->textBox_btn_test_subreply->Text = L"6-Axis Sensor:\r\n00 00 00 00  00 00 00 00 \r\n00 00 00 00  00 00 00 00 \r\n00 00 00 00"
-				L"  00 00 00 00 \r\n00 00 00 00  00 00 00 00 \r\n00 00 00 00 ";
+			this->textBox_btn_test_subreply->Text = L"6-Axis Sensor:\r\nAccelerometer\r\nX: \r\nY: \r\nX: \r\n\r\nGyroscope\r\nX: \r\nY: \r\nZ: ";
 			// 
-			// groupBox1
+			// groupBox_btn_test
 			// 
-			this->groupBox1->Controls->Add(this->btn_run_btn_test);
-			this->groupBox1->Controls->Add(this->textBox_btn_test_reply);
-			this->groupBox1->Controls->Add(this->textBox_btn_test_subreply);
-			this->groupBox1->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+			this->groupBox_btn_test->Controls->Add(this->label_btn_test_desc);
+			this->groupBox_btn_test->Controls->Add(this->btn_run_btn_test);
+			this->groupBox_btn_test->Controls->Add(this->textBox_btn_test_reply);
+			this->groupBox_btn_test->Controls->Add(this->textBox_btn_test_subreply);
+			this->groupBox_btn_test->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox1->Location = System::Drawing::Point(14, 444);
-			this->groupBox1->Name = L"groupBox1";
-			this->groupBox1->Size = System::Drawing::Size(210, 214);
-			this->groupBox1->TabIndex = 36;
-			this->groupBox1->TabStop = false;
-			this->groupBox1->Text = L"Button test";
+			this->groupBox_btn_test->Location = System::Drawing::Point(1418, 36);
+			this->groupBox_btn_test->Name = L"groupBox_btn_test";
+			this->groupBox_btn_test->Size = System::Drawing::Size(232, 399);
+			this->groupBox_btn_test->TabIndex = 36;
+			this->groupBox_btn_test->TabStop = false;
+			this->groupBox_btn_test->Text = L"Button test";
+			this->groupBox_btn_test->Visible = false;
+			// 
+			// label_btn_test_desc
+			// 
+			this->label_btn_test_desc->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->label_btn_test_desc->Location = System::Drawing::Point(5, 238);
+			this->label_btn_test_desc->Name = L"label_btn_test_desc";
+			this->label_btn_test_desc->Size = System::Drawing::Size(213, 93);
+			this->label_btn_test_desc->TabIndex = 37;
+			this->label_btn_test_desc->Text = L"The Analog Stick values are uint16.\r\nThe 6-Axis Sensor values are int16.\r\n\r\nSame "
+				L"goes with their calibration and most of factory parameters.";
 			// 
 			// btn_run_btn_test
 			// 
@@ -1730,7 +1756,7 @@ namespace CppWinFormJoy {
 			this->btn_run_btn_test->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
 			this->btn_run_btn_test->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-			this->btn_run_btn_test->Location = System::Drawing::Point(65, 181);
+			this->btn_run_btn_test->Location = System::Drawing::Point(77, 349);
 			this->btn_run_btn_test->Name = L"btn_run_btn_test";
 			this->btn_run_btn_test->Size = System::Drawing::Size(75, 27);
 			this->btn_run_btn_test->TabIndex = 36;
@@ -1740,18 +1766,54 @@ namespace CppWinFormJoy {
 			// 
 			// groupBox2
 			// 
+			this->groupBox2->Controls->Add(this->textBox_6axis_ucal);
+			this->groupBox2->Controls->Add(this->textBox_6axis_cal);
 			this->groupBox2->Controls->Add(this->textBox_lstick_fcal);
 			this->groupBox2->Controls->Add(this->textBox_rstick_fcal);
 			this->groupBox2->Controls->Add(this->textBox_rstick_ucal);
 			this->groupBox2->Controls->Add(this->textBox_lstick_ucal);
 			this->groupBox2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox2->Location = System::Drawing::Point(230, 444);
+			this->groupBox2->Location = System::Drawing::Point(14, 445);
 			this->groupBox2->Name = L"groupBox2";
-			this->groupBox2->Size = System::Drawing::Size(240, 214);
+			this->groupBox2->Size = System::Drawing::Size(366, 212);
 			this->groupBox2->TabIndex = 37;
 			this->groupBox2->TabStop = false;
 			this->groupBox2->Text = L"Calibration";
+			// 
+			// textBox_6axis_ucal
+			// 
+			this->textBox_6axis_ucal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBox_6axis_ucal->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBox_6axis_ucal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
+			this->textBox_6axis_ucal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->textBox_6axis_ucal->Location = System::Drawing::Point(248, 123);
+			this->textBox_6axis_ucal->Multiline = true;
+			this->textBox_6axis_ucal->Name = L"textBox_6axis_ucal";
+			this->textBox_6axis_ucal->ReadOnly = true;
+			this->textBox_6axis_ucal->Size = System::Drawing::Size(109, 65);
+			this->textBox_6axis_ucal->TabIndex = 43;
+			this->textBox_6axis_ucal->TabStop = false;
+			this->textBox_6axis_ucal->Text = L"6-Axis User:";
+			// 
+			// textBox_6axis_cal
+			// 
+			this->textBox_6axis_cal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBox_6axis_cal->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBox_6axis_cal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
+			this->textBox_6axis_cal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->textBox_6axis_cal->Location = System::Drawing::Point(248, 22);
+			this->textBox_6axis_cal->Multiline = true;
+			this->textBox_6axis_cal->Name = L"textBox_6axis_cal";
+			this->textBox_6axis_cal->ReadOnly = true;
+			this->textBox_6axis_cal->Size = System::Drawing::Size(109, 65);
+			this->textBox_6axis_cal->TabIndex = 42;
+			this->textBox_6axis_cal->TabStop = false;
+			this->textBox_6axis_cal->Text = L"6-Axis Factory:";
 			// 
 			// textBox_lstick_fcal
 			// 
@@ -1765,10 +1827,10 @@ namespace CppWinFormJoy {
 			this->textBox_lstick_fcal->Multiline = true;
 			this->textBox_lstick_fcal->Name = L"textBox_lstick_fcal";
 			this->textBox_lstick_fcal->ReadOnly = true;
-			this->textBox_lstick_fcal->Size = System::Drawing::Size(222, 39);
+			this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 39);
 			this->textBox_lstick_fcal->TabIndex = 40;
 			this->textBox_lstick_fcal->TabStop = false;
-			this->textBox_lstick_fcal->Text = L"L Stick Factory:\r\n";
+			this->textBox_lstick_fcal->Text = L"L Stick Factory:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
 			// 
 			// textBox_rstick_fcal
 			// 
@@ -1782,10 +1844,10 @@ namespace CppWinFormJoy {
 			this->textBox_rstick_fcal->Multiline = true;
 			this->textBox_rstick_fcal->Name = L"textBox_rstick_fcal";
 			this->textBox_rstick_fcal->ReadOnly = true;
-			this->textBox_rstick_fcal->Size = System::Drawing::Size(222, 39);
+			this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 39);
 			this->textBox_rstick_fcal->TabIndex = 39;
 			this->textBox_rstick_fcal->TabStop = false;
-			this->textBox_rstick_fcal->Text = L"R Stick Factory:\r\n";
+			this->textBox_rstick_fcal->Text = L"R Stick Factory:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
 			// 
 			// textBox_rstick_ucal
 			// 
@@ -1799,10 +1861,10 @@ namespace CppWinFormJoy {
 			this->textBox_rstick_ucal->Multiline = true;
 			this->textBox_rstick_ucal->Name = L"textBox_rstick_ucal";
 			this->textBox_rstick_ucal->ReadOnly = true;
-			this->textBox_rstick_ucal->Size = System::Drawing::Size(222, 39);
+			this->textBox_rstick_ucal->Size = System::Drawing::Size(207, 39);
 			this->textBox_rstick_ucal->TabIndex = 38;
 			this->textBox_rstick_ucal->TabStop = false;
-			this->textBox_rstick_ucal->Text = L"R Stick User:\r\n";
+			this->textBox_rstick_ucal->Text = L"R Stick User:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
 			// 
 			// textBox_lstick_ucal
 			// 
@@ -1816,10 +1878,57 @@ namespace CppWinFormJoy {
 			this->textBox_lstick_ucal->Multiline = true;
 			this->textBox_lstick_ucal->Name = L"textBox_lstick_ucal";
 			this->textBox_lstick_ucal->ReadOnly = true;
-			this->textBox_lstick_ucal->Size = System::Drawing::Size(222, 39);
+			this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 39);
 			this->textBox_lstick_ucal->TabIndex = 37;
 			this->textBox_lstick_ucal->TabStop = false;
-			this->textBox_lstick_ucal->Text = L"L Stick User:";
+			this->textBox_lstick_ucal->Text = L"L Stick User:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
+			// 
+			// textBox_device_parameters
+			// 
+			this->textBox_device_parameters->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBox_device_parameters->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBox_device_parameters->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
+			this->textBox_device_parameters->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->textBox_device_parameters->Location = System::Drawing::Point(9, 22);
+			this->textBox_device_parameters->Multiline = true;
+			this->textBox_device_parameters->Name = L"textBox_device_parameters";
+			this->textBox_device_parameters->ReadOnly = true;
+			this->textBox_device_parameters->Size = System::Drawing::Size(128, 158);
+			this->textBox_device_parameters->TabIndex = 41;
+			this->textBox_device_parameters->TabStop = false;
+			this->textBox_device_parameters->Text = L"6-Axis Horizontal Offsets:\r\n\r\n\r\n\r\nStick Parameters:";
+			// 
+			// textBox_device_parameters2
+			// 
+			this->textBox_device_parameters2->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBox_device_parameters2->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBox_device_parameters2->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
+			this->textBox_device_parameters2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->textBox_device_parameters2->Location = System::Drawing::Point(172, 78);
+			this->textBox_device_parameters2->Multiline = true;
+			this->textBox_device_parameters2->Name = L"textBox_device_parameters2";
+			this->textBox_device_parameters2->ReadOnly = true;
+			this->textBox_device_parameters2->Size = System::Drawing::Size(137, 104);
+			this->textBox_device_parameters2->TabIndex = 42;
+			this->textBox_device_parameters2->TabStop = false;
+			this->textBox_device_parameters2->Text = L"Stick Parameters 2:\r\n";
+			// 
+			// groupBox_dev_param
+			// 
+			this->groupBox_dev_param->Controls->Add(this->textBox_device_parameters);
+			this->groupBox_dev_param->Controls->Add(this->textBox_device_parameters2);
+			this->groupBox_dev_param->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
+				static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->groupBox_dev_param->Location = System::Drawing::Point(393, 445);
+			this->groupBox_dev_param->Name = L"groupBox_dev_param";
+			this->groupBox_dev_param->Size = System::Drawing::Size(321, 212);
+			this->groupBox_dev_param->TabIndex = 43;
+			this->groupBox_dev_param->TabStop = false;
+			this->groupBox_dev_param->Text = L"6-Axis and Stick Device Parameters";
 			// 
 			// FormJoy
 			// 
@@ -1827,9 +1936,10 @@ namespace CppWinFormJoy {
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->ClientSize = System::Drawing::Size(1473, 671);
+			this->ClientSize = System::Drawing::Size(1662, 688);
+			this->Controls->Add(this->groupBox_dev_param);
 			this->Controls->Add(this->groupBox2);
-			this->Controls->Add(this->groupBox1);
+			this->Controls->Add(this->groupBox_btn_test);
 			this->Controls->Add(this->btn_enable_expert_mode);
 			this->Controls->Add(this->groupBoxVib);
 			this->Controls->Add(this->groupBox_chg_sn);
@@ -1883,10 +1993,12 @@ namespace CppWinFormJoy {
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_amp))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_freq))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_freq))->EndInit();
-			this->groupBox1->ResumeLayout(false);
-			this->groupBox1->PerformLayout();
+			this->groupBox_btn_test->ResumeLayout(false);
+			this->groupBox_btn_test->PerformLayout();
 			this->groupBox2->ResumeLayout(false);
 			this->groupBox2->PerformLayout();
+			this->groupBox_dev_param->ResumeLayout(false);
+			this->groupBox_dev_param->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -2308,7 +2420,8 @@ namespace CppWinFormJoy {
 			reset_window_option();
 
 
-			this->ClientSize = System::Drawing::Size(485, 670);
+			this->ClientSize = System::Drawing::Size(738, 670);
+			this->groupBox_btn_test->Visible = true;
 			enable_button_test = false;
 			this->btn_run_btn_test->Text = L"Turn on";
 			option_is_on = 5;
@@ -2330,6 +2443,7 @@ namespace CppWinFormJoy {
 		this->textBoxDbg_reply->Visible = false;
 		this->textBoxDbg_reply_cmd->Visible = false;
 		this->groupBoxVib->Visible = false;
+		this->groupBox_btn_test->Visible = false;
 	}
 
 	private: System::Void btnDbg_send_cmd_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -3310,62 +3424,123 @@ namespace CppWinFormJoy {
 		}
 
 		if (!enable_button_test) {
-			unsigned char factory_cal[0x12];
-			unsigned char user_cal[0x16];
-			memset(factory_cal, 0, 0x12);
-			memset(user_cal, 0, 0x16);
-			get_spi_data(0x603D, 0x12, factory_cal);
-			get_spi_data(0x8010, 0x16, user_cal);
+			unsigned char factory_stick_cal[0x12];
+			unsigned char user_stick_cal[0x16];
+			unsigned char sensor_model[0x6];
+			unsigned char stick_model[0x24];
+			unsigned char factory_sensor_cal[0x18];
+			unsigned char user_sensor_cal[0x1A];
+			memset(factory_stick_cal, 0, 0x12);
+			memset(user_stick_cal, 0, 0x16);
+			memset(sensor_model, 0, 0x6);
+			memset(stick_model, 0, 0x12);
+			memset(factory_sensor_cal, 0, 0x18);
+			memset(user_sensor_cal, 0, 0x1A);
+			get_spi_data(0x6020, 0x18, factory_sensor_cal);
+			get_spi_data(0x603D, 0x12, factory_stick_cal);
+			get_spi_data(0x6080, 0x6, sensor_model);
+			get_spi_data(0x6086, 0x12, stick_model);
+			get_spi_data(0x6086, 0x12, &stick_model[0x12]);
+			get_spi_data(0x8010, 0x16, user_stick_cal);
+			get_spi_data(0x8026, 0x1A, user_sensor_cal);
 			
+			//Analog Stick device parameters
+			this->textBox_device_parameters->Text = String::Format(L"6-Axis Horizontal Offsets:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2}\r\n{6:X3}",
+				sensor_model[0] | sensor_model[1] << 8,
+				sensor_model[2] | sensor_model[3] << 8,
+				sensor_model[4] | sensor_model[5] << 8,
+				(stick_model[1] << 8) & 0xF00 | stick_model[0], (stick_model[2] << 4) | (stick_model[1] >> 4),
+				(stick_model[4] << 8) & 0xF00 | stick_model[3],
+				((stick_model[5] << 4) | (stick_model[4] >> 4)));
+
+			for (int i = 0; i < 10; i = i + 3) {
+				this->textBox_device_parameters->Text += String::Format(L"\r\n{0:X3} {1:X3}",
+					(stick_model[7 + i] << 8) & 0xF00 | stick_model[6 + i],
+					(stick_model[8 + i] << 4) | (stick_model[7 + i] >> 4));
+			}
+
+			this->textBox_device_parameters2->Text = String::Format(L"Stick Parameters 2:\r\n{0:X3} {1:X3}\r\n{2:X2}\r\n{3:X3}",
+				(stick_model[19] << 8) & 0xF00 | stick_model[18], (stick_model[20] << 4) | (stick_model[19] >> 4),
+				(stick_model[22] << 8) & 0xF00 | stick_model[21],
+				((stick_model[23] << 4) | (stick_model[22] >> 4)));
+
+			for (int i = 0; i < 10; i = i + 3) {
+				this->textBox_device_parameters2->Text += String::Format(L"\r\n{0:X3} {1:X3}",
+					(stick_model[25 + i] << 8) & 0xF00 | stick_model[24 + i],
+					(stick_model[26 + i] << 4) | (stick_model[25 + i] >> 4));
+			}
+
+			//Calibration
 			if (handle_ok != 2) {
 				this->textBox_lstick_fcal->Text = String::Format(L"L Stick Factory:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
-					(factory_cal[4] << 8) & 0xF00 | factory_cal[3],
-					(factory_cal[5] << 4) | (factory_cal[4] >> 4),
-					((factory_cal[4] << 8) & 0xF00 | factory_cal[3]) - ((factory_cal[7] << 8) & 0xF00 | factory_cal[6]),
-					((factory_cal[5] << 4) | (factory_cal[4] >> 4)) - ((factory_cal[8] << 4) | (factory_cal[7] >> 4)),
-					((factory_cal[4] << 8) & 0xF00 | factory_cal[3]) + ((factory_cal[1] << 8) & 0xF00 | factory_cal[0]),
-					((factory_cal[5] << 4) | (factory_cal[4] >> 4)) + ((factory_cal[2] << 4) | (factory_cal[2] >> 4)));
+					(factory_stick_cal[4] << 8) & 0xF00 | factory_stick_cal[3],
+					(factory_stick_cal[5] << 4) | (factory_stick_cal[4] >> 4),
+					((factory_stick_cal[4] << 8) & 0xF00 | factory_stick_cal[3]) - ((factory_stick_cal[7] << 8) & 0xF00 | factory_stick_cal[6]),
+					((factory_stick_cal[5] << 4) | (factory_stick_cal[4] >> 4)) - ((factory_stick_cal[8] << 4) | (factory_stick_cal[7] >> 4)),
+					((factory_stick_cal[4] << 8) & 0xF00 | factory_stick_cal[3]) + ((factory_stick_cal[1] << 8) & 0xF00 | factory_stick_cal[0]),
+					((factory_stick_cal[5] << 4) | (factory_stick_cal[4] >> 4)) + ((factory_stick_cal[2] << 4) | (factory_stick_cal[2] >> 4)));
 			}
 			else {
 				this->textBox_lstick_fcal->Text = L"L Stick Factory:\r\nNo calibration";
 			}
 			if (handle_ok != 1) {
 				this->textBox_rstick_fcal->Text = String::Format(L"R Stick Factory:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
-					(factory_cal[10] << 8) & 0xF00 | factory_cal[9],
-					(factory_cal[11] << 4) | (factory_cal[10] >> 4),
-					((factory_cal[10] << 8) & 0xF00 | factory_cal[9]) - ((factory_cal[13] << 8) & 0xF00 | factory_cal[12]),
-					((factory_cal[11] << 4) | (factory_cal[10] >> 4)) - ((factory_cal[14] << 4) | (factory_cal[13] >> 4)),
-					((factory_cal[10] << 8) & 0xF00 | factory_cal[9]) + ((factory_cal[16] << 8) & 0xF00 | factory_cal[15]),
-					((factory_cal[11] << 4) | (factory_cal[10] >> 4)) + ((factory_cal[17] << 4) | (factory_cal[16] >> 4)));
+					(factory_stick_cal[10] << 8) & 0xF00 | factory_stick_cal[9],
+					(factory_stick_cal[11] << 4) | (factory_stick_cal[10] >> 4),
+					((factory_stick_cal[10] << 8) & 0xF00 | factory_stick_cal[9]) - ((factory_stick_cal[13] << 8) & 0xF00 | factory_stick_cal[12]),
+					((factory_stick_cal[11] << 4) | (factory_stick_cal[10] >> 4)) - ((factory_stick_cal[14] << 4) | (factory_stick_cal[13] >> 4)),
+					((factory_stick_cal[10] << 8) & 0xF00 | factory_stick_cal[9]) + ((factory_stick_cal[16] << 8) & 0xF00 | factory_stick_cal[15]),
+					((factory_stick_cal[11] << 4) | (factory_stick_cal[10] >> 4)) + ((factory_stick_cal[17] << 4) | (factory_stick_cal[16] >> 4)));
 			}
 			else {
 				this->textBox_rstick_fcal->Text = L"R Stick Factory:\r\nNo calibration";
 			}
 
-			if ((user_cal[0] | user_cal[1] << 8) == 0xA1B2) {
+			if ((user_stick_cal[0] | user_stick_cal[1] << 8) == 0xA1B2) {
 				this->textBox_lstick_ucal->Text = String::Format(L"L Stick User:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
-					(user_cal[6] << 8) & 0xF00 | user_cal[5],
-					(user_cal[7] << 4) | (user_cal[6] >> 4),
-					((user_cal[6] << 8) & 0xF00 | user_cal[5]) - ((user_cal[9] << 8) & 0xF00 | user_cal[8]),
-					((user_cal[7] << 4) | (user_cal[6] >> 4)) - ((user_cal[10] << 4) | (user_cal[9] >> 4)),
-					((user_cal[6] << 8) & 0xF00 | user_cal[5]) + ((user_cal[3] << 8) & 0xF00 | user_cal[2]),
-					((user_cal[7] << 4) | (user_cal[6] >> 4)) + ((user_cal[4] << 4) | (user_cal[3] >> 4)));
+					(user_stick_cal[6] << 8) & 0xF00 | user_stick_cal[5],
+					(user_stick_cal[7] << 4) | (user_stick_cal[6] >> 4),
+					((user_stick_cal[6] << 8) & 0xF00 | user_stick_cal[5]) - ((user_stick_cal[9] << 8) & 0xF00 | user_stick_cal[8]),
+					((user_stick_cal[7] << 4) | (user_stick_cal[6] >> 4)) - ((user_stick_cal[10] << 4) | (user_stick_cal[9] >> 4)),
+					((user_stick_cal[6] << 8) & 0xF00 | user_stick_cal[5]) + ((user_stick_cal[3] << 8) & 0xF00 | user_stick_cal[2]),
+					((user_stick_cal[7] << 4) | (user_stick_cal[6] >> 4)) + ((user_stick_cal[4] << 4) | (user_stick_cal[3] >> 4)));
 			}
 			else {
 				this->textBox_lstick_ucal->Text = L"L Stick User:\r\nNo calibration";
 			}
-			if ((user_cal[0xB] | user_cal[0xC] << 8) == 0xA1B2) {
+			if ((user_stick_cal[0xB] | user_stick_cal[0xC] << 8) == 0xA1B2) {
 				this->textBox_rstick_ucal->Text = String::Format(L"R Stick User:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
-					(user_cal[14] << 8) & 0xF00 | user_cal[13],
-					(user_cal[15] << 4) | (user_cal[14] >> 4),
-					((user_cal[14] << 8) & 0xF00 | user_cal[13]) - ((user_cal[17] << 8) & 0xF00 | user_cal[16]),
-					((user_cal[15] << 4) | (user_cal[14] >> 4)) - ((user_cal[18] << 4) | (user_cal[17] >> 4)),
-					((user_cal[14] << 8) & 0xF00 | user_cal[13]) + ((user_cal[20] << 8) & 0xF00 | user_cal[19]),
-					((user_cal[15] << 4) | (user_cal[14] >> 4)) + ((user_cal[21] << 4) | (user_cal[20] >> 4)));
+					(user_stick_cal[14] << 8) & 0xF00 | user_stick_cal[13],
+					(user_stick_cal[15] << 4) | (user_stick_cal[14] >> 4),
+					((user_stick_cal[14] << 8) & 0xF00 | user_stick_cal[13]) - ((user_stick_cal[17] << 8) & 0xF00 | user_stick_cal[16]),
+					((user_stick_cal[15] << 4) | (user_stick_cal[14] >> 4)) - ((user_stick_cal[18] << 4) | (user_stick_cal[17] >> 4)),
+					((user_stick_cal[14] << 8) & 0xF00 | user_stick_cal[13]) + ((user_stick_cal[20] << 8) & 0xF00 | user_stick_cal[19]),
+					((user_stick_cal[15] << 4) | (user_stick_cal[14] >> 4)) + ((user_stick_cal[21] << 4) | (user_stick_cal[20] >> 4)));
 			}
 			else {
 				this->textBox_rstick_ucal->Text = L"R Stick User:\r\nNo calibration";
 			}
+
+			this->textBox_6axis_cal->Text = L"6-Axis Factory:\r\n";
+			for (int i = 0; i < 0x18; i = i + 6) {
+				this->textBox_6axis_cal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n",
+					factory_sensor_cal[i + 0] | factory_sensor_cal[i + 1] << 8,
+					factory_sensor_cal[i + 2] | factory_sensor_cal[i + 3] << 8,
+					factory_sensor_cal[i + 4] | factory_sensor_cal[i + 5] << 8);
+			}
+			if ((user_sensor_cal[0x0] | user_sensor_cal[0x1] << 8) == 0xA1B2) {
+				this->textBox_6axis_ucal->Text = L"6-Axis User:\r\n";
+				for (int i = 0; i < 0x18; i = i + 6) {
+					this->textBox_6axis_ucal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n",
+						user_sensor_cal[i + 2] | user_sensor_cal[i + 3] << 8,
+						user_sensor_cal[i + 4] | user_sensor_cal[i + 5] << 8,
+						user_sensor_cal[i + 6] | user_sensor_cal[i + 7] << 8);
+				}
+			}
+			else {
+				this->textBox_6axis_ucal->Text = L"\r\n\r\nUser:\r\nNo calibration";
+			}
+
 
 			this->btn_run_btn_test->Text = L"Turn off";
 			enable_button_test = true;
