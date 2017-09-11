@@ -598,8 +598,8 @@ int button_test() {
 				input_report_sys = String::Format(L"6-Axis Sensor:\r\nAccelerometer\r\n");
 				//The controller sends the sensor data 3 times with a little bit different values. Skip them
 				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00);
-				input_report_sys += String::Format(L"Y: {0:X4}\r\n", buf_reply[21] | (buf_reply[20] << 8) & 0xFF00);
-				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[23] | (buf_reply[22] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"Y: {0:X4}\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00);
 				
 				input_report_sys += String::Format(L"\r\nGyroscope\r\n");
 				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00);
