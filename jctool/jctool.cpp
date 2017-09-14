@@ -39,6 +39,13 @@ int timming_byte = 0x0;
 
 #pragma pack(pop)
 
+float sensor_uint16_to_int16(uint16_t a) {
+	int16_t b;
+	char* aPointer = (char*)&a, *bPointer = (char*)&b;
+	memcpy(bPointer, aPointer, sizeof(a));
+	return b;
+}
+
 int set_led_busy() {
 	int res;
 	u8 buf[0x100];
@@ -568,7 +575,7 @@ int button_test() {
 		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
 		if (res > 12) {
-			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
+			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x31 || buf_reply[0] == 0x32 || buf_reply[0] == 0x33) {
 				if (((buf_reply[2] >> 1) & 0x3) == 3)
 					input_report_cmd = String::Format(L"Conn: BT, ");
 				else if (((buf_reply[2] >> 1) & 0x3) == 0)
@@ -580,6 +587,10 @@ int button_test() {
 					input_report_cmd += L"Chrg: Yes\r\n";
 				else
 					input_report_cmd += L"Chrg: No\r\n";
+
+				input_report_cmd += String::Format(L"\r\nVib decision: ");
+				input_report_cmd += String::Format(L"{0:X}, {1:X}", (buf_reply[12] >> 7) & 1, (buf_reply[12] >> 4) & 7);
+
 				input_report_cmd += String::Format(L"\r\nButtons: ");
 
 				for (int i = 3; i < 6; i++)
@@ -597,15 +608,28 @@ int button_test() {
 
 				input_report_sys = String::Format(L"6-Axis Sensor:\r\nAccelerometer\r\n");
 				//The controller sends the sensor data 3 times with a little bit different values. Skip them
-				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00);
-				input_report_sys += String::Format(L"Y: {0:X4}\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00);
-				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"X: {0:X4} ({1:F2}G)\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
+					(float)sensor_uint16_to_int16(buf_reply[13] | (buf_reply[14] << 8) & 0xFF00) * 0.00025f);
+				input_report_sys += String::Format(L"Y: {0:X4} ({1:F2}G)\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
+					(float)sensor_uint16_to_int16(buf_reply[15] | (buf_reply[16] << 8) & 0xFF00) * 0.00025f);
+				input_report_sys += String::Format(L"Z: {0:X4} ({1:F2}G)\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
+					(float)sensor_uint16_to_int16(buf_reply[17] | (buf_reply[18] << 8) & 0xFF00) * 0.00025f);
 				
 				input_report_sys += String::Format(L"\r\nGyroscope\r\n");
-				input_report_sys += String::Format(L"X: {0:X4}\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00);
-				input_report_sys += String::Format(L"Y: {0:X4}\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00);
-				input_report_sys += String::Format(L"Z: {0:X4}\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00);
+				input_report_sys += String::Format(L"X: {0:X4} ({1:F2}dps)\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00, 
+					(float)sensor_uint16_to_int16(buf_reply[19] | (buf_reply[20] << 8) & 0xFF00) * 0.000204f);
+				input_report_sys += String::Format(L"Y: {0:X4} ({1:F2}dps)\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00, 
+					(float)sensor_uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00)* 0.000204f);
+				input_report_sys += String::Format(L"Z: {0:X4} ({1:F2}dps)\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00, 
+					(float)sensor_uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00)* 0.000204f);
+
 			}
+			else if (buf_reply[0] == 0x3F) {
+				input_report_cmd = L"";
+				for (int i = 0; i < 17; i++)
+					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
+			}
+
 			if (limit_output == 1) {
 
 				FormJoy::myform1->textBox_btn_test_reply->Text = input_report_cmd;

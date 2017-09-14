@@ -1776,7 +1776,7 @@ namespace CppWinFormJoy {
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
 			this->groupBox2->Location = System::Drawing::Point(14, 445);
 			this->groupBox2->Name = L"groupBox2";
-			this->groupBox2->Size = System::Drawing::Size(366, 212);
+			this->groupBox2->Size = System::Drawing::Size(398, 212);
 			this->groupBox2->TabIndex = 37;
 			this->groupBox2->TabStop = false;
 			this->groupBox2->Text = L"Calibration";
@@ -1789,14 +1789,14 @@ namespace CppWinFormJoy {
 			this->textBox_6axis_ucal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
 			this->textBox_6axis_ucal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-			this->textBox_6axis_ucal->Location = System::Drawing::Point(248, 123);
+			this->textBox_6axis_ucal->Location = System::Drawing::Point(238, 119);
 			this->textBox_6axis_ucal->Multiline = true;
 			this->textBox_6axis_ucal->Name = L"textBox_6axis_ucal";
 			this->textBox_6axis_ucal->ReadOnly = true;
-			this->textBox_6axis_ucal->Size = System::Drawing::Size(109, 65);
+			this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 88);
 			this->textBox_6axis_ucal->TabIndex = 43;
 			this->textBox_6axis_ucal->TabStop = false;
-			this->textBox_6axis_ucal->Text = L"6-Axis User:";
+			this->textBox_6axis_ucal->Text = L"6-Axis User (XYZ):\r\nAccelerometer\r\n\r\n\r\n\r\nGyroscope:";
 			// 
 			// textBox_6axis_cal
 			// 
@@ -1806,14 +1806,14 @@ namespace CppWinFormJoy {
 			this->textBox_6axis_cal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
 			this->textBox_6axis_cal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->textBox_6axis_cal->Location = System::Drawing::Point(248, 22);
+			this->textBox_6axis_cal->Location = System::Drawing::Point(238, 22);
 			this->textBox_6axis_cal->Multiline = true;
 			this->textBox_6axis_cal->Name = L"textBox_6axis_cal";
 			this->textBox_6axis_cal->ReadOnly = true;
-			this->textBox_6axis_cal->Size = System::Drawing::Size(109, 65);
+			this->textBox_6axis_cal->Size = System::Drawing::Size(156, 95);
 			this->textBox_6axis_cal->TabIndex = 42;
 			this->textBox_6axis_cal->TabStop = false;
-			this->textBox_6axis_cal->Text = L"6-Axis Factory:";
+			this->textBox_6axis_cal->Text = L"6-Axis Factory (XYZ):\r\nAccelerometer\r\n\r\n\r\n\r\nGyroscope";
 			// 
 			// textBox_lstick_fcal
 			// 
@@ -1908,7 +1908,7 @@ namespace CppWinFormJoy {
 			this->textBox_device_parameters2->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
 			this->textBox_device_parameters2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->textBox_device_parameters2->Location = System::Drawing::Point(172, 78);
+			this->textBox_device_parameters2->Location = System::Drawing::Point(152, 78);
 			this->textBox_device_parameters2->Multiline = true;
 			this->textBox_device_parameters2->Name = L"textBox_device_parameters2";
 			this->textBox_device_parameters2->ReadOnly = true;
@@ -1923,9 +1923,9 @@ namespace CppWinFormJoy {
 			this->groupBox_dev_param->Controls->Add(this->textBox_device_parameters2);
 			this->groupBox_dev_param->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
 				static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox_dev_param->Location = System::Drawing::Point(393, 445);
+			this->groupBox_dev_param->Location = System::Drawing::Point(418, 445);
 			this->groupBox_dev_param->Name = L"groupBox_dev_param";
-			this->groupBox_dev_param->Size = System::Drawing::Size(321, 212);
+			this->groupBox_dev_param->Size = System::Drawing::Size(296, 212);
 			this->groupBox_dev_param->TabIndex = 43;
 			this->groupBox_dev_param->TabStop = false;
 			this->groupBox_dev_param->Text = L"6-Axis and Stick Device Parameters";
@@ -2418,7 +2418,6 @@ namespace CppWinFormJoy {
 	private: System::Void buttonTestToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (option_is_on != 5) {
 			reset_window_option();
-
 
 			this->ClientSize = System::Drawing::Size(738, 670);
 			this->groupBox_btn_test->Visible = true;
@@ -3521,17 +3520,33 @@ namespace CppWinFormJoy {
 				this->textBox_rstick_ucal->Text = L"R Stick User:\r\nNo calibration";
 			}
 
-			this->textBox_6axis_cal->Text = L"6-Axis Factory:\r\n";
-			for (int i = 0; i < 0x18; i = i + 6) {
-				this->textBox_6axis_cal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n",
+			this->textBox_6axis_cal->Text = L"6-Axis Factory (XYZ):\r\nAcc:  ";
+			for (int i = 0; i < 0xC; i = i + 6) {
+			
+				this->textBox_6axis_cal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
 					factory_sensor_cal[i + 0] | factory_sensor_cal[i + 1] << 8,
 					factory_sensor_cal[i + 2] | factory_sensor_cal[i + 3] << 8,
 					factory_sensor_cal[i + 4] | factory_sensor_cal[i + 5] << 8);
 			}
+			this->textBox_6axis_cal->Text += L"\r\nGyro: ";
+			for (int i = 0xC; i < 0x18; i = i + 6) {
+				this->textBox_6axis_cal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
+					factory_sensor_cal[i + 0] | factory_sensor_cal[i + 1] << 8,
+					factory_sensor_cal[i + 2] | factory_sensor_cal[i + 3] << 8,
+					factory_sensor_cal[i + 4] | factory_sensor_cal[i + 5] << 8);
+			}
+
 			if ((user_sensor_cal[0x0] | user_sensor_cal[0x1] << 8) == 0xA1B2) {
-				this->textBox_6axis_ucal->Text = L"6-Axis User:\r\n";
-				for (int i = 0; i < 0x18; i = i + 6) {
-					this->textBox_6axis_ucal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n",
+				this->textBox_6axis_ucal->Text = L"6-Axis User (XYZ):\r\nAcc:  ";
+				for (int i = 0; i < 0xC; i = i + 6) {
+					this->textBox_6axis_ucal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
+						user_sensor_cal[i + 2] | user_sensor_cal[i + 3] << 8,
+						user_sensor_cal[i + 4] | user_sensor_cal[i + 5] << 8,
+						user_sensor_cal[i + 6] | user_sensor_cal[i + 7] << 8);
+				}
+				this->textBox_6axis_ucal->Text += L"\r\nGyro: ";
+				for (int i = 0xC; i < 0x18; i = i + 6) {
+					this->textBox_6axis_ucal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
 						user_sensor_cal[i + 2] | user_sensor_cal[i + 3] << 8,
 						user_sensor_cal[i + 4] | user_sensor_cal[i + 5] << 8,
 						user_sensor_cal[i + 6] | user_sensor_cal[i + 7] << 8);
