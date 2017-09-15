@@ -37,7 +37,6 @@ namespace CppWinFormJoy {
 			else {
 				this->textBoxSN->Text = L"No S/N";
 				this->textBox_chg_sn->Text = this->textBoxSN->Text;
-				this->btnClrDlg2->Visible = false;
 			}
 			unsigned char device_info[10];
 			memset(device_info, 0, sizeof(device_info));
@@ -2010,7 +2009,7 @@ namespace CppWinFormJoy {
 			return;
 		}
 		set_led_busy();
-		if (MessageBox::Show(L"Don't forget to make a backup first!\nYou can also find retail colors at the bottom of the colors dialog for each type.\n\nNote: Pro controller buttons cannot be changed.\n\nAre you sure you want to continue?", L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
+		if (MessageBox::Show(L"Don't forget to make a backup first!\nYou can also find retail colors at the bottom of the colors dialog for each type.\n\nAre you sure you want to continue?", L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
 		{
 			this->btnWriteBody->Enabled = false;
 
@@ -2028,8 +2027,7 @@ namespace CppWinFormJoy {
 			button_color[2] = (u8)colorDialog2->Color.B;
 
 			write_spi_data(0x6050, 0x3, body_color);
-			if (handle_ok != 3)
-				write_spi_data(0x6053, 0x3, button_color);
+			write_spi_data(0x6053, 0x3, button_color);
 
 			send_rumble();
 			MessageBox::Show(L"The colors were writen to the device!", L"Done!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
@@ -2042,7 +2040,7 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void btnClrDlg1_Click(System::Object^ sender, System::EventArgs^ e) {
-		if(handle_ok !=3 )
+		if(handle_ok != 3 )
 			this->colorDialog1->CustomColors = getCustomColorFromConfig("bodycolors");
 		else
 			this->colorDialog1->CustomColors = getCustomColorFromConfig("bodycolors_pro");
@@ -2158,11 +2156,23 @@ namespace CppWinFormJoy {
 				if (gotColor.R <= 255 && gotColor.R > 100){
 					gotColor = Color::FromArgb(gotColor.A, CLAMP(r*color_coeff, 0.0f, 255.0f), CLAMP(g*color_coeff, 0.0f, 255.0f), CLAMP(b*color_coeff, 0.0f, 255.0f));
 				}
-				else if (gotColor.R <= 100 && gotColor.R != 78 && gotColor.R > 30 && handle_ok !=3) {
+				else if (handle_ok != 3 && gotColor.R <= 100 && gotColor.R != 78 && gotColor.R > 30) {
 					if (gotColor.R == 100)
 						gotColor = Color::FromArgb(gotColor.A, rb, gb, bb);
 					else {
 						gotColor = Color::FromArgb(gotColor.A, CLAMP(rb*color_coeff, 0.0f, 255.0f), CLAMP(gb*color_coeff, 0.0f, 255.0f), CLAMP(bb*color_coeff, 0.0f, 255.0f));
+					}
+				}
+				else if (handle_ok == 3 && gotColor.R <= 100 && gotColor.R != 78 && gotColor.R > 30) {
+					if (rb == 255 && gb == 255 && bb == 255) {
+						//Do nothing
+					}
+					else {
+						if (gotColor.R == 100)
+							gotColor = Color::FromArgb(gotColor.A, rb, gb, bb);
+						else {
+							gotColor = Color::FromArgb(gotColor.A, CLAMP(rb*color_coeff, 0.0f, 255.0f), CLAMP(gb*color_coeff, 0.0f, 255.0f), CLAMP(bb*color_coeff, 0.0f, 255.0f));
+						}
 					}
 				}
 				MyImage->SetPixel(x, y, gotColor);
@@ -2191,8 +2201,7 @@ namespace CppWinFormJoy {
 		memset(button_color, 0, 0x3);
 
 		get_spi_data(0x6050, 0x3, body_color);
-		if (handle_ok != 3)
-			get_spi_data(0x6053, 0x3, button_color);
+		get_spi_data(0x6053, 0x3, button_color);
 
 		update_joycon_color((u8)body_color[0], (u8)body_color[1], (u8)body_color[2], (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
 

@@ -66,8 +66,8 @@ int set_led_busy() {
 	//Set breathing HOME Led
 	if (handle_ok != 1) {
 		memset(buf, 0, sizeof(buf));
-		auto hdr = (brcm_hdr *)buf;
-		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr = (brcm_hdr *)buf;
+		pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 0x01;
 		hdr->rumble[0] = timming_byte;
 		timming_byte++;
@@ -408,8 +408,8 @@ int send_rumble() {
 	//Heartbeat HOME Led
 	if (handle_ok != 1) {
 		memset(buf, 0, sizeof(buf));
-		auto hdr = (brcm_hdr *)buf;
-		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr = (brcm_hdr *)buf;
+		pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 0x01;
 		hdr->rumble[0] = timming_byte;
 		timming_byte++;
