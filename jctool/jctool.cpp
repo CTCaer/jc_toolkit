@@ -1,3 +1,6 @@
+// Copyright (c) 2017 CTCaer. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #include <cstdio>
 #include <functional>
 #include <memory>
@@ -39,7 +42,7 @@ int timming_byte = 0x0;
 
 #pragma pack(pop)
 
-float sensor_uint16_to_int16(uint16_t a) {
+int16_t sensor_uint16_to_int16(uint16_t a) {
 	int16_t b;
 	char* aPointer = (char*)&a, *bPointer = (char*)&b;
 	memcpy(bPointer, aPointer, sizeof(a));
@@ -432,6 +435,7 @@ int send_rumble() {
 }
 
 int send_custom_command(u8* arg) {
+	int res_write;
 	int res;
 	int byte_seperator = 1;
 	String^ input_report_cmd;
@@ -455,23 +459,45 @@ int send_custom_command(u8* arg) {
 	buf_cmd[10] = arg[5];
 
 	output_report_sys = String::Format(L"Cmd:  {0:X2}   Subcmd: {1:X2}\r\n", buf_cmd[0], buf_cmd[10]);
-	for (int i = 6; i < 31; i++) {
-		buf_cmd[5 + i] = arg[i];
-		output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
-		if (byte_seperator == 4)
-			output_report_sys += L" ";
-		if (byte_seperator == 8)
-		{
+	if (buf_cmd[0] == 0x01 || buf_cmd[0] == 0x10 || buf_cmd[0] == 0x11) {
+		for (int i = 6; i < 31; i++) {
+			buf_cmd[5 + i] = arg[i];
+			output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
+			if (byte_seperator == 4)
+				output_report_sys += L" ";
+			if (byte_seperator == 8)
+			{
 
-			byte_seperator = 0;
-			output_report_sys += L"\r\n";
+				byte_seperator = 0;
+				output_report_sys += L"\r\n";
+			}
+			byte_seperator++;
 		}
-		byte_seperator++;
+	}
+	//Use subcmd after command
+	else {
+		for (int i = 6; i < 31; i++) {
+			buf_cmd[i - 5] = arg[i];
+			output_report_sys += String::Format(L"{0:X2} ", buf_cmd[i - 5]);
+			if (byte_seperator == 4)
+				output_report_sys += L" ";
+			if (byte_seperator == 8)
+			{
+
+				byte_seperator = 0;
+				output_report_sys += L"\r\n";
+			}
+			byte_seperator++;
+		}
 	}
 	FormJoy::myform1->textBoxDbg_sent->Text = output_report_sys;
 
 	//Packet size header + subcommand and uint8 argument
-	res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+	res_write = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+
+	if (res_write < 0) {
+		input_report_sys += L"hid_write failed!\r\n\r\n";
+	}
 
 	res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
@@ -542,6 +568,184 @@ int button_test() {
 	String^ input_report_sys;
 	u8 buf_cmd[36];
 	u8 buf_reply[0x170];
+	u8 buf_ft[0x200];
+	float acc_cal_coeff[3];
+	float gyro_cal_coeff[3];
+
+
+	bool has_user_cal_stick_l = false;
+	bool has_user_cal_stick_r = false;
+	bool has_user_cal_sensor = false;
+	unsigned char factory_stick_cal[0x12];
+	unsigned char user_stick_cal[0x16];
+	unsigned char sensor_model[0x6];
+	unsigned char stick_model[0x24];
+	unsigned char factory_sensor_cal[0x18];
+	unsigned char user_sensor_cal[0x1A];
+	uint16_t factory_sensor_cal_calm[0xC];
+	uint16_t user_sensor_cal_calm[0xC];
+	s16 sensor_cal[0x2][0x3];
+	memset(factory_stick_cal, 0, 0x12);
+	memset(user_stick_cal, 0, 0x16);
+	memset(sensor_model, 0, 0x6);
+	memset(stick_model, 0, 0x12);
+	memset(factory_sensor_cal, 0, 0x18);
+	memset(user_sensor_cal, 0, 0x1A);
+	memset(factory_sensor_cal_calm, 0, 0xC);
+	memset(user_sensor_cal_calm, 0, 0xC);
+	memset(sensor_cal, 0, sizeof(sensor_cal));
+	get_spi_data(0x6020, 0x18, factory_sensor_cal);
+	get_spi_data(0x603D, 0x12, factory_stick_cal);
+	get_spi_data(0x6080, 0x6, sensor_model);
+	get_spi_data(0x6086, 0x12, stick_model);
+	get_spi_data(0x6098, 0x12, &stick_model[0x12]);
+	get_spi_data(0x8010, 0x16, user_stick_cal);
+	get_spi_data(0x8026, 0x1A, user_sensor_cal);
+
+	/*
+	//pro dev parameters
+	sensor_model[0] = 0x50;		sensor_model[1] = 0xFD;		sensor_model[2] = 0x00;
+	sensor_model[3] = 0x00;		sensor_model[4] = 0xC6;		sensor_model[5] = 0x0F;
+	stick_model[0] = 0x0F;		stick_model[1] = 0x30;		stick_model[2] = 0x61;
+	stick_model[3] = 0x96;		stick_model[4] = 0x30;		stick_model[5] = 0xF3;
+	stick_model[6] = 0xD4;		stick_model[7] = 0x14;		stick_model[8] = 0x54;
+	stick_model[9] = 0x41;		stick_model[10] = 0x15;		stick_model[11] = 0x54;
+	stick_model[12] = 0xC7;		stick_model[13] = 0x79;		stick_model[14] = 0x9C;
+	stick_model[15] = 0x33;		stick_model[16] = 0x36;		stick_model[17] = 0x63;
+	*/
+
+	// Analog Stick device parameters
+	FormJoy::myform1->textBox_device_parameters->Text = String::Format(L"6-Axis Sideways Offsets:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2} (Deadzone)\r\n{6:X3} (Range ratio)",
+		sensor_model[0] | sensor_model[1] << 8,
+		sensor_model[2] | sensor_model[3] << 8,
+		sensor_model[4] | sensor_model[5] << 8,
+		(stick_model[1] << 8) & 0xF00 | stick_model[0], (stick_model[2] << 4) | (stick_model[1] >> 4),
+		(stick_model[4] << 8) & 0xF00 | stick_model[3],
+		((stick_model[5] << 4) | (stick_model[4] >> 4)));
+
+	for (int i = 0; i < 10; i = i + 3) {
+		FormJoy::myform1->textBox_device_parameters->Text += String::Format(L"\r\n{0:X3} {1:X3}",
+			(stick_model[7 + i] << 8) & 0xF00 | stick_model[6 + i],
+			(stick_model[8 + i] << 4) | (stick_model[7 + i] >> 4));
+	}
+
+	FormJoy::myform1->textBox_device_parameters2->Text = String::Format(L"Stick Parameters 2:\r\n{0:X3} {1:X3}\r\n{2:X2} (Deadzone)\r\n{3:X3} (Range ratio)",
+		(stick_model[19] << 8) & 0xF00 | stick_model[18], (stick_model[20] << 4) | (stick_model[19] >> 4),
+		(stick_model[22] << 8) & 0xF00 | stick_model[21],
+		((stick_model[23] << 4) | (stick_model[22] >> 4)));
+
+	for (int i = 0; i < 10; i = i + 3) {
+		FormJoy::myform1->textBox_device_parameters2->Text += String::Format(L"\r\n{0:X3} {1:X3}",
+			(stick_model[25 + i] << 8) & 0xF00 | stick_model[24 + i],
+			(stick_model[26 + i] << 4) | (stick_model[25 + i] >> 4));
+	}
+
+	// Stick calibration
+	if (handle_ok != 2) {
+		FormJoy::myform1->textBox_lstick_fcal->Text = String::Format(L"L Stick Factory:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
+			(factory_stick_cal[4] << 8) & 0xF00 | factory_stick_cal[3],
+			(factory_stick_cal[5] << 4) | (factory_stick_cal[4] >> 4),
+			((factory_stick_cal[4] << 8) & 0xF00 | factory_stick_cal[3]) - ((factory_stick_cal[7] << 8) & 0xF00 | factory_stick_cal[6]),
+			((factory_stick_cal[5] << 4) | (factory_stick_cal[4] >> 4)) - ((factory_stick_cal[8] << 4) | (factory_stick_cal[7] >> 4)),
+			((factory_stick_cal[4] << 8) & 0xF00 | factory_stick_cal[3]) + ((factory_stick_cal[1] << 8) & 0xF00 | factory_stick_cal[0]),
+			((factory_stick_cal[5] << 4) | (factory_stick_cal[4] >> 4)) + ((factory_stick_cal[2] << 4) | (factory_stick_cal[2] >> 4)));
+	}
+	else {
+		FormJoy::myform1->textBox_lstick_fcal->Text = L"L Stick Factory:\r\nNo calibration";
+	}
+	if (handle_ok != 1) {
+		FormJoy::myform1->textBox_rstick_fcal->Text = String::Format(L"R Stick Factory:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
+			(factory_stick_cal[10] << 8) & 0xF00 | factory_stick_cal[9],
+			(factory_stick_cal[11] << 4) | (factory_stick_cal[10] >> 4),
+			((factory_stick_cal[10] << 8) & 0xF00 | factory_stick_cal[9]) - ((factory_stick_cal[13] << 8) & 0xF00 | factory_stick_cal[12]),
+			((factory_stick_cal[11] << 4) | (factory_stick_cal[10] >> 4)) - ((factory_stick_cal[14] << 4) | (factory_stick_cal[13] >> 4)),
+			((factory_stick_cal[10] << 8) & 0xF00 | factory_stick_cal[9]) + ((factory_stick_cal[16] << 8) & 0xF00 | factory_stick_cal[15]),
+			((factory_stick_cal[11] << 4) | (factory_stick_cal[10] >> 4)) + ((factory_stick_cal[17] << 4) | (factory_stick_cal[16] >> 4)));
+	}
+	else {
+		FormJoy::myform1->textBox_rstick_fcal->Text = L"R Stick Factory:\r\nNo calibration";
+	}
+
+	if ((user_stick_cal[0] | user_stick_cal[1] << 8) == 0xA1B2) {
+		FormJoy::myform1->textBox_lstick_ucal->Text = String::Format(L"L Stick User:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
+			(user_stick_cal[6] << 8) & 0xF00 | user_stick_cal[5],
+			(user_stick_cal[7] << 4) | (user_stick_cal[6] >> 4),
+			((user_stick_cal[6] << 8) & 0xF00 | user_stick_cal[5]) - ((user_stick_cal[9] << 8) & 0xF00 | user_stick_cal[8]),
+			((user_stick_cal[7] << 4) | (user_stick_cal[6] >> 4)) - ((user_stick_cal[10] << 4) | (user_stick_cal[9] >> 4)),
+			((user_stick_cal[6] << 8) & 0xF00 | user_stick_cal[5]) + ((user_stick_cal[3] << 8) & 0xF00 | user_stick_cal[2]),
+			((user_stick_cal[7] << 4) | (user_stick_cal[6] >> 4)) + ((user_stick_cal[4] << 4) | (user_stick_cal[3] >> 4)));
+	}
+	else {
+		FormJoy::myform1->textBox_lstick_ucal->Text = L"L Stick User:\r\nNo calibration";
+	}
+	if ((user_stick_cal[0xB] | user_stick_cal[0xC] << 8) == 0xA1B2) {
+		FormJoy::myform1->textBox_rstick_ucal->Text = String::Format(L"R Stick User:\r\nCenter X,Y: ({0:X3}, {1:X3})\r\nX: [{2:X3} - {4:X3}] Y: [{3:X3} - {5:X3}]",
+			(user_stick_cal[14] << 8) & 0xF00 | user_stick_cal[13],
+			(user_stick_cal[15] << 4) | (user_stick_cal[14] >> 4),
+			((user_stick_cal[14] << 8) & 0xF00 | user_stick_cal[13]) - ((user_stick_cal[17] << 8) & 0xF00 | user_stick_cal[16]),
+			((user_stick_cal[15] << 4) | (user_stick_cal[14] >> 4)) - ((user_stick_cal[18] << 4) | (user_stick_cal[17] >> 4)),
+			((user_stick_cal[14] << 8) & 0xF00 | user_stick_cal[13]) + ((user_stick_cal[20] << 8) & 0xF00 | user_stick_cal[19]),
+			((user_stick_cal[15] << 4) | (user_stick_cal[14] >> 4)) + ((user_stick_cal[21] << 4) | (user_stick_cal[20] >> 4)));
+	}
+	else {
+		FormJoy::myform1->textBox_rstick_ucal->Text = L"R Stick User:\r\nNo calibration";
+	}
+
+	// Sensor calibration
+	FormJoy::myform1->textBox_6axis_cal->Text = L"6-Axis Factory (XYZ):\r\nAcc:  ";
+	for (int i = 0; i < 0xC; i = i + 6) {
+		FormJoy::myform1->textBox_6axis_cal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
+			factory_sensor_cal[i + 0] | factory_sensor_cal[i + 1] << 8,
+			factory_sensor_cal[i + 2] | factory_sensor_cal[i + 3] << 8,
+			factory_sensor_cal[i + 4] | factory_sensor_cal[i + 5] << 8);
+	}
+	// Acc cal origin position
+	sensor_cal[0][0] = sensor_uint16_to_int16(factory_sensor_cal[0] | factory_sensor_cal[1] << 8);
+	sensor_cal[0][1] = sensor_uint16_to_int16(factory_sensor_cal[2] | factory_sensor_cal[3] << 8);
+	sensor_cal[0][2] = sensor_uint16_to_int16(factory_sensor_cal[4] | factory_sensor_cal[5] << 8);
+
+	FormJoy::myform1->textBox_6axis_cal->Text += L"\r\nGyro: ";
+	for (int i = 0xC; i < 0x18; i = i + 6) {
+		FormJoy::myform1->textBox_6axis_cal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
+			factory_sensor_cal[i + 0] | factory_sensor_cal[i + 1] << 8,
+			factory_sensor_cal[i + 2] | factory_sensor_cal[i + 3] << 8,
+			factory_sensor_cal[i + 4] | factory_sensor_cal[i + 5] << 8);
+	}
+	// Gyro cal origin position
+	sensor_cal[1][0] = sensor_uint16_to_int16(factory_sensor_cal[0xC] | factory_sensor_cal[0xD] << 8);
+	sensor_cal[1][1] = sensor_uint16_to_int16(factory_sensor_cal[0xE] | factory_sensor_cal[0xF] << 8);
+	sensor_cal[1][2] = sensor_uint16_to_int16(factory_sensor_cal[0x10] | factory_sensor_cal[0x11] << 8);
+
+	if ((user_sensor_cal[0x0] | user_sensor_cal[0x1] << 8) == 0xA1B2) {
+		FormJoy::myform1->textBox_6axis_ucal->Text = L"6-Axis User (XYZ):\r\nAcc:  ";
+		for (int i = 0; i < 0xC; i = i + 6) {
+			FormJoy::myform1->textBox_6axis_ucal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
+				user_sensor_cal[i + 2] | user_sensor_cal[i + 3] << 8,
+				user_sensor_cal[i + 4] | user_sensor_cal[i + 5] << 8,
+				user_sensor_cal[i + 6] | user_sensor_cal[i + 7] << 8);
+		}
+		// Acc cal origin position
+		sensor_cal[0][0] = sensor_uint16_to_int16(user_sensor_cal[2] | user_sensor_cal[3] << 8);
+		sensor_cal[0][1] = sensor_uint16_to_int16(user_sensor_cal[4] | user_sensor_cal[5] << 8);
+		sensor_cal[0][2] = sensor_uint16_to_int16(user_sensor_cal[6] | user_sensor_cal[7] << 8);
+		FormJoy::myform1->textBox_6axis_ucal->Text += L"\r\nGyro: ";
+		for (int i = 0xC; i < 0x18; i = i + 6) {
+			FormJoy::myform1->textBox_6axis_ucal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
+				user_sensor_cal[i + 2] | user_sensor_cal[i + 3] << 8,
+				user_sensor_cal[i + 4] | user_sensor_cal[i + 5] << 8,
+				user_sensor_cal[i + 6] | user_sensor_cal[i + 7] << 8);
+		}
+		// Gyro cal origin position
+		sensor_cal[1][0] = sensor_uint16_to_int16(user_sensor_cal[0xE] | user_sensor_cal[0xF] << 8);
+		sensor_cal[1][1] = sensor_uint16_to_int16(user_sensor_cal[0x10] | user_sensor_cal[0x11] << 8);
+		sensor_cal[1][2] = sensor_uint16_to_int16(user_sensor_cal[0x12] | user_sensor_cal[0x13] << 8);
+	}
+	else {
+		FormJoy::myform1->textBox_6axis_ucal->Text = L"\r\n\r\nUser:\r\nNo calibration";
+	}
+
+
+	// Input report loop
 	memset(buf_cmd, 0, sizeof(buf_cmd));
 	auto hdr = (brcm_hdr *)buf_cmd;
 	auto pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -555,6 +759,7 @@ int button_test() {
 	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
+	// Enable IMU
 	memset(buf_cmd, 0, sizeof(buf_cmd));
 	hdr = (brcm_hdr *)buf_cmd;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -568,8 +773,17 @@ int button_test() {
 	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
-	while (enable_button_test) {
+	// Use SPI calibration and convert them to SI acc unit
+	acc_cal_coeff[0] = (float)(1.0 / (float)(16384 - sensor_uint16_to_int16(sensor_cal[0][0]))) * 4.0f  * 9.8f;
+	acc_cal_coeff[1] = (float)(1.0 / (float)(16384 - sensor_uint16_to_int16(sensor_cal[0][1]))) * 4.0f  * 9.8f;
+	acc_cal_coeff[2] = (float)(1.0 / (float)(16384 - sensor_uint16_to_int16(sensor_cal[0][2]))) * 4.0f  * 9.8f;
 
+	// Use SPI calibration and convert them to SI gyro unit
+	gyro_cal_coeff[0] = (float)(936.0 / (float)(13371 - sensor_uint16_to_int16(sensor_cal[1][0])) * 0.01745329251994);
+	gyro_cal_coeff[1] = (float)(936.0 / (float)(13371 - sensor_uint16_to_int16(sensor_cal[1][1])) * 0.01745329251994);
+	gyro_cal_coeff[2] = (float)(936.0 / (float)(13371 - sensor_uint16_to_int16(sensor_cal[1][2])) * 0.01745329251994);
+
+	while (enable_button_test) {
 		memset(buf_cmd, 0, sizeof(buf_cmd));
 		//Sleep(64);
 		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
@@ -596,9 +810,11 @@ int button_test() {
 				for (int i = 3; i < 6; i++)
 					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
 
-				input_report_cmd += String::Format(L"\r\nL Stick: X: {0:X3}  Y: {1:X3}\r\nR Stick: X: {2:X3}  Y: {3:X3} ", 
+				input_report_cmd += String::Format(L"\r\nL Stick:\r\nX: {0:X3}  Y: {1:X3}\r\n",
 					buf_reply[6] | (u16)((buf_reply[7] & 0xF) << 8),
-					(buf_reply[7] >> 4) | (buf_reply[8] << 4),
+					(buf_reply[7] >> 4) | (buf_reply[8] << 4));
+
+				input_report_cmd += String::Format(L"\r\nR Stick:\r\nX: {0:X3}  Y: {1:X3}\r\n",
 					buf_reply[9] | (u16)((buf_reply[10] & 0xF) << 8),
 					(buf_reply[10] >> 4) | (buf_reply[11] << 4));
 
@@ -608,20 +824,20 @@ int button_test() {
 
 				input_report_sys = String::Format(L"6-Axis Sensor:\r\nAccelerometer\r\n");
 				//The controller sends the sensor data 3 times with a little bit different values. Skip them
-				input_report_sys += String::Format(L"X: {0:X4} ({1:F2}G)\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
-					(float)sensor_uint16_to_int16(buf_reply[13] | (buf_reply[14] << 8) & 0xFF00) * 0.00025f);
-				input_report_sys += String::Format(L"Y: {0:X4} ({1:F2}G)\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
-					(float)sensor_uint16_to_int16(buf_reply[15] | (buf_reply[16] << 8) & 0xFF00) * 0.00025f);
-				input_report_sys += String::Format(L"Z: {0:X4} ({1:F2}G)\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
-					(float)sensor_uint16_to_int16(buf_reply[17] | (buf_reply[18] << 8) & 0xFF00) * 0.00025f);
-				
+				input_report_sys += String::Format(L"X: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
+					(float)(sensor_uint16_to_int16(buf_reply[13] | (buf_reply[14] << 8) & 0xFF00)) * acc_cal_coeff[0]);
+				input_report_sys += String::Format(L"Y: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
+					(float)(sensor_uint16_to_int16(buf_reply[15] | (buf_reply[16] << 8) & 0xFF00)) * acc_cal_coeff[1]);
+				input_report_sys += String::Format(L"Z: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
+					(float)(sensor_uint16_to_int16(buf_reply[17] | (buf_reply[18] << 8) & 0xFF00))  * acc_cal_coeff[2]);
+
 				input_report_sys += String::Format(L"\r\nGyroscope\r\n");
-				input_report_sys += String::Format(L"X: {0:X4} ({1:F2}dps)\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00, 
-					(float)sensor_uint16_to_int16(buf_reply[19] | (buf_reply[20] << 8) & 0xFF00) * 0.000204f);
-				input_report_sys += String::Format(L"Y: {0:X4} ({1:F2}dps)\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00, 
-					(float)sensor_uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00)* 0.000204f);
-				input_report_sys += String::Format(L"Z: {0:X4} ({1:F2}dps)\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00, 
-					(float)sensor_uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00)* 0.000204f);
+				input_report_sys += String::Format(L"X: {0:X4} ({1:F1} rad/s)\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00,
+					(float)(sensor_uint16_to_int16(buf_reply[19] | (buf_reply[20] << 8) & 0xFF00)) * gyro_cal_coeff[0]);
+				input_report_sys += String::Format(L"Y: {0:X4} ({1:F1} rad/s)\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00,
+					(float)(sensor_uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00)) * gyro_cal_coeff[1]);
+				input_report_sys += String::Format(L"Z: {0:X4} ({1:F1} rad/s)\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00,
+					(float)(sensor_uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00)) * gyro_cal_coeff[2]);
 
 			}
 			else if (buf_reply[0] == 0x3F) {
@@ -635,7 +851,8 @@ int button_test() {
 				FormJoy::myform1->textBox_btn_test_reply->Text = input_report_cmd;
 				FormJoy::myform1->textBox_btn_test_subreply->Text = input_report_sys;
 			}
-			else if (limit_output > 4){
+			//Only update every 75ms
+			else if (limit_output > 4) {
 				limit_output = 0;
 			}
 			limit_output++;
