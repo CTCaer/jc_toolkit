@@ -57,6 +57,7 @@ namespace CppWinFormJoy {
 				this->textBoxDev->Text = L"Pro Controller";
 
 			update_battery();
+			update_temperature();
 			update_colors_from_spi(true);
 
 			/*
@@ -262,6 +263,7 @@ namespace CppWinFormJoy {
 	public: System::Windows::Forms::TextBox^  textBox_device_parameters2;
 	private: System::Windows::Forms::GroupBox^  groupBox_dev_param;
 	private: System::Windows::Forms::Button^  btn_refresh;
+	private: System::Windows::Forms::Label^  label_temp;
 
 	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
@@ -283,6 +285,7 @@ namespace CppWinFormJoy {
 			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(FormJoy::typeid));
 			this->btnWriteBody = (gcnew System::Windows::Forms::Button());
 			this->groupBoxColor = (gcnew System::Windows::Forms::GroupBox());
+			this->label_temp = (gcnew System::Windows::Forms::Label());
 			this->btn_refresh = (gcnew System::Windows::Forms::Button());
 			this->label_batt_percent = (gcnew System::Windows::Forms::Label());
 			this->btbRestoreEnable = (gcnew System::Windows::Forms::Button());
@@ -432,6 +435,7 @@ namespace CppWinFormJoy {
 			// 
 			this->groupBoxColor->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->groupBoxColor->Controls->Add(this->label_temp);
 			this->groupBoxColor->Controls->Add(this->btn_refresh);
 			this->groupBoxColor->Controls->Add(this->label_batt_percent);
 			this->groupBoxColor->Controls->Add(this->btbRestoreEnable);
@@ -454,6 +458,17 @@ namespace CppWinFormJoy {
 			this->groupBoxColor->TabIndex = 0;
 			this->groupBoxColor->TabStop = false;
 			this->groupBoxColor->Text = L"Device colors";
+			// 
+			// label_temp
+			// 
+			this->label_temp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->label_temp->Location = System::Drawing::Point(8, 279);
+			this->label_temp->Name = L"label_temp";
+			this->label_temp->Size = System::Drawing::Size(110, 26);
+			this->label_temp->TabIndex = 21;
+			this->label_temp->Text = L"0.00°C / 0.00°F";
+			this->label_temp->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
 			// 
 			// btn_refresh
 			// 
@@ -2038,6 +2053,7 @@ namespace CppWinFormJoy {
 			update_colors_from_spi(false);
 
 			update_battery();
+			update_temperature();
 		}
 	}
 
@@ -2129,6 +2145,7 @@ namespace CppWinFormJoy {
 		}
 		
 		update_battery();
+		update_temperature();
 	}
 
 	private: System::Void update_joycon_color(u8 r, u8 g, u8 b, u8 rb, u8 gb, u8 bb) {
@@ -2289,6 +2306,18 @@ namespace CppWinFormJoy {
 				break;
 		}
 	
+	}
+
+	private: System::Void update_temperature() {
+
+		unsigned char temp_info[2];
+		memset(temp_info, 0, sizeof(temp_info));
+		get_temprature(temp_info);
+
+		float temperature_c = 25.0f + uint16_to_int16(temp_info[1] << 8 | temp_info[0]) * 0.0625f;
+		float temperature_f = temperature_c * 1.8f + 32;
+
+		this->label_temp->Text = String::Format(L"{0:f2}°C / {1:f2}°F", temperature_c, temperature_f);
 	}
 
 	private: array<int>^ getCustomColorFromConfig(String^ custom_type)
@@ -2793,6 +2822,7 @@ namespace CppWinFormJoy {
 				//Check that the colors were written
 				update_colors_from_spi(true);
 				update_battery();
+				update_temperature();
 				send_rumble();
 
 				MessageBox::Show(L"The colors were restored!", L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
@@ -2822,6 +2852,7 @@ namespace CppWinFormJoy {
 					MessageBox::Show(L"The serial number was restored!", L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 				}
 				update_battery();
+				update_temperature();
 				send_rumble();
 			}
 
@@ -2853,6 +2884,7 @@ namespace CppWinFormJoy {
 					write_spi_data(0x8026, 0x1A, sensor);
 
 				update_battery();
+				update_temperature();
 				send_rumble();
 				MessageBox::Show(L"The user calibration was restored!", L"Calibration Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 			}
@@ -2876,6 +2908,7 @@ namespace CppWinFormJoy {
 					write_spi_data(0x8026, 0x1A, sensor);
 
 				update_battery();
+				update_temperature();
 				send_rumble();
 				MessageBox::Show(L"The user calibration was factory resetted!", L"Calibration Reset Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 			}
@@ -2936,6 +2969,7 @@ namespace CppWinFormJoy {
 				custom_cmd[2] = 0x01;
 				send_custom_command(custom_cmd);
 				update_battery();
+				update_temperature();
 				send_rumble();
 
 				MessageBox::Show(L"The full restore was completed!\n\nIt is recommended to turn off the controller and exit Joy-Con Toolkit.\nAfter that press any button on the controller and run the app again.", L"Full Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Warning);
@@ -3146,6 +3180,7 @@ namespace CppWinFormJoy {
 
 					write_spi_data(0x6000, 0x10, sn);
 					update_battery();
+					update_temperature();
 					send_rumble();
 					String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
 					MessageBox::Show(L"The S/N was written to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!\n\nIf you still ignored the warnings about creating a backup, the S/N in the left of the main window will not change. Copy it somewhere safe!\n\nLastly, a backup of your S/N was created inside the SPI.");
@@ -3181,6 +3216,7 @@ namespace CppWinFormJoy {
 				}
 
 				update_battery();
+				update_temperature();
 				send_rumble();
 				String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
 				MessageBox::Show(L"The S/N was restored to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!");
@@ -3202,6 +3238,7 @@ namespace CppWinFormJoy {
 			set_led_busy();
 			play_tune();
 			update_battery();
+			update_temperature();
 			send_rumble();
 			MessageBox::Show(L"The HD Rumble music has ended.", L"Easter egg!");
 		}
@@ -3397,6 +3434,7 @@ namespace CppWinFormJoy {
 			this->groupBox_vib_eq->Enabled = true;
 		}
 		update_battery();
+		update_temperature();
 
 	}
 

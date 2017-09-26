@@ -29,10 +29,12 @@ typedef int32_t s32;
 typedef int64_t s64;
 
 extern std::string get_sn(u32 offset, const u16 read_len);
+extern int16_t uint16_to_int16(uint16_t a);
 extern int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf);
 extern int write_spi_data(u32 offset, const u16 write_len, u8* test_buf);
 extern int get_device_info(u8* test_buf);
 extern int get_battery(u8* test_buf);
+extern int get_temprature(u8* test_buf);
 extern int dump_spi(const char *dev_name);
 extern int send_rumble();
 extern int play_tune();

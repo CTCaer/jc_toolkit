@@ -42,7 +42,7 @@ int timming_byte = 0x0;
 
 #pragma pack(pop)
 
-int16_t sensor_uint16_to_int16(uint16_t a) {
+int16_t uint16_to_int16(uint16_t a) {
 	int16_t b;
 	char* aPointer = (char*)&a, *bPointer = (char*)&b;
 	memcpy(bPointer, aPointer, sizeof(a));
@@ -255,6 +255,98 @@ int get_battery(u8* test_buf) {
 	test_buf[0] = buf[0x2];
 	test_buf[1] = buf[0xF];
 	test_buf[2] = buf[0x10];
+
+	return 0;
+
+}
+
+int get_temprature(u8* test_buf) {
+	int res;
+	u8 buf[0x100];
+	int error_reading = 0;
+	bool imu_changed = false;
+
+	while (1) {
+		memset(buf, 0, sizeof(buf));
+		auto hdr = (brcm_hdr *)buf;
+		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 1;
+		hdr->rumble[0] = timming_byte;
+		timming_byte++;
+		if (timming_byte > 0xF)
+			timming_byte = 0x0;
+		pkt->subcmd = 0x43;
+		buf[11] = 0x10;
+		buf[12] = 0x01;
+		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle, buf, sizeof(buf));
+
+		if (*(uint16_t*)&buf[0xD] == 0x43C0)
+			break;
+		error_reading++;
+		if (error_reading == 125)
+			break;
+	}
+
+	if ((buf[0x11] >> 4) == 0x0) {
+
+		memset(buf, 0, sizeof(buf));
+		auto hdr = (brcm_hdr *)buf;
+		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x01;
+		hdr->rumble[0] = timming_byte;
+		timming_byte++;
+		if (timming_byte > 0xF)
+			timming_byte = 0x0;
+		pkt->subcmd = 0x40;
+		buf[11] = 0x01;
+		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle, buf, 0);
+
+		imu_changed = true;
+		Sleep(32);
+	}
+
+	while (1) {
+		memset(buf, 0, sizeof(buf));
+		auto hdr = (brcm_hdr *)buf;
+		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 1;
+		hdr->rumble[0] = timming_byte;
+		timming_byte++;
+		if (timming_byte > 0xF)
+			timming_byte = 0x0;
+		pkt->subcmd = 0x43;
+		buf[11] = 0x20;
+		buf[12] = 0x02;
+		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		//printf("write %d\n", res);
+		res = hid_read(handle, buf, sizeof(buf));
+
+		if (*(uint16_t*)&buf[0xD] == 0x43C0)
+			break;
+		error_reading++;
+		if (error_reading == 125)
+			break;
+	}
+	test_buf[0] = buf[0x11];
+	test_buf[1] = buf[0x12];
+
+	if (imu_changed) {
+		memset(buf, 0, sizeof(buf));
+		auto hdr = (brcm_hdr *)buf;
+		auto pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x01;
+		hdr->rumble[0] = timming_byte;
+		timming_byte++;
+		if (timming_byte > 0xF)
+			timming_byte = 0x0;
+		pkt->subcmd = 0x40;
+		buf[11] = 0x00;
+		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle, buf, 0);
+
+	}
 
 	return 0;
 
@@ -700,9 +792,9 @@ int button_test() {
 			factory_sensor_cal[i + 4] | factory_sensor_cal[i + 5] << 8);
 	}
 	// Acc cal origin position
-	sensor_cal[0][0] = sensor_uint16_to_int16(factory_sensor_cal[0] | factory_sensor_cal[1] << 8);
-	sensor_cal[0][1] = sensor_uint16_to_int16(factory_sensor_cal[2] | factory_sensor_cal[3] << 8);
-	sensor_cal[0][2] = sensor_uint16_to_int16(factory_sensor_cal[4] | factory_sensor_cal[5] << 8);
+	sensor_cal[0][0] = uint16_to_int16(factory_sensor_cal[0] | factory_sensor_cal[1] << 8);
+	sensor_cal[0][1] = uint16_to_int16(factory_sensor_cal[2] | factory_sensor_cal[3] << 8);
+	sensor_cal[0][2] = uint16_to_int16(factory_sensor_cal[4] | factory_sensor_cal[5] << 8);
 
 	FormJoy::myform1->textBox_6axis_cal->Text += L"\r\nGyro: ";
 	for (int i = 0xC; i < 0x18; i = i + 6) {
@@ -712,9 +804,9 @@ int button_test() {
 			factory_sensor_cal[i + 4] | factory_sensor_cal[i + 5] << 8);
 	}
 	// Gyro cal origin position
-	sensor_cal[1][0] = sensor_uint16_to_int16(factory_sensor_cal[0xC] | factory_sensor_cal[0xD] << 8);
-	sensor_cal[1][1] = sensor_uint16_to_int16(factory_sensor_cal[0xE] | factory_sensor_cal[0xF] << 8);
-	sensor_cal[1][2] = sensor_uint16_to_int16(factory_sensor_cal[0x10] | factory_sensor_cal[0x11] << 8);
+	sensor_cal[1][0] = uint16_to_int16(factory_sensor_cal[0xC] | factory_sensor_cal[0xD] << 8);
+	sensor_cal[1][1] = uint16_to_int16(factory_sensor_cal[0xE] | factory_sensor_cal[0xF] << 8);
+	sensor_cal[1][2] = uint16_to_int16(factory_sensor_cal[0x10] | factory_sensor_cal[0x11] << 8);
 
 	if ((user_sensor_cal[0x0] | user_sensor_cal[0x1] << 8) == 0xA1B2) {
 		FormJoy::myform1->textBox_6axis_ucal->Text = L"6-Axis User (XYZ):\r\nAcc:  ";
@@ -725,9 +817,9 @@ int button_test() {
 				user_sensor_cal[i + 6] | user_sensor_cal[i + 7] << 8);
 		}
 		// Acc cal origin position
-		sensor_cal[0][0] = sensor_uint16_to_int16(user_sensor_cal[2] | user_sensor_cal[3] << 8);
-		sensor_cal[0][1] = sensor_uint16_to_int16(user_sensor_cal[4] | user_sensor_cal[5] << 8);
-		sensor_cal[0][2] = sensor_uint16_to_int16(user_sensor_cal[6] | user_sensor_cal[7] << 8);
+		sensor_cal[0][0] = uint16_to_int16(user_sensor_cal[2] | user_sensor_cal[3] << 8);
+		sensor_cal[0][1] = uint16_to_int16(user_sensor_cal[4] | user_sensor_cal[5] << 8);
+		sensor_cal[0][2] = uint16_to_int16(user_sensor_cal[6] | user_sensor_cal[7] << 8);
 		FormJoy::myform1->textBox_6axis_ucal->Text += L"\r\nGyro: ";
 		for (int i = 0xC; i < 0x18; i = i + 6) {
 			FormJoy::myform1->textBox_6axis_ucal->Text += String::Format(L"{0:X4} {1:X4} {2:X4}\r\n      ",
@@ -736,9 +828,9 @@ int button_test() {
 				user_sensor_cal[i + 6] | user_sensor_cal[i + 7] << 8);
 		}
 		// Gyro cal origin position
-		sensor_cal[1][0] = sensor_uint16_to_int16(user_sensor_cal[0xE] | user_sensor_cal[0xF] << 8);
-		sensor_cal[1][1] = sensor_uint16_to_int16(user_sensor_cal[0x10] | user_sensor_cal[0x11] << 8);
-		sensor_cal[1][2] = sensor_uint16_to_int16(user_sensor_cal[0x12] | user_sensor_cal[0x13] << 8);
+		sensor_cal[1][0] = uint16_to_int16(user_sensor_cal[0xE] | user_sensor_cal[0xF] << 8);
+		sensor_cal[1][1] = uint16_to_int16(user_sensor_cal[0x10] | user_sensor_cal[0x11] << 8);
+		sensor_cal[1][2] = uint16_to_int16(user_sensor_cal[0x12] | user_sensor_cal[0x13] << 8);
 	}
 	else {
 		FormJoy::myform1->textBox_6axis_ucal->Text = L"\r\n\r\nUser:\r\nNo calibration";
@@ -774,14 +866,14 @@ int button_test() {
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
 	// Use SPI calibration and convert them to SI acc unit
-	acc_cal_coeff[0] = (float)(1.0 / (float)(16384 - sensor_uint16_to_int16(sensor_cal[0][0]))) * 4.0f  * 9.8f;
-	acc_cal_coeff[1] = (float)(1.0 / (float)(16384 - sensor_uint16_to_int16(sensor_cal[0][1]))) * 4.0f  * 9.8f;
-	acc_cal_coeff[2] = (float)(1.0 / (float)(16384 - sensor_uint16_to_int16(sensor_cal[0][2]))) * 4.0f  * 9.8f;
+	acc_cal_coeff[0] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][0]))) * 4.0f  * 9.8f;
+	acc_cal_coeff[1] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][1]))) * 4.0f  * 9.8f;
+	acc_cal_coeff[2] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][2]))) * 4.0f  * 9.8f;
 
 	// Use SPI calibration and convert them to SI gyro unit
-	gyro_cal_coeff[0] = (float)(936.0 / (float)(13371 - sensor_uint16_to_int16(sensor_cal[1][0])) * 0.01745329251994);
-	gyro_cal_coeff[1] = (float)(936.0 / (float)(13371 - sensor_uint16_to_int16(sensor_cal[1][1])) * 0.01745329251994);
-	gyro_cal_coeff[2] = (float)(936.0 / (float)(13371 - sensor_uint16_to_int16(sensor_cal[1][2])) * 0.01745329251994);
+	gyro_cal_coeff[0] = (float)(936.0 / (float)(13371 - uint16_to_int16(sensor_cal[1][0])) * 0.01745329251994);
+	gyro_cal_coeff[1] = (float)(936.0 / (float)(13371 - uint16_to_int16(sensor_cal[1][1])) * 0.01745329251994);
+	gyro_cal_coeff[2] = (float)(936.0 / (float)(13371 - uint16_to_int16(sensor_cal[1][2])) * 0.01745329251994);
 
 	while (enable_button_test) {
 		memset(buf_cmd, 0, sizeof(buf_cmd));
@@ -825,19 +917,19 @@ int button_test() {
 				input_report_sys = String::Format(L"6-Axis Sensor:\r\nAccelerometer\r\n");
 				//The controller sends the sensor data 3 times with a little bit different values. Skip them
 				input_report_sys += String::Format(L"X: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
-					(float)(sensor_uint16_to_int16(buf_reply[13] | (buf_reply[14] << 8) & 0xFF00)) * acc_cal_coeff[0]);
+					(float)(uint16_to_int16(buf_reply[13] | (buf_reply[14] << 8) & 0xFF00)) * acc_cal_coeff[0]);
 				input_report_sys += String::Format(L"Y: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
-					(float)(sensor_uint16_to_int16(buf_reply[15] | (buf_reply[16] << 8) & 0xFF00)) * acc_cal_coeff[1]);
+					(float)(uint16_to_int16(buf_reply[15] | (buf_reply[16] << 8) & 0xFF00)) * acc_cal_coeff[1]);
 				input_report_sys += String::Format(L"Z: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
-					(float)(sensor_uint16_to_int16(buf_reply[17] | (buf_reply[18] << 8) & 0xFF00))  * acc_cal_coeff[2]);
+					(float)(uint16_to_int16(buf_reply[17] | (buf_reply[18] << 8) & 0xFF00))  * acc_cal_coeff[2]);
 
 				input_report_sys += String::Format(L"\r\nGyroscope\r\n");
 				input_report_sys += String::Format(L"X: {0:X4} ({1:F1} rad/s)\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00,
-					(float)(sensor_uint16_to_int16(buf_reply[19] | (buf_reply[20] << 8) & 0xFF00)) * gyro_cal_coeff[0]);
+					(float)(uint16_to_int16(buf_reply[19] | (buf_reply[20] << 8) & 0xFF00)) * gyro_cal_coeff[0]);
 				input_report_sys += String::Format(L"Y: {0:X4} ({1:F1} rad/s)\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00,
-					(float)(sensor_uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00)) * gyro_cal_coeff[1]);
+					(float)(uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00)) * gyro_cal_coeff[1]);
 				input_report_sys += String::Format(L"Z: {0:X4} ({1:F1} rad/s)\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00,
-					(float)(sensor_uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00)) * gyro_cal_coeff[2]);
+					(float)(uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00)) * gyro_cal_coeff[2]);
 
 			}
 			else if (buf_reply[0] == 0x3F) {
