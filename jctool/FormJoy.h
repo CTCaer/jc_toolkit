@@ -32,7 +32,7 @@ namespace CppWinFormJoy {
 			myform1 = this;
 
 			this->btnWriteBody->Enabled = false;
-
+			temp_celsius = true;
 			if (handle_ok != 3) {
 				this->textBoxSN->Text = gcnew String(get_sn(0x6001, 0xF).c_str());
 				this->textBox_chg_sn->Text = this->textBoxSN->Text;
@@ -115,7 +115,7 @@ namespace CppWinFormJoy {
 			this->groupBox_chg_sn->Location = System::Drawing::Point(494, 36);
 			this->groupBoxVib->Location = System::Drawing::Point(494, 36);
 			this->groupBox_btn_test->Location = System::Drawing::Point(494, 36);
-			this->ClientSize = System::Drawing::Size(485, 449);
+			this->ClientSize = System::Drawing::Size(485, 474);
 			
 			vib_file_type = 0;
 			vib_sample_rate = 0;
@@ -151,6 +151,7 @@ namespace CppWinFormJoy {
 	private: u32 vib_loop_end;
 	private: u32 vib_loop_wait;
 	private: int vib_converted;
+	private: bool temp_celsius;
 	//file type: 1 = Raw, 2 = bnvib (0x4), 3 = bnvib loop (0xC), 4 = bnvib loop (0x10)
 	private: int vib_file_type;
 	private: int disable_expert_mode;
@@ -178,7 +179,6 @@ namespace CppWinFormJoy {
 	private: System::Windows::Forms::Label^  label6;
 	private: System::Windows::Forms::PictureBox^  pictureBoxPreview;
 	public: System::Windows::Forms::Label^  label_progress;
-	private: System::Windows::Forms::PictureBox^  pictureBoxBattery;
 	private: System::Windows::Forms::MenuStrip^  menuStrip1;
 	private: System::Windows::Forms::ToolStripMenuItem^  menuToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^  debugToolStripMenuItem;
@@ -262,8 +262,12 @@ namespace CppWinFormJoy {
 	public: System::Windows::Forms::TextBox^  textBox_6axis_ucal;
 	public: System::Windows::Forms::TextBox^  textBox_device_parameters2;
 	private: System::Windows::Forms::GroupBox^  groupBox_dev_param;
-	private: System::Windows::Forms::Button^  btn_refresh;
-	private: System::Windows::Forms::Label^  label_temp;
+	private: System::Windows::Forms::ToolStrip^  toolStrip1;
+	private: System::Windows::Forms::ToolStripLabel^  toolStripLabel_temp;
+	private: System::Windows::Forms::ToolStripButton^  toolStripBtn_refresh;
+	private: System::Windows::Forms::ToolStripButton^  toolStripBtn_batt;
+	private: System::Windows::Forms::ToolStripLabel^  toolStripLabel_batt;
+	private: System::Windows::Forms::ToolStripButton^  toolStripBtn_Disconnect;
 
 	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
@@ -285,11 +289,7 @@ namespace CppWinFormJoy {
 			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(FormJoy::typeid));
 			this->btnWriteBody = (gcnew System::Windows::Forms::Button());
 			this->groupBoxColor = (gcnew System::Windows::Forms::GroupBox());
-			this->label_temp = (gcnew System::Windows::Forms::Label());
-			this->btn_refresh = (gcnew System::Windows::Forms::Button());
-			this->label_batt_percent = (gcnew System::Windows::Forms::Label());
 			this->btbRestoreEnable = (gcnew System::Windows::Forms::Button());
-			this->pictureBoxBattery = (gcnew System::Windows::Forms::PictureBox());
 			this->pictureBoxPreview = (gcnew System::Windows::Forms::PictureBox());
 			this->button3 = (gcnew System::Windows::Forms::Button());
 			this->btnClrDlg1 = (gcnew System::Windows::Forms::Button());
@@ -388,8 +388,13 @@ namespace CppWinFormJoy {
 			this->textBox_device_parameters = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_device_parameters2 = (gcnew System::Windows::Forms::TextBox());
 			this->groupBox_dev_param = (gcnew System::Windows::Forms::GroupBox());
+			this->toolStrip1 = (gcnew System::Windows::Forms::ToolStrip());
+			this->toolStripBtn_batt = (gcnew System::Windows::Forms::ToolStripButton());
+			this->toolStripLabel_batt = (gcnew System::Windows::Forms::ToolStripLabel());
+			this->toolStripLabel_temp = (gcnew System::Windows::Forms::ToolStripLabel());
+			this->toolStripBtn_refresh = (gcnew System::Windows::Forms::ToolStripButton());
+			this->toolStripBtn_Disconnect = (gcnew System::Windows::Forms::ToolStripButton());
 			this->groupBoxColor->SuspendLayout();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxBattery))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
 			this->groupBoxSPI->SuspendLayout();
 			this->menuStrip1->SuspendLayout();
@@ -409,6 +414,7 @@ namespace CppWinFormJoy {
 			this->groupBox_btn_test->SuspendLayout();
 			this->groupBox2->SuspendLayout();
 			this->groupBox_dev_param->SuspendLayout();
+			this->toolStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// btnWriteBody
@@ -435,11 +441,7 @@ namespace CppWinFormJoy {
 			// 
 			this->groupBoxColor->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->groupBoxColor->Controls->Add(this->label_temp);
-			this->groupBoxColor->Controls->Add(this->btn_refresh);
-			this->groupBoxColor->Controls->Add(this->label_batt_percent);
 			this->groupBoxColor->Controls->Add(this->btbRestoreEnable);
-			this->groupBoxColor->Controls->Add(this->pictureBoxBattery);
 			this->groupBoxColor->Controls->Add(this->pictureBoxPreview);
 			this->groupBoxColor->Controls->Add(this->button3);
 			this->groupBoxColor->Controls->Add(this->btnClrDlg1);
@@ -458,37 +460,6 @@ namespace CppWinFormJoy {
 			this->groupBoxColor->TabIndex = 0;
 			this->groupBoxColor->TabStop = false;
 			this->groupBoxColor->Text = L"Device colors";
-			// 
-			// label_temp
-			// 
-			this->label_temp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
-				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label_temp->Location = System::Drawing::Point(8, 279);
-			this->label_temp->Name = L"label_temp";
-			this->label_temp->Size = System::Drawing::Size(110, 26);
-			this->label_temp->TabIndex = 21;
-			this->label_temp->Text = L"0.00°C / 0.00°F";
-			this->label_temp->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
-			// 
-			// btn_refresh
-			// 
-			this->btn_refresh->Location = System::Drawing::Point(337, 32);
-			this->btn_refresh->Name = L"btn_refresh";
-			this->btn_refresh->Size = System::Drawing::Size(75, 23);
-			this->btn_refresh->TabIndex = 20;
-			this->btn_refresh->Text = L"Refresh";
-			this->btn_refresh->UseVisualStyleBackColor = true;
-			// 
-			// label_batt_percent
-			// 
-			this->label_batt_percent->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
-				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label_batt_percent->Location = System::Drawing::Point(141, 284);
-			this->label_batt_percent->Name = L"label_batt_percent";
-			this->label_batt_percent->Size = System::Drawing::Size(40, 17);
-			this->label_batt_percent->TabIndex = 19;
-			this->label_batt_percent->Text = L"0%";
-			this->label_batt_percent->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// btbRestoreEnable
 			// 
@@ -509,16 +480,6 @@ namespace CppWinFormJoy {
 			this->btbRestoreEnable->UseVisualStyleBackColor = false;
 			this->btbRestoreEnable->Click += gcnew System::EventHandler(this, &FormJoy::btbRestoreEnable_Click);
 			// 
-			// pictureBoxBattery
-			// 
-			this->pictureBoxBattery->Cursor = System::Windows::Forms::Cursors::Arrow;
-			this->pictureBoxBattery->Location = System::Drawing::Point(144, 266);
-			this->pictureBoxBattery->Name = L"pictureBoxBattery";
-			this->pictureBoxBattery->Size = System::Drawing::Size(48, 18);
-			this->pictureBoxBattery->TabIndex = 17;
-			this->pictureBoxBattery->TabStop = false;
-			this->pictureBoxBattery->Click += gcnew System::EventHandler(this, &FormJoy::pictureBoxBattery_Click);
-			// 
 			// pictureBoxPreview
 			// 
 			this->pictureBoxPreview->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
@@ -526,7 +487,7 @@ namespace CppWinFormJoy {
 			this->pictureBoxPreview->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Zoom;
 			this->pictureBoxPreview->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->pictureBoxPreview->Location = System::Drawing::Point(1, 66);
+			this->pictureBoxPreview->Location = System::Drawing::Point(1, 90);
 			this->pictureBoxPreview->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->pictureBoxPreview->Name = L"pictureBoxPreview";
 			this->pictureBoxPreview->Size = System::Drawing::Size(312, 192);
@@ -1946,13 +1907,100 @@ namespace CppWinFormJoy {
 			this->groupBox_dev_param->TabStop = false;
 			this->groupBox_dev_param->Text = L"6-Axis and Stick Device Parameters";
 			// 
+			// toolStrip1
+			// 
+			this->toolStrip1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(55)), static_cast<System::Int32>(static_cast<System::Byte>(55)),
+				static_cast<System::Int32>(static_cast<System::Byte>(55)));
+			this->toolStrip1->Dock = System::Windows::Forms::DockStyle::Bottom;
+			this->toolStrip1->GripStyle = System::Windows::Forms::ToolStripGripStyle::Hidden;
+			this->toolStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {
+				this->toolStripBtn_batt,
+					this->toolStripLabel_batt, this->toolStripLabel_temp, this->toolStripBtn_refresh, this->toolStripBtn_Disconnect
+			});
+			this->toolStrip1->Location = System::Drawing::Point(0, 677);
+			this->toolStrip1->Name = L"toolStrip1";
+			this->toolStrip1->Size = System::Drawing::Size(1662, 25);
+			this->toolStrip1->TabIndex = 44;
+			this->toolStrip1->Text = L"toolStrip1";
+			// 
+			// toolStripBtn_batt
+			// 
+			this->toolStripBtn_batt->Alignment = System::Windows::Forms::ToolStripItemAlignment::Right;
+			this->toolStripBtn_batt->AutoToolTip = false;
+			this->toolStripBtn_batt->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Stretch;
+			this->toolStripBtn_batt->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Image;
+			this->toolStripBtn_batt->ImageScaling = System::Windows::Forms::ToolStripItemImageScaling::None;
+			this->toolStripBtn_batt->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->toolStripBtn_batt->Name = L"toolStripBtn_batt";
+			this->toolStripBtn_batt->Size = System::Drawing::Size(23, 22);
+			this->toolStripBtn_batt->Text = L"toolStripBtn_batt";
+			this->toolStripBtn_batt->Click += gcnew System::EventHandler(this, &FormJoy::pictureBoxBattery_Click);
+			// 
+			// toolStripLabel_batt
+			// 
+			this->toolStripLabel_batt->Alignment = System::Windows::Forms::ToolStripItemAlignment::Right;
+			this->toolStripLabel_batt->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
+			this->toolStripLabel_batt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+			this->toolStripLabel_batt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->toolStripLabel_batt->Name = L"toolStripLabel_batt";
+			this->toolStripLabel_batt->Size = System::Drawing::Size(59, 22);
+			this->toolStripLabel_batt->Text = L"Batt_V_%";
+			// 
+			// toolStripLabel_temp
+			// 
+			this->toolStripLabel_temp->Alignment = System::Windows::Forms::ToolStripItemAlignment::Right;
+			this->toolStripLabel_temp->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
+			this->toolStripLabel_temp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+			this->toolStripLabel_temp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->toolStripLabel_temp->Name = L"toolStripLabel_temp";
+			this->toolStripLabel_temp->Size = System::Drawing::Size(45, 22);
+			this->toolStripLabel_temp->Text = L"0.00°C";
+			this->toolStripLabel_temp->ToolTipText = resources->GetString(L"toolStripLabel_temp.ToolTipText");
+			this->toolStripLabel_temp->Click += gcnew System::EventHandler(this, &FormJoy::toolStripLabel_temp_Click);
+			// 
+			// toolStripBtn_refresh
+			// 
+			this->toolStripBtn_refresh->AutoToolTip = false;
+			this->toolStripBtn_refresh->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
+			this->toolStripBtn_refresh->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+			this->toolStripBtn_refresh->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->toolStripBtn_refresh->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"toolStripBtn_refresh.Image")));
+			this->toolStripBtn_refresh->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->toolStripBtn_refresh->Name = L"toolStripBtn_refresh";
+			this->toolStripBtn_refresh->Size = System::Drawing::Size(56, 22);
+			this->toolStripBtn_refresh->Text = L"Refresh";
+			this->toolStripBtn_refresh->ToolTipText = L"Refresh connected controller info.\r\n\r\nIf you connected a new controller and disco"
+				L"nnected the old one,\r\nit will show the new controller.";
+			this->toolStripBtn_refresh->Click += gcnew System::EventHandler(this, &FormJoy::toolStripBtn_refresh_Click);
+			// 
+			// toolStripBtn_Disconnect
+			// 
+			this->toolStripBtn_Disconnect->AutoToolTip = false;
+			this->toolStripBtn_Disconnect->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
+			this->toolStripBtn_Disconnect->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
+			this->toolStripBtn_Disconnect->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(60)), static_cast<System::Int32>(static_cast<System::Byte>(40)));
+			this->toolStripBtn_Disconnect->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"toolStripBtn_Disconnect.Image")));
+			this->toolStripBtn_Disconnect->ImageTransparentColor = System::Drawing::Color::Magenta;
+			this->toolStripBtn_Disconnect->Name = L"toolStripBtn_Disconnect";
+			this->toolStripBtn_Disconnect->Size = System::Drawing::Size(75, 22);
+			this->toolStripBtn_Disconnect->Text = L"Disconnect";
+			this->toolStripBtn_Disconnect->ToolTipText = L"Disconnects the device.\r\n\r\nAdditionally performs a reboot.\r\nAfter 4s it\'s ready t"
+				L"o connect again.";
+			this->toolStripBtn_Disconnect->Click += gcnew System::EventHandler(this, &FormJoy::toolStripBtn_Disconnect_Click);
+			// 
 			// FormJoy
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(7, 17);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->ClientSize = System::Drawing::Size(1662, 688);
+			this->ClientSize = System::Drawing::Size(1662, 702);
+			this->Controls->Add(this->toolStrip1);
 			this->Controls->Add(this->groupBox_dev_param);
 			this->Controls->Add(this->groupBox2);
 			this->Controls->Add(this->groupBox_btn_test);
@@ -1986,7 +2034,6 @@ namespace CppWinFormJoy {
 			this->Text = L"Joy-Con Toolkit v2.0";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
 			this->groupBoxColor->ResumeLayout(false);
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxBattery))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->EndInit();
 			this->groupBoxSPI->ResumeLayout(false);
 			this->menuStrip1->ResumeLayout(false);
@@ -2015,6 +2062,8 @@ namespace CppWinFormJoy {
 			this->groupBox2->PerformLayout();
 			this->groupBox_dev_param->ResumeLayout(false);
 			this->groupBox_dev_param->PerformLayout();
+			this->toolStrip1->ResumeLayout(false);
+			this->toolStrip1->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -2261,48 +2310,49 @@ namespace CppWinFormJoy {
 		else if (batt_volt > 0x657)
 			batt_percent = 100;
 
-		this->label_batt_percent->Text = String::Format("{0:D}%", batt_percent);
+		this->toolStripLabel_batt->Text = String::Format(" {0:f2}V - {1:D}%", (batt_volt * 2.5) / 1000, batt_percent);
 
+		// Update Battery icon from input report value.
 		switch (batt) {
 			case 0:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Empty\n\nLol, how?");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0")));
+				this->toolStripBtn_batt->ToolTipText = L"Empty\n\nDisconnected?";
 				break;
 			case 1:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0_chr")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Empty, Charging.");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0_chr")));
+				this->toolStripBtn_batt->ToolTipText = L"Empty, Charging.";
 				break;
 			case 2:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Low\n\nPlease charge your device!");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25")));
+				this->toolStripBtn_batt->ToolTipText = L"Low\n\nPlease charge your device!";
 				break;
 			case 3:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25_chr")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Low\n\nCharging");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25_chr")));
+				this->toolStripBtn_batt->ToolTipText = L"Low\n\nCharging";
 				break;
 			case 4:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Medium");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50")));
+				this->toolStripBtn_batt->ToolTipText = L"Medium";
 				break;
 			case 5:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50_chr")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Medium\n\nCharging");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50_chr")));
+				this->toolStripBtn_batt->ToolTipText = L"Medium\n\nCharging";
 				break;
 			case 6:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Good");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75")));
+				this->toolStripBtn_batt->ToolTipText = L"Good";
 				break;
 			case 7:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75_chr")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Good\n\nCharging");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75_chr")));
+				this->toolStripBtn_batt->ToolTipText = L"Good\n\nCharging";
 				break;
 			case 8:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Full");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100")));
+				this->toolStripBtn_batt->ToolTipText = L"Full";
 				break;
 			case 9:
-				this->pictureBoxBattery->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100_chr")));
-				this->toolTip1->SetToolTip(this->pictureBoxBattery, "Almost full\n\nCharging");
+				this->toolStripBtn_batt->Image = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100_chr")));
+				this->toolStripBtn_batt->ToolTipText = L"Almost full\n\nCharging";
 				break;
 		}
 	
@@ -2317,7 +2367,13 @@ namespace CppWinFormJoy {
 		float temperature_c = 25.0f + uint16_to_int16(temp_info[1] << 8 | temp_info[0]) * 0.0625f;
 		float temperature_f = temperature_c * 1.8f + 32;
 
-		this->label_temp->Text = String::Format(L"{0:f2}°C / {1:f2}°F", temperature_c, temperature_f);
+		if (temp_celsius) {
+			this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2103 ", temperature_c);
+		}
+		else {
+			this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2109 ", temperature_f);
+		}
+		
 	}
 
 	private: array<int>^ getCustomColorFromConfig(String^ custom_type)
@@ -2566,6 +2622,7 @@ namespace CppWinFormJoy {
 		this->textBoxDbg_reply_cmd->Visible = true;
 
 		update_battery();
+		update_temperature();
 	}
 
 	private: System::Void btnLoadBackup_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -3481,6 +3538,28 @@ namespace CppWinFormJoy {
 			enable_button_test = false;
 		}
 
+	}
+
+	private: System::Void toolStripLabel_temp_Click(System::Object^  sender, System::EventArgs^  e) {
+
+		if (temp_celsius)
+			temp_celsius = false;
+		else
+			temp_celsius = true;
+
+		update_temperature();
+	}
+
+	private: System::Void toolStripBtn_Disconnect_Click(System::Object^  sender, System::EventArgs^  e) {
+		unsigned char custom_cmd[7];
+		memset(custom_cmd, 0, 7);
+		custom_cmd[0] = 0x01;
+		custom_cmd[5] = 0x06;
+		custom_cmd[6] = 0x00;
+		send_custom_command(custom_cmd);
+	}
+	private: System::Void toolStripBtn_refresh_Click(System::Object^  sender, System::EventArgs^  e) {
+		full_refresh(true);
 	}
 };
 }
