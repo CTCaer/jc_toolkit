@@ -376,7 +376,7 @@ int dump_spi(const char *dev_name) {
 	
 	u16 read_len = 0x1d;
 	u32 offset = 0x0;
-	while (offset < 0x80000) {
+	while (offset < 0x80000 && !cancel_spi_dump) {
 		std::stringstream offset_label;
 		offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << offset/1024.0f;
 		offset_label << "KB of 512KB";
@@ -916,11 +916,11 @@ int button_test() {
 
 				input_report_sys = String::Format(L"6-Axis Sensor:\r\nAccelerometer\r\n");
 				//The controller sends the sensor data 3 times with a little bit different values. Skip them
-				input_report_sys += String::Format(L"X: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
+				input_report_sys += String::Format(L"X: {0:X4} ({1:F1} m/s\u00B2)\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
 					(float)(uint16_to_int16(buf_reply[13] | (buf_reply[14] << 8) & 0xFF00)) * acc_cal_coeff[0]);
-				input_report_sys += String::Format(L"Y: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
+				input_report_sys += String::Format(L"Y: {0:X4} ({1:F1} m/s\u00B2)\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
 					(float)(uint16_to_int16(buf_reply[15] | (buf_reply[16] << 8) & 0xFF00)) * acc_cal_coeff[1]);
-				input_report_sys += String::Format(L"Z: {0:X4} ({1:F1} m/s²)\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
+				input_report_sys += String::Format(L"Z: {0:X4} ({1:F1} m/s\u00B2)\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
 					(float)(uint16_to_int16(buf_reply[17] | (buf_reply[18] << 8) & 0xFF00))  * acc_cal_coeff[2]);
 
 				input_report_sys += String::Format(L"\r\nGyroscope\r\n");

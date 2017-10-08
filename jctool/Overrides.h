@@ -6,28 +6,28 @@ namespace Overrides {
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(85, 85, 85);
+				return Color::FromArgb(55, 55, 55);
 			}
 		}
 		public: property Color MenuItemSelected
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(105, 105, 105);
+				return Color::FromArgb(85, 85, 85);
 			}
 		}
 		public: property Color MenuBorder
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(85, 85, 85);
+				return Color::FromArgb(55, 55, 55);
 			}
 		}
 		public: property Color MenuItemBorder
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(105, 105, 105);
+				return Color::FromArgb(70, 70, 70);
 			}
 		}
 
@@ -35,7 +35,7 @@ namespace Overrides {
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(125, 125, 125);
+				return Color::FromArgb(85, 85, 85);
 			}
 		}
 
@@ -43,14 +43,14 @@ namespace Overrides {
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(125, 125, 125);
+				return Color::FromArgb(85, 85, 85);
 			}
 		}
 		public: property Color ImageMarginGradientBegin
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(75, 75, 75);
+				return Color::FromArgb(55, 55, 55);
 			}
 		}
 
@@ -58,7 +58,7 @@ namespace Overrides {
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(75, 75, 75);
+				return Color::FromArgb(55, 55, 55);
 			}
 		}
 
@@ -66,18 +66,27 @@ namespace Overrides {
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(105, 105, 105);
+				return Color::FromArgb(85, 85, 85);
 			}
 		}
 		public: property Color MenuItemSelectedGradientEnd
 		{
 			virtual Color get() override
 			{
-				return Color::FromArgb(105, 105, 105);
+				return Color::FromArgb(85, 85, 85);
 			}
 		}
 			
 };
 
+	public ref class OverrideTSSR : ToolStripSystemRenderer
+	{
+		public: OverrideTSSR() { }
+
+		protected: virtual void OnRenderToolStripBorder(ToolStripRenderEventArgs^ e) override
+		{
+			// Do nothing
+		}
+	};
 
 }

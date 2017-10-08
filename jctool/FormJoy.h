@@ -33,32 +33,8 @@ namespace CppWinFormJoy {
 
 			this->btnWriteBody->Enabled = false;
 			temp_celsius = true;
-			if (handle_ok != 3) {
-				this->textBoxSN->Text = gcnew String(get_sn(0x6001, 0xF).c_str());
-				this->textBox_chg_sn->Text = this->textBoxSN->Text;
-			}
-			else {
-				this->textBoxSN->Text = L"No S/N";
-				this->textBox_chg_sn->Text = this->textBoxSN->Text;
-			}
-			unsigned char device_info[10];
-			memset(device_info, 0, sizeof(device_info));
 
-			get_device_info(device_info);
-			
-			this->textBoxFW->Text = String::Format("{0:X}.{1:X2}", device_info[0], device_info[1]);
-			this->textBoxMAC->Text = String::Format("{0:X2}:{1:X2}:{2:X2}:{3:X2}:{4:X2}:{5:X2}", device_info[4], device_info[5], device_info[6], device_info[7], device_info[8], device_info[9]);
-
-			if (handle_ok == 1)
-				this->textBoxDev->Text = L"Joy-Con (L)";
-			else if (handle_ok == 2)
-				this->textBoxDev->Text = L"Joy-Con (R)";
-			else if (handle_ok == 3)
-				this->textBoxDev->Text = L"Pro Controller";
-
-			update_battery();
-			update_temperature();
-			update_colors_from_spi(true);
+			full_refresh(false);
 
 			/*
 			BOOL chk = AllocConsole();
@@ -105,6 +81,8 @@ namespace CppWinFormJoy {
 			this->textBox_vib_loop_times->Validating += gcnew CancelEventHandler(this, &FormJoy::textBox_loop_Validating);
 			this->textBox_vib_loop_times->Validated += gcnew EventHandler(this, &FormJoy::textBox_loop_Validated);
 
+			this->toolStrip1->Renderer = gcnew Overrides::OverrideTSSR();
+
 			this->toolTip1->SetToolTip(this->label_sn, L"Click here to change your S/N");
 			this->toolTip1->SetToolTip(this->textBox_vib_loop_times, L"Set how many additional times the loop will be played.\n\nChoose a number from 0 to 999");
 			this->toolTip1->SetToolTip(this->label_loop_times, L"Set how many additional times the loop will be played.\n\nChoose a number from 0 to 999");
@@ -123,8 +101,7 @@ namespace CppWinFormJoy {
 			vib_loop_start = 0;
 			vib_loop_end = 0;
 			vib_loop_wait = 0;
-			disable_expert_mode = 1;
-			enable_button_test = 0;
+			disable_expert_mode = true;
 
 			//Done drawing!
 			send_rumble();
@@ -154,7 +131,7 @@ namespace CppWinFormJoy {
 	private: bool temp_celsius;
 	//file type: 1 = Raw, 2 = bnvib (0x4), 3 = bnvib loop (0xC), 4 = bnvib loop (0x10)
 	private: int vib_file_type;
-	private: int disable_expert_mode;
+	private: bool disable_expert_mode;
 	private: float lf_gain;
 	private: float lf_pitch;
 	private: float hf_gain;
@@ -241,7 +218,6 @@ namespace CppWinFormJoy {
 	private: System::Windows::Forms::Label^  label_eq_info;
 	private: System::Windows::Forms::Button^  btnVib_reset_eq;
 	private: System::Windows::Forms::GroupBox^  groupBox_vib_eq;
-	private: System::Windows::Forms::Label^  label_batt_percent;
 	private: System::Windows::Forms::Button^  btn_enable_expert_mode;
 	private: System::Windows::Forms::Label^  label_loop_times;
 	private: System::Windows::Forms::Button^  btnRestore_SN;
@@ -262,6 +238,7 @@ namespace CppWinFormJoy {
 	public: System::Windows::Forms::TextBox^  textBox_6axis_ucal;
 	public: System::Windows::Forms::TextBox^  textBox_device_parameters2;
 	private: System::Windows::Forms::GroupBox^  groupBox_dev_param;
+	private: System::Windows::Forms::Button^  btn_spi_cancel;
 	private: System::Windows::Forms::ToolStrip^  toolStrip1;
 	private: System::Windows::Forms::ToolStripLabel^  toolStripLabel_temp;
 	private: System::Windows::Forms::ToolStripButton^  toolStripBtn_refresh;
@@ -296,6 +273,7 @@ namespace CppWinFormJoy {
 			this->btnClrDlg2 = (gcnew System::Windows::Forms::Button());
 			this->label_hint = (gcnew System::Windows::Forms::Label());
 			this->groupBoxSPI = (gcnew System::Windows::Forms::GroupBox());
+			this->btn_spi_cancel = (gcnew System::Windows::Forms::Button());
 			this->label_progress = (gcnew System::Windows::Forms::Label());
 			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->textBoxSN = (gcnew System::Windows::Forms::TextBox());
@@ -569,6 +547,7 @@ namespace CppWinFormJoy {
 			// 
 			this->groupBoxSPI->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->groupBoxSPI->Controls->Add(this->btn_spi_cancel);
 			this->groupBoxSPI->Controls->Add(this->label_progress);
 			this->groupBoxSPI->Controls->Add(this->label6);
 			this->groupBoxSPI->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
@@ -580,6 +559,24 @@ namespace CppWinFormJoy {
 			this->groupBoxSPI->Size = System::Drawing::Size(456, 315);
 			this->groupBoxSPI->TabIndex = 14;
 			this->groupBoxSPI->TabStop = false;
+			// 
+			// btn_spi_cancel
+			// 
+			this->btn_spi_cancel->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btn_spi_cancel->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->btn_spi_cancel->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btn_spi_cancel->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
+			this->btn_spi_cancel->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
+				static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->btn_spi_cancel->Location = System::Drawing::Point(187, 250);
+			this->btn_spi_cancel->Name = L"btn_spi_cancel";
+			this->btn_spi_cancel->Size = System::Drawing::Size(75, 34);
+			this->btn_spi_cancel->TabIndex = 35;
+			this->btn_spi_cancel->Text = L"Cancel";
+			this->btn_spi_cancel->UseVisualStyleBackColor = false;
+			this->btn_spi_cancel->Click += gcnew System::EventHandler(this, &FormJoy::btn_spi_cancel_Click);
 			// 
 			// label_progress
 			// 
@@ -758,8 +755,8 @@ namespace CppWinFormJoy {
 			// 
 			// menuStrip1
 			// 
-			this->menuStrip1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->menuStrip1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(55)), static_cast<System::Int32>(static_cast<System::Byte>(55)),
+				static_cast<System::Int32>(static_cast<System::Byte>(55)));
 			this->menuStrip1->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
 			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
@@ -774,8 +771,8 @@ namespace CppWinFormJoy {
 			// 
 			// hDRumblePlayerToolStripMenuItem
 			// 
-			this->hDRumblePlayerToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->hDRumblePlayerToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(55)),
+				static_cast<System::Int32>(static_cast<System::Byte>(55)), static_cast<System::Int32>(static_cast<System::Byte>(55)));
 			this->hDRumblePlayerToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->hDRumblePlayerToolStripMenuItem->Name = L"hDRumblePlayerToolStripMenuItem";
@@ -785,8 +782,8 @@ namespace CppWinFormJoy {
 			// 
 			// menuToolStripMenuItem
 			// 
-			this->menuToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->menuToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(55)),
+				static_cast<System::Int32>(static_cast<System::Byte>(55)), static_cast<System::Int32>(static_cast<System::Byte>(55)));
 			this->menuToolStripMenuItem->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
 			this->menuToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {
 				this->buttonTestToolStripMenuItem,
@@ -800,8 +797,8 @@ namespace CppWinFormJoy {
 			// 
 			// buttonTestToolStripMenuItem
 			// 
-			this->buttonTestToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->buttonTestToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->buttonTestToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->buttonTestToolStripMenuItem->Name = L"buttonTestToolStripMenuItem";
@@ -811,8 +808,8 @@ namespace CppWinFormJoy {
 			// 
 			// debugToolStripMenuItem
 			// 
-			this->debugToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->debugToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->debugToolStripMenuItem->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
 			this->debugToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
@@ -823,8 +820,8 @@ namespace CppWinFormJoy {
 			// 
 			// aboutToolStripMenuItem
 			// 
-			this->aboutToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->aboutToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->aboutToolStripMenuItem->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
 			this->aboutToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
@@ -2069,6 +2066,45 @@ namespace CppWinFormJoy {
 
 		}
 #pragma endregion
+
+	private: System::Void full_refresh(bool check_connection) {
+		if (check_connection) {
+			if (!device_connection()) {
+				MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try to write the colors again!", L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+				return;
+			}
+		}
+		this->btn_run_btn_test->Text = L"Turn on";
+		enable_button_test = false;
+
+		if (handle_ok != 3) {
+			this->textBoxSN->Text = gcnew String(get_sn(0x6001, 0xF).c_str());
+			this->textBox_chg_sn->Text = this->textBoxSN->Text;
+		}
+		else {
+			this->textBoxSN->Text = L"No S/N";
+			this->textBox_chg_sn->Text = this->textBoxSN->Text;
+		}
+		unsigned char device_info[10];
+		memset(device_info, 0, sizeof(device_info));
+
+		get_device_info(device_info);
+
+		this->textBoxFW->Text = String::Format("{0:X}.{1:X2}", device_info[0], device_info[1]);
+		this->textBoxMAC->Text = String::Format("{0:X2}:{1:X2}:{2:X2}:{3:X2}:{4:X2}:{5:X2}", device_info[4], device_info[5], device_info[6], device_info[7], device_info[8], device_info[9]);
+
+		if (handle_ok == 1)
+			this->textBoxDev->Text = L"Joy-Con (L)";
+		else if (handle_ok == 2)
+			this->textBoxDev->Text = L"Joy-Con (R)";
+		else if (handle_ok == 3)
+			this->textBoxDev->Text = L"Pro Controller";
+
+		update_battery();
+		update_temperature();
+		update_colors_from_spi(!check_connection);
+	}
+
 	private: System::Void btnWriteBody_Click(System::Object^ sender, System::EventArgs^ e) {
 		if (!device_connection()) {
 			MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try to write the colors again!",L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
@@ -2183,11 +2219,13 @@ namespace CppWinFormJoy {
 			Application::DoEvents();
 			send_rumble();
 			set_led_busy();
+			cancel_spi_dump = false;
 
 			int error = dump_spi((context.marshal_as<std::string>(filename)).c_str());
+
 			this->groupBoxColor->Visible = true;
 			handler_close = 0;
-			if (!error) {
+			if (!error && !cancel_spi_dump) {
 				send_rumble();
 				MessageBox::Show(L"Done dumping SPI!", L"SPI Dumping", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 			}
@@ -2291,7 +2329,7 @@ namespace CppWinFormJoy {
 		int batt_percent = 0;
 		int batt = ((u8)batt_info[0] & 0xF0) >> 4;
 		
-		//Calculate aproximate battery percent from regulated voltage
+		// Calculate aproximate battery percent from regulated voltage
 		u16 batt_volt = (u8)batt_info[1] + ((u8)batt_info[2] << 8);
 		if (batt_volt < 0x560)
 			batt_percent = 1;
@@ -2455,81 +2493,66 @@ namespace CppWinFormJoy {
 
 	private: System::Void debugToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (option_is_on != 1) {
-			reset_window_option();
-			this->ClientSize = System::Drawing::Size(738, 449);
+			reset_window_option(false);
+			this->ClientSize = System::Drawing::Size(738, 474);
 			this->groupDbg->Visible = true;
 			option_is_on = 1;
 		}
-		else {
-			reset_window_option();
-			this->ClientSize = System::Drawing::Size(485, 449);
-			option_is_on = 0;
-		}
+		else
+			reset_window_option(true);
 	}
 
 	private: System::Void btbRestoreEnable_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (option_is_on != 2) {
-			reset_window_option();
+			reset_window_option(false);
 			this->groupRst->Visible = true;
-			this->ClientSize = System::Drawing::Size(738, 449);
+			this->ClientSize = System::Drawing::Size(738, 474);
 			option_is_on = 2;
 		}
-		else {
-			reset_window_option();
-			this->ClientSize = System::Drawing::Size(485, 449);
-			option_is_on = 0;
-		}
+		else
+			reset_window_option(true);
 	}
 
 	private: System::Void label_sn_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (option_is_on != 3) {
-			reset_window_option();
+			reset_window_option(false);
 
-			this->ClientSize = System::Drawing::Size(738, 449);
+			this->ClientSize = System::Drawing::Size(738, 474);
 			this->groupBox_chg_sn->Visible = true;
 			option_is_on = 3;
 		}
-		else {
-			reset_window_option();
-			this->ClientSize = System::Drawing::Size(485, 449);
-			option_is_on = 0;
-		}
+		else
+			reset_window_option(true);
 	}
 
 	private: System::Void btnPlayVibEnable_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (option_is_on != 4) {
-			reset_window_option();
+			reset_window_option(false);
 
-			this->ClientSize = System::Drawing::Size(738, 449);
+			this->ClientSize = System::Drawing::Size(738, 474);
 			this->groupBoxVib->Visible = true;
 			option_is_on = 4;
 		}
-		else {
-			reset_window_option();
-			this->ClientSize = System::Drawing::Size(485, 449);
-			option_is_on = 0;
-		}
+		else
+			reset_window_option(true);
 	}
 
 	private: System::Void buttonTestToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (option_is_on != 5) {
-			reset_window_option();
+			reset_window_option(false);
 
-			this->ClientSize = System::Drawing::Size(738, 670);
+			this->ClientSize = System::Drawing::Size(738, 695);
 			this->groupBox_btn_test->Visible = true;
-			enable_button_test = false;
 			this->btn_run_btn_test->Text = L"Turn on";
 			option_is_on = 5;
 		}
 		else {
-			reset_window_option();
-			this->ClientSize = System::Drawing::Size(485, 449);
-			option_is_on = 0;
+			reset_window_option(true);
 			this->btn_run_btn_test->Text = L"Turn on";
 		}
 	}
 
-	private: System::Void reset_window_option() {
+	private: System::Void reset_window_option(bool reset_all) {
 		enable_button_test = false;
 		this->groupDbg->Visible = false;
 		this->groupRst->Visible = false;
@@ -2539,6 +2562,11 @@ namespace CppWinFormJoy {
 		this->textBoxDbg_reply_cmd->Visible = false;
 		this->groupBoxVib->Visible = false;
 		this->groupBox_btn_test->Visible = false;
+
+		if (reset_all) {
+			this->ClientSize = System::Drawing::Size(485, 474);
+			option_is_on = 0;
+		}
 	}
 
 	private: System::Void btnDbg_send_cmd_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -2621,8 +2649,10 @@ namespace CppWinFormJoy {
 		this->textBoxDbg_reply->Visible = true;
 		this->textBoxDbg_reply_cmd->Visible = true;
 
-		update_battery();
-		update_temperature();
+		if (test[5] != 0x06) {
+			update_battery();
+			update_temperature();
+		}
 	}
 
 	private: System::Void btnLoadBackup_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -2983,7 +3013,7 @@ namespace CppWinFormJoy {
 				unsigned char sn_backup_erase[0x10];
 				memset(sn_backup_erase, 0xFF, sizeof(sn_backup_erase));
 
-				//Factory Configuration Sector 0x6000
+				// Factory Configuration Sector 0x6000
 				for (int i = 0x00; i < 0x1000; i = i + 0x10) {
 					memset(full_restore_data, 0, 0x10);
 					for (int j = 0; j < 0x10; j++)
@@ -2996,7 +3026,7 @@ namespace CppWinFormJoy {
 					FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
 					Application::DoEvents();
 				}
-				//User Calibration Sector 0x8000
+				// User Calibration Sector 0x8000
 				for (int i = 0x00; i < 0x1000; i = i + 0x10) {
 					memset(full_restore_data, 0, 0x10);
 					for (int j = 0; j < 0x10; j++)
@@ -3009,7 +3039,7 @@ namespace CppWinFormJoy {
 					FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
 					Application::DoEvents();
 				}
-				//Erase S/N backup storage
+				// Erase S/N backup storage
 				write_spi_data(0xF000, 0x10, sn_backup_erase);
 
 				std::stringstream offset_label;
@@ -3018,18 +3048,30 @@ namespace CppWinFormJoy {
 				FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
 				Application::DoEvents();
 
-				unsigned char custom_cmd[3];
-				memset(custom_cmd, 0, 3);
+				// Set shipment
+				unsigned char custom_cmd[7];
+				memset(custom_cmd, 0, 7);
 				custom_cmd[0] = 0x01;
-				//Set shipment. This will force a full pair with Switch
-				custom_cmd[1] = 0x08;
-				custom_cmd[2] = 0x01;
+				custom_cmd[5] = 0x08;
+				custom_cmd[6] = 0x01;
 				send_custom_command(custom_cmd);
+				// Clear pairing info
+				memset(custom_cmd, 0, 7);
+				custom_cmd[0] = 0x01;
+				custom_cmd[5] = 0x07;
+				send_custom_command(custom_cmd);
+				// Reboot controller and go into pairing mode
+				memset(custom_cmd, 0, 7);
+				custom_cmd[0] = 0x01;
+				custom_cmd[5] = 0x06;
+				custom_cmd[6] = 0x02;
+				send_custom_command(custom_cmd);
+
 				update_battery();
 				update_temperature();
 				send_rumble();
 
-				MessageBox::Show(L"The full restore was completed!\n\nIt is recommended to turn off the controller and exit Joy-Con Toolkit.\nAfter that press any button on the controller and run the app again.", L"Full Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Warning);
+				MessageBox::Show(L"The full restore was completed!\nThe controller was rebooted and it is now in pairing mode!\n\nExit Joy-Con Toolkit and pair with Switch or PC again.", L"Full Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Warning);
 				this->groupBoxColor->Visible = true;
 				this->btnLoadBackup->Enabled = true;
 				this->btn_restore->Enabled = true;
@@ -3429,7 +3471,7 @@ namespace CppWinFormJoy {
 			//vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
 
 			//Convert to raw
-			for (int i = 0; i < vib_samples * 4; i = i + 4)
+			for (u32 i = 0; i < (vib_samples * 4); i = i + 4)
 			{
 				//Apply amp eq
 				u8 tempLA = (this->trackBar_lf_amp->Value == 10 ? this->vib_loaded_file[0xC + vib_off + i] : (u8)CLAMP((float)this->vib_loaded_file[0xC + vib_off + i] * lf_gain, 0.0f, 255.0f));
@@ -3517,7 +3559,7 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void btn_enable_expert_mode_Click(System::Object^  sender, System::EventArgs^  e) {
-		disable_expert_mode = 0;
+		disable_expert_mode = false;
 		this->groupDbg->Text = L"Expert Mode";
 	}
 
@@ -3538,6 +3580,10 @@ namespace CppWinFormJoy {
 			enable_button_test = false;
 		}
 
+	}
+
+	private: System::Void btn_spi_cancel_Click(System::Object^  sender, System::EventArgs^  e) {
+		cancel_spi_dump = true;
 	}
 
 	private: System::Void toolStripLabel_temp_Click(System::Object^  sender, System::EventArgs^  e) {
