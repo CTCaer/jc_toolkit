@@ -159,7 +159,7 @@ std::string get_sn(u32 offset, const u16 read_len) {
 
 		res = hid_read(handle, buf, sizeof(buf));
 
-		if ((*(uint16_t*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
+		if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 			break;
 	}
 
@@ -195,7 +195,7 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
 
 		res = hid_read(handle, buf, sizeof(buf));
 
-		if ((*(uint16_t*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
+		if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 			break;
 	}
 	if (res >= 0x14 + read_len) {
@@ -230,7 +230,7 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
 
 		res = hid_read(handle, buf, sizeof(buf));
 
-		if (*(uint16_t*)&buf[0xD] == 0x1180)
+		if (*(u16*)&buf[0xD] == 0x1180)
 			break;
 
 		error_writing++;
@@ -263,7 +263,7 @@ int get_device_info(u8* test_buf) {
 		//printf("write %d\n", res);
 		res = hid_read(handle, buf, sizeof(buf));
 		
-		if (*(uint16_t*)&buf[0xD] == 0x0282)
+		if (*(u16*)&buf[0xD] == 0x0282)
 			break;
 		error_reading++;
 		if (error_reading == 125)
@@ -295,7 +295,7 @@ int get_battery(u8* test_buf) {
 		//printf("write %d\n", res);
 		res = hid_read(handle, buf, sizeof(buf));
 
-		if (*(uint16_t*)&buf[0xD] == 0x50D0)
+		if (*(u16*)&buf[0xD] == 0x50D0)
 			break;
 		error_reading++;
 		if (error_reading == 125)
@@ -330,7 +330,7 @@ int get_temprature(u8* test_buf) {
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 		res = hid_read(handle, buf, sizeof(buf));
 
-		if (*(uint16_t*)&buf[0xD] == 0x43C0)
+		if (*(u16*)&buf[0xD] == 0x43C0)
 			break;
 		error_reading++;
 		if (error_reading == 125)
@@ -372,7 +372,7 @@ int get_temprature(u8* test_buf) {
 		//printf("write %d\n", res);
 		res = hid_read(handle, buf, sizeof(buf));
 
-		if (*(uint16_t*)&buf[0xD] == 0x43C0)
+		if (*(u16*)&buf[0xD] == 0x43C0)
 			break;
 		error_reading++;
 		if (error_reading == 125)
@@ -447,7 +447,7 @@ int dump_spi(const char *dev_name) {
 			res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 			res = hid_read(handle, buf, sizeof(buf));
 
-			if ((*(uint16_t*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
+			if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 				break;
 		}
 		fwrite(buf + 0x14, read_len, 1, f);
@@ -709,7 +709,6 @@ int button_test() {
 	String^ input_report_sys;
 	u8 buf_cmd[36];
 	u8 buf_reply[0x170];
-	u8 buf_ft[0x200];
 	float acc_cal_coeff[3];
 	float gyro_cal_coeff[3];
 	float cal_x[1] = { 0.0f };
@@ -718,14 +717,15 @@ int button_test() {
 	bool has_user_cal_stick_l = false;
 	bool has_user_cal_stick_r = false;
 	bool has_user_cal_sensor = false;
+
 	unsigned char factory_stick_cal[0x12];
 	unsigned char user_stick_cal[0x16];
 	unsigned char sensor_model[0x6];
 	unsigned char stick_model[0x24];
 	unsigned char factory_sensor_cal[0x18];
 	unsigned char user_sensor_cal[0x1A];
-	uint16_t factory_sensor_cal_calm[0xC];
-	uint16_t user_sensor_cal_calm[0xC];
+	u16 factory_sensor_cal_calm[0xC];
+	u16 user_sensor_cal_calm[0xC];
 	s16 sensor_cal[0x2][0x3];
 	u16 stick_cal_x_l[0x3];
 	u16 stick_cal_y_l[0x3];
@@ -751,18 +751,6 @@ int button_test() {
 	get_spi_data(0x6098, 0x12, &stick_model[0x12]);
 	get_spi_data(0x8010, 0x16, user_stick_cal);
 	get_spi_data(0x8026, 0x1A, user_sensor_cal);
-
-	/*
-	//pro dev parameters
-	sensor_model[0] = 0x50;		sensor_model[1] = 0xFD;		sensor_model[2] = 0x00;
-	sensor_model[3] = 0x00;		sensor_model[4] = 0xC6;		sensor_model[5] = 0x0F;
-	stick_model[0] = 0x0F;		stick_model[1] = 0x30;		stick_model[2] = 0x61;
-	stick_model[3] = 0x96;		stick_model[4] = 0x30;		stick_model[5] = 0xF3;
-	stick_model[6] = 0xD4;		stick_model[7] = 0x14;		stick_model[8] = 0x54;
-	stick_model[9] = 0x41;		stick_model[10] = 0x15;		stick_model[11] = 0x54;
-	stick_model[12] = 0xC7;		stick_model[13] = 0x79;		stick_model[14] = 0x9C;
-	stick_model[15] = 0x33;		stick_model[16] = 0x36;		stick_model[17] = 0x63;
-	*/
 
 	// Analog Stick device parameters
 	FormJoy::myform1->textBox_device_parameters->Text = String::Format(L"6-Axis Sideways Offsets:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2} (Deadzone)\r\n{6:X3} (Range ratio)",
@@ -940,7 +928,6 @@ int button_test() {
 	// Input report loop
 	while (enable_button_test) {
 		memset(buf_cmd, 0, sizeof(buf_cmd));
-		//Sleep(64);
 		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
 		if (res > 12) {
