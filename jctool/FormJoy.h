@@ -1685,11 +1685,12 @@ namespace CppWinFormJoy {
 			this->textBox_btn_test_reply->Multiline = true;
 			this->textBox_btn_test_reply->Name = L"textBox_btn_test_reply";
 			this->textBox_btn_test_reply->ReadOnly = true;
-			this->textBox_btn_test_reply->Size = System::Drawing::Size(217, 115);
+			this->textBox_btn_test_reply->Size = System::Drawing::Size(210, 167);
 			this->textBox_btn_test_reply->TabIndex = 35;
 			this->textBox_btn_test_reply->TabStop = false;
-			this->textBox_btn_test_reply->Text = L"Conn:   , Batt:  /4, Chrg:   \r\n\r\nButtons:          \r\nL Stick: X:      Y:    \r\nR S"
-				L"tick: X:      Y:    ";
+			this->textBox_btn_test_reply->Text = L"Conn:\r\nBatt:       Charging: Yes\r\nVibration decision:\r\n\r\nButtons:\r\n\r\nL Stick (Raw"
+				L"/Cal):\r\nX:         Y:\r\nX:         Y:\r\n\r\n\r\nR Stick (Raw/Cal):\r\nX:         Y:\r\nX: "
+				L"        Y:";
 			// 
 			// textBox_btn_test_subreply
 			// 
@@ -1699,14 +1700,14 @@ namespace CppWinFormJoy {
 			this->textBox_btn_test_subreply->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
 			this->textBox_btn_test_subreply->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->textBox_btn_test_subreply->Location = System::Drawing::Point(8, 146);
+			this->textBox_btn_test_subreply->Location = System::Drawing::Point(8, 202);
 			this->textBox_btn_test_subreply->Multiline = true;
 			this->textBox_btn_test_subreply->Name = L"textBox_btn_test_subreply";
 			this->textBox_btn_test_subreply->ReadOnly = true;
-			this->textBox_btn_test_subreply->Size = System::Drawing::Size(212, 132);
+			this->textBox_btn_test_subreply->Size = System::Drawing::Size(210, 119);
 			this->textBox_btn_test_subreply->TabIndex = 35;
 			this->textBox_btn_test_subreply->TabStop = false;
-			this->textBox_btn_test_subreply->Text = L"6-Axis Sensor:\r\nAccelerometer\r\nX: \r\nY: \r\nX: \r\n\r\nGyroscope\r\nX: \r\nY: \r\nZ: ";
+			this->textBox_btn_test_subreply->Text = L"Acc/meter (Raw/Cal):\r\nX: \r\nY: \r\nX: \r\n\r\nGyroscope (Raw/Cal):\r\nX: \r\nY: \r\nZ: ";
 			// 
 			// groupBox_btn_test
 			// 
