@@ -1873,7 +1873,7 @@ namespace CppWinFormJoy {
 			this->textBox_device_parameters->Size = System::Drawing::Size(144, 158);
 			this->textBox_device_parameters->TabIndex = 41;
 			this->textBox_device_parameters->TabStop = false;
-			this->textBox_device_parameters->Text = L"6-Axis Horizontal Offsets:\r\n\r\n\r\n\r\nStick Parameters:";
+			this->textBox_device_parameters->Text = L"Flat surface ACC Offsets:\r\n\r\n\r\n\r\nStick Parameters:";
 			// 
 			// textBox_device_parameters2
 			// 
@@ -2068,6 +2068,10 @@ namespace CppWinFormJoy {
 		}
 #pragma endregion
 
+	//////////////
+	// Functions
+	//////////////
+
 	private: System::Void full_refresh(bool check_connection) {
 		if (check_connection) {
 			if (!device_connection()) {
@@ -2075,6 +2079,10 @@ namespace CppWinFormJoy {
 				return;
 			}
 		}
+
+		if (check_connection)
+			set_led_busy();
+
 		this->btn_run_btn_test->Text = L"Turn on";
 		enable_button_test = false;
 
@@ -2401,18 +2409,15 @@ namespace CppWinFormJoy {
 
 		unsigned char temp_info[2];
 		memset(temp_info, 0, sizeof(temp_info));
-		get_temprature(temp_info);
-
+		get_temperature(temp_info);
+		// Convert reading to Celsius according to datasheet
 		float temperature_c = 25.0f + uint16_to_int16(temp_info[1] << 8 | temp_info[0]) * 0.0625f;
 		float temperature_f = temperature_c * 1.8f + 32;
 
-		if (temp_celsius) {
+		if (temp_celsius)
 			this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2103 ", temperature_c);
-		}
-		else {
+		else
 			this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2109 ", temperature_f);
-		}
-		
 	}
 
 	private: array<int>^ getCustomColorFromConfig(String^ custom_type)

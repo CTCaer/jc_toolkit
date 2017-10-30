@@ -34,7 +34,7 @@ extern int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf);
 extern int write_spi_data(u32 offset, const u16 write_len, u8* test_buf);
 extern int get_device_info(u8* test_buf);
 extern int get_battery(u8* test_buf);
-extern int get_temprature(u8* test_buf);
+extern int get_temperature(u8* test_buf);
 extern int dump_spi(const char *dev_name);
 extern int send_rumble();
 extern int play_tune();

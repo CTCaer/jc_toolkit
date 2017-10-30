@@ -5,8 +5,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+// #define NOMINMAX
 #include <Windows.h>
-#define NOMINMAX
 
 #include "jctool.h"
 #include "FormJoy.h"
@@ -20,25 +20,28 @@ using namespace CppWinFormJoy;
 
 struct brcm_hdr {
 	u8 cmd;
-	u8 rumble[9];
+	u8 timer;
+	u8 rumble_l[4];
+	u8 rumble_r[4];
 };
 
 struct brcm_cmd_01 {
 	u8 subcmd;
 	union {
-		
 		struct {
 			u32 offset;
 			u8 size;
 		} spi_read;
 		
 		struct {
-			u32 address;
-		} hax_read;
+			u8 arg1;
+			u8 arg2;
+		} subcmd_arg;
 	};
 };
 
-int timming_byte = 0x0;
+// Used to order the packets received in Joy-Con internally. Range 0x0-0xF.
+u8 timming_byte = 0x0;
 
 #pragma pack(pop)
 
@@ -62,7 +65,7 @@ void AnalogStickCalc
 )
 {
 	float x_f, y_f;
-	// Apply Joy-Con center deadzone. 0xAE translates approx to 15%. Pro controller has a 10% () deadzone
+	// Apply Joy-Con center deadzone. 0xAE translates approx to 15%. Pro controller has a 10% deadzone.
 	float deadZoneCenter = 0.15f;
 	// Add a small ammount of outer deadzone to avoid edge cases or machine variety.
 	float deadZoneOuter = 0.10f;
@@ -81,8 +84,7 @@ void AnalogStickCalc
 
 	// Interpolate zone between deadzones
 	float mag = sqrtf(x_f*x_f + y_f*y_f);
-	if (mag > deadZoneCenter)
-	{
+	if (mag > deadZoneCenter) {
 		// scale such that output magnitude is in the range [0.0f, 1.0f]
 		float legalRange = 1.0f - deadZoneOuter - deadZoneCenter;
 		float normalizedMag = min(1.0f, (mag - deadZoneCenter) / legalRange);
@@ -105,13 +107,10 @@ int set_led_busy() {
 	auto hdr = (brcm_hdr *)buf;
 	auto pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x30;
-	pkt->spi_read.offset = 0x81;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x81;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
 
@@ -121,17 +120,13 @@ int set_led_busy() {
 		hdr = (brcm_hdr *)buf;
 		pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 0x01;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x38;
-
-		buf[11] = 0x28;
-		buf[12] = 0x20;
+		pkt->subcmd_arg.arg1 = 0x28;
+		pkt->subcmd_arg.arg2 = 0x20;
 		buf[13] = 0xF2;
 		buf[14] = buf[15] = 0xF0;
-
 		res = hid_write(handle, buf, 16);
 		res = hid_read(handle, buf, 0);
 	}
@@ -148,17 +143,14 @@ std::string get_sn(u32 offset, const u16 read_len) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 1;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x10;
 		pkt->spi_read.offset = offset;
 		pkt->spi_read.size = read_len;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
 		res = hid_read(handle, buf, sizeof(buf));
-
 		if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 			break;
 	}
@@ -170,10 +162,9 @@ std::string get_sn(u32 offset, const u16 read_len) {
 			}else
 				test += "";
 			}
-		}
+	}
 
-		return test;
-	
+	return test;
 }
 
 int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
@@ -184,17 +175,14 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 1;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x10;
 		pkt->spi_read.offset = offset;
 		pkt->spi_read.size = read_len;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
 		res = hid_read(handle, buf, sizeof(buf));
-
 		if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 			break;
 	}
@@ -216,30 +204,25 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 1;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x11;
 		pkt->spi_read.offset = offset;
 		pkt->spi_read.size = write_len;
-		for (int i = 0; i < write_len; i++) {
+		for (int i = 0; i < write_len; i++)
 			buf[0x10 + i] = test_buf[i];
-		}
+
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt) + write_len);
 
 		res = hid_read(handle, buf, sizeof(buf));
-
 		if (*(u16*)&buf[0xD] == 0x1180)
 			break;
-
 		error_writing++;
 		if (error_writing == 125)
 			return 1;
 	}
 
 	return 0;
-
 }
 
 int get_device_info(u8* test_buf) {
@@ -251,18 +234,12 @@ int get_device_info(u8* test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 1;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x02;
-		pkt->spi_read.offset = 0x00;
-		pkt->spi_read.size = 0x00;
-
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		//printf("write %d\n", res);
-		res = hid_read(handle, buf, sizeof(buf));
-		
+
+		res = hid_read(handle, buf, sizeof(buf));		
 		if (*(u16*)&buf[0xD] == 0x0282)
 			break;
 		error_reading++;
@@ -274,7 +251,6 @@ int get_device_info(u8* test_buf) {
 	}
 
 	return 0;
-
 }
 
 int get_battery(u8* test_buf) {
@@ -286,15 +262,12 @@ int get_battery(u8* test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 1;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x50;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		//printf("write %d\n", res);
-		res = hid_read(handle, buf, sizeof(buf));
 
+		res = hid_read(handle, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x50D0)
 			break;
 		error_reading++;
@@ -306,10 +279,9 @@ int get_battery(u8* test_buf) {
 	test_buf[2] = buf[0x10];
 
 	return 0;
-
 }
 
-int get_temprature(u8* test_buf) {
+int get_temperature(u8* test_buf) {
 	int res;
 	u8 buf[0x100];
 	int error_reading = 0;
@@ -320,16 +292,14 @@ int get_temprature(u8* test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 1;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x43;
-		buf[11] = 0x10;
-		buf[12] = 0x01;
+		pkt->subcmd_arg.arg1 = 0x10;
+		pkt->subcmd_arg.arg2 = 0x01;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		res = hid_read(handle, buf, sizeof(buf));
 
+		res = hid_read(handle, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x43C0)
 			break;
 		error_reading++;
@@ -343,17 +313,17 @@ int get_temprature(u8* test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 0x01;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x40;
-		buf[11] = 0x01;
+		pkt->subcmd_arg.arg1 = 0x01;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 		res = hid_read(handle, buf, 0);
 
 		imu_changed = true;
-		Sleep(32);
+
+		// Let temperature sensor stabilize for a little bit.
+		Sleep(64);
 	}
 
 	while (1) {
@@ -361,17 +331,14 @@ int get_temprature(u8* test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 1;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x43;
-		buf[11] = 0x20;
-		buf[12] = 0x02;
+		pkt->subcmd_arg.arg1 = 0x20;
+		pkt->subcmd_arg.arg2 = 0x02;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		//printf("write %d\n", res);
-		res = hid_read(handle, buf, sizeof(buf));
 
+		res = hid_read(handle, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x43C0)
 			break;
 		error_reading++;
@@ -386,19 +353,15 @@ int get_temprature(u8* test_buf) {
 		auto hdr = (brcm_hdr *)buf;
 		auto pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 0x01;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x40;
-		buf[11] = 0x00;
+		pkt->subcmd_arg.arg1 = 0x00;
 		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 		res = hid_read(handle, buf, 0);
-
 	}
 
 	return 0;
-
 }
 
 int dump_spi(const char *dev_name) {
@@ -406,18 +369,15 @@ int dump_spi(const char *dev_name) {
 	int i=0;
 
 	String^ filename_sys = gcnew String(file_dev_name.c_str());
-
 	file_dev_name = "./" + file_dev_name;
 
 	FILE *f;
 	errno_t err;
 
 	if ((err = fopen_s(&f, file_dev_name.c_str(), "wb")) != 0) {
-		
 		MessageBox::Show(L"Cannot open file " + filename_sys + L" for writing!\n\nError: " + err, L"Error opening file!", MessageBoxButtons::OK ,MessageBoxIcon::Exclamation);
-
+		
 		return 1;
-	
 	}
 
 	int res;
@@ -437,10 +397,8 @@ int dump_spi(const char *dev_name) {
 			auto hdr = (brcm_hdr *)buf;
 			auto pkt = (brcm_cmd_01 *)(hdr + 1);
 			hdr->cmd = 1;
-			hdr->rumble[0] = timming_byte;
+			hdr->timer = timming_byte & 0xF;
 			timming_byte++;
-			if (timming_byte > 0xF)
-				timming_byte = 0x0;
 			pkt->subcmd = 0x10;
 			pkt->spi_read.offset = offset;
 			pkt->spi_read.size = read_len;
@@ -470,13 +428,10 @@ int send_rumble() {
 	auto hdr = (brcm_hdr *)buf;
 	auto pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x48;
-	pkt->spi_read.offset = 0x01;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf2, 0);
 
@@ -485,37 +440,40 @@ int send_rumble() {
 	//Send confirmation 
 	memset(buf, 0, sizeof(buf));
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
-	hdr->rumble[1] = 0xc2; hdr->rumble[2] = 0xc8; hdr->rumble[3] = 0x03; hdr->rumble[4] = 0x72;
-	hdr->rumble[5] = 0xc2; hdr->rumble[6] = 0xc8; hdr->rumble[7] = 0x03; hdr->rumble[8] = 0x72;
+	hdr->rumble_l[0] = 0xc2;
+	hdr->rumble_l[1] = 0xc8;
+	hdr->rumble_l[2] = 0x03;
+	hdr->rumble_l[3] = 0x72;
+	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-
 	res = hid_read(handle, buf2, 0);
 
 	Sleep(81);
-	hdr->rumble[0] = timming_byte;
-	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
-	hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-	hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
+	hdr->timer = timming_byte & 0xF;
+	timming_byte++;
+	hdr->rumble_l[0] = 0x00;
+	hdr->rumble_l[1] = 0x01;
+	hdr->rumble_l[2] = 0x40;
+	hdr->rumble_l[3] = 0x40;
+	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf2, 0);
 
 	Sleep(5);
-	hdr->rumble[0] = timming_byte;
-	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
-	hdr->rumble[1] = 0xc3; hdr->rumble[2] = 0xc8; hdr->rumble[3] = 0x60; hdr->rumble[4] = 0x64;
-	hdr->rumble[5] = 0xc3; hdr->rumble[6] = 0xc8; hdr->rumble[7] = 0x60; hdr->rumble[8] = 0x64;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
+	hdr->timer = timming_byte & 0xF;
+	timming_byte++;
+	hdr->rumble_l[0] = 0xc3;
+	hdr->rumble_l[1] = 0xc8;
+	hdr->rumble_l[2] = 0x60;
+	hdr->rumble_l[3] = 0x64;
+	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
+	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf2, 0);
+
 	Sleep(5);
 
 	//Disable vibration
@@ -523,15 +481,15 @@ int send_rumble() {
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
-	hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-	hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+	hdr->rumble_l[0] = 0x00;
+	hdr->rumble_l[1] = 0x01;
+	hdr->rumble_l[2] = 0x40;
+	hdr->rumble_l[3] = 0x40;
+	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	pkt->subcmd = 0x48;
-	pkt->spi_read.offset = 0x00;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x00;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
 
@@ -539,40 +497,33 @@ int send_rumble() {
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x30;
-	pkt->spi_read.offset = 0x01;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
 
-	//Heartbeat HOME Led
+	// Set HOME Led
 	if (handle_ok != 1) {
 		memset(buf, 0, sizeof(buf));
 		hdr = (brcm_hdr *)buf;
 		pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 0x01;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
 		pkt->subcmd = 0x38;
-
+		// Heartbeat style configuration
 		buf[11] = 0xF1;
 		buf[12] = 0x00;
 		buf[13] = buf[14] = buf[15] = buf[16] = buf[17] = buf[18] = 0xF0;
 		buf[19] = buf[22] = buf[25] = buf[28] = buf[31] = 0x00;
 		buf[20] = buf[21] = buf[23] = buf[24] = buf[26] = buf[27] = buf[29] = buf[30] = buf[32] = buf[33] = 0xFF;
-
 		res = hid_write(handle, buf, 34);
 		res = hid_read(handle, buf, 0);
 	}
 
 	return 0;
-
 }
 
 int send_custom_command(u8* arg) {
@@ -588,14 +539,12 @@ int send_custom_command(u8* arg) {
 	memset(buf_reply, 0, sizeof(buf_reply));
 
 	buf_cmd[0] = arg[0];
-	buf_cmd[1] = timming_byte;
+	buf_cmd[1] = timming_byte & 0xF;
+	timming_byte++;
 	buf_cmd[2] = buf_cmd[6] = arg[1];
 	buf_cmd[3] = buf_cmd[7] = arg[2];
 	buf_cmd[4] = buf_cmd[8] = arg[3];
 	buf_cmd[5] = buf_cmd[9] = arg[4];
-	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 
 	buf_cmd[10] = arg[5];
 
@@ -606,9 +555,7 @@ int send_custom_command(u8* arg) {
 			output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
 			if (byte_seperator == 4)
 				output_report_sys += L" ";
-			if (byte_seperator == 8)
-			{
-
+			if (byte_seperator == 8) {
 				byte_seperator = 0;
 				output_report_sys += L"\r\n";
 			}
@@ -622,9 +569,7 @@ int send_custom_command(u8* arg) {
 			output_report_sys += String::Format(L"{0:X2} ", buf_cmd[i - 5]);
 			if (byte_seperator == 4)
 				output_report_sys += L" ";
-			if (byte_seperator == 8)
-			{
-
+			if (byte_seperator == 8) {
 				byte_seperator = 0;
 				output_report_sys += L"\r\n";
 			}
@@ -636,9 +581,8 @@ int send_custom_command(u8* arg) {
 	//Packet size header + subcommand and uint8 argument
 	res_write = hid_write(handle, buf_cmd, sizeof(buf_cmd));
 
-	if (res_write < 0) {
+	if (res_write < 0)
 		input_report_sys += L"hid_write failed!\r\n\r\n";
-	}
 
 	res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
@@ -654,8 +598,7 @@ int send_custom_command(u8* arg) {
 				input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
 				if (byte_seperator == 4)
 					input_report_cmd += L" ";
-				if (byte_seperator == 8)
-				{
+				if (byte_seperator == 8) {
 					byte_seperator = 0;
 					input_report_cmd += L"\r\n";
 				}
@@ -666,8 +609,7 @@ int send_custom_command(u8* arg) {
 				input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
 				if (byte_seperator == 4)
 					input_report_sys += L" ";
-				if (byte_seperator == 8)
-				{
+				if (byte_seperator == 8) {
 					byte_seperator = 0;
 					input_report_sys += L"\r\n";
 				}
@@ -680,8 +622,7 @@ int send_custom_command(u8* arg) {
 				input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
 				if (byte_seperator == 4)
 					input_report_sys += L" ";
-				if (byte_seperator == 8)
-				{
+				if (byte_seperator == 8) {
 					byte_seperator = 0;
 					input_report_sys += L"\r\n";
 				}
@@ -753,7 +694,7 @@ int button_test() {
 	get_spi_data(0x8026, 0x1A, user_sensor_cal);
 
 	// Analog Stick device parameters
-	FormJoy::myform1->textBox_device_parameters->Text = String::Format(L"6-Axis Sideways Offsets:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2} (Deadzone)\r\n{6:X3} (Range ratio)",
+	FormJoy::myform1->textBox_device_parameters->Text = String::Format(L"Flat surface ACC Offset:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2} (Deadzone)\r\n{6:X3} (Range ratio)",
 		sensor_model[0] | sensor_model[1] << 8,
 		sensor_model[2] | sensor_model[3] << 8,
 		sensor_model[4] | sensor_model[5] << 8,
@@ -892,12 +833,10 @@ int button_test() {
 	auto hdr = (brcm_hdr *)buf_cmd;
 	auto pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x03;
-	pkt->spi_read.offset = 0x30;
+	pkt->subcmd_arg.arg1 = 0x30;
 	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
@@ -906,12 +845,10 @@ int button_test() {
 	hdr = (brcm_hdr *)buf_cmd;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x40;
-	pkt->spi_read.offset = 0x01;
+	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
@@ -946,7 +883,6 @@ int button_test() {
 
 				input_report_cmd += String::Format(L"Vibration decision: ");
 				input_report_cmd += String::Format(L"{0:X}, {1:X}\r\n", (buf_reply[12] >> 7) & 1, (buf_reply[12] >> 4) & 7);
-
 				input_report_cmd += String::Format(L"\r\nButtons: ");
 
 				for (int i = 3; i < 6; i++)
@@ -1003,7 +939,6 @@ int button_test() {
 					(float)(uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00)) * gyro_cal_coeff[1]);
 				input_report_sys += String::Format(L"Z: {0:X4}  {1,6:F1} rad/s\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00,
 					(float)(uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00)) * gyro_cal_coeff[2]);
-
 			}
 			else if (buf_reply[0] == 0x3F) {
 				input_report_cmd = L"";
@@ -1012,11 +947,10 @@ int button_test() {
 			}
 
 			if (limit_output == 1) {
-
 				FormJoy::myform1->textBox_btn_test_reply->Text = input_report_cmd;
 				FormJoy::myform1->textBox_btn_test_subreply->Text = input_report_sys;
 			}
-			//Only update every 75ms
+			//Only update every 75ms for better readability. No need for real time parsing.
 			else if (limit_output > 4) {
 				limit_output = 0;
 			}
@@ -1029,12 +963,10 @@ int button_test() {
 	hdr = (brcm_hdr *)buf_cmd;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x03;
-	pkt->spi_read.offset = 0x3F;
+	pkt->subcmd_arg.arg1 = 0x3F;
 	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
@@ -1042,12 +974,10 @@ int button_test() {
 	hdr = (brcm_hdr *)buf_cmd;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x40;
-	pkt->spi_read.offset = 0x00;
+	pkt->subcmd_arg.arg1 = 0x00;
 	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
@@ -1064,13 +994,10 @@ int play_tune() {
 	auto hdr = (brcm_hdr *)buf;
 	auto pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x48;
-	pkt->spi_read.offset = 0x01;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf2, 0);
 
@@ -1080,34 +1007,34 @@ int play_tune() {
 		hdr = (brcm_hdr *)buf;
 		pkt = (brcm_cmd_01 *)(hdr + 1);
 		hdr->cmd = 0x10;
-		hdr->rumble[0] = timming_byte;
+		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
-		if (timming_byte > 0xF)
-			timming_byte = 0x0;
-		hdr->rumble[1] = (tune[i] >> 24) & 0xFF; hdr->rumble[2] = (tune[i] >> 16) & 0xFF; hdr->rumble[3] = (tune[i] >> 8) & 0xFF; hdr->rumble[4] = tune[i] & 0xFF;
-		hdr->rumble[5] = (tune[i] >> 24) & 0xFF; hdr->rumble[6] = (tune[i] >> 16) & 0xFF; hdr->rumble[7] = (tune[i] >> 8) & 0xFF; hdr->rumble[8] = (tune[i] & 0xFF);
+		hdr->rumble_l[0] = (tune[i] >> 24) & 0xFF;
+		hdr->rumble_l[1] = (tune[i] >> 16) & 0xFF;
+		hdr->rumble_l[2] = (tune[i] >> 8) & 0xFF;
+		hdr->rumble_l[3] = tune[i] & 0xFF;
+		memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 		res = hid_write(handle, buf, sizeof(*hdr));
+		// Joy-con does not reply when Output Report is 0x10
 
-		//Joy-con does not reply when Output Report is 0x10
-		//res = hid_read_timeout(handle, buf2, 0, 0);
 		Application::DoEvents();
 	}
 
-	//Disable vibration
+	// Disable vibration
 	Sleep(15);
 	memset(buf, 0, sizeof(buf));
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
-	hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-	hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+	hdr->rumble_l[0] = 0x00;
+	hdr->rumble_l[1] = 0x01;
+	hdr->rumble_l[2] = 0x40;
+	hdr->rumble_l[3] = 0x40;
+	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	pkt->subcmd = 0x48;
-	pkt->spi_read.offset = 0x00;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x00;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
 
@@ -1115,18 +1042,14 @@ int play_tune() {
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x30;
-	pkt->spi_read.offset = 0x01;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
 
 	return 0;
-
 }
 
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
@@ -1139,13 +1062,10 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	auto hdr = (brcm_hdr *)buf;
 	auto pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x48;
-	pkt->spi_read.offset = 0x01;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf2, 0);
 
@@ -1156,23 +1076,23 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			hdr = (brcm_hdr *)buf;
 			pkt = (brcm_cmd_01 *)(hdr + 1);
 			hdr->cmd = 0x10;
-			hdr->rumble[0] = timming_byte;
+			hdr->timer = timming_byte & 0xF;
 			timming_byte++;
-			if (timming_byte > 0xF)
-				timming_byte = 0x0;
 			if (file_type == 1) {
-				hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0A + i];
-				hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0B + i];
-				hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0C + i];
-				hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0D + i];
+				hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0A + i];
+				hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0B + i];
+				hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0C + i];
+				hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0D + i];
 			}
 			//file_type is simple bnvib
 			else {
-				hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_file_converted[0x0C + i];
-				hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_file_converted[0x0D + i];
-				hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_file_converted[0x0E + i];
-				hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_file_converted[0x0F + i];
+				hdr->rumble_l[0] = FormJoy::myform1->vib_file_converted[0x0C + i];
+				hdr->rumble_l[1] = FormJoy::myform1->vib_file_converted[0x0D + i];
+				hdr->rumble_l[2] = FormJoy::myform1->vib_file_converted[0x0E + i];
+				hdr->rumble_l[3] = FormJoy::myform1->vib_file_converted[0x0F + i];
 			}
+			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
+
 			res = hid_write(handle, buf, sizeof(*hdr));
 			Application::DoEvents();
 		}
@@ -1190,15 +1110,14 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			hdr = (brcm_hdr *)buf;
 			pkt = (brcm_cmd_01 *)(hdr + 1);
 			hdr->cmd = 0x10;
-			hdr->rumble[0] = timming_byte;
+			hdr->timer = timming_byte & 0xF;
 			timming_byte++;
-			if (timming_byte > 0xF)
-				timming_byte = 0x0;
 			
-			hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
-			hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
-			hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
-			hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+			hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
+			hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
+			hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
+			hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 			
 			res = hid_write(handle, buf, sizeof(*hdr));
 			Application::DoEvents();
@@ -1210,31 +1129,31 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 				hdr = (brcm_hdr *)buf;
 				pkt = (brcm_cmd_01 *)(hdr + 1);
 				hdr->cmd = 0x10;
-				hdr->rumble[0] = timming_byte;
+				hdr->timer = timming_byte & 0xF;
 				timming_byte++;
-				if (timming_byte > 0xF)
-					timming_byte = 0x0;
 				
-				hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
-				hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
-				hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
-				hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+				hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
+				hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
+				hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
+				hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+				memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
 				res = hid_write(handle, buf, sizeof(*hdr));
 				Application::DoEvents();
 			}
 			Sleep(sample_rate);
-			//Disable vibration
+			// Disable vibration
 			memset(buf, 0, sizeof(buf));
 			hdr = (brcm_hdr *)buf;
 			pkt = (brcm_cmd_01 *)(hdr + 1);
 			hdr->cmd = 0x10;
-			hdr->rumble[0] = timming_byte;
+			hdr->timer = timming_byte & 0xF;
 			timming_byte++;
-			if (timming_byte > 0xF)
-				timming_byte = 0x0;
-			hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-			hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+			hdr->rumble_l[0] = 0x00;
+			hdr->rumble_l[1] = 0x01;
+			hdr->rumble_l[2] = 0x40;
+			hdr->rumble_l[3] = 0x40;
+			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 			res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 			Sleep(loop_wait * sample_rate);
 		}
@@ -1244,15 +1163,14 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			hdr = (brcm_hdr *)buf;
 			pkt = (brcm_cmd_01 *)(hdr + 1);
 			hdr->cmd = 0x10;
-			hdr->rumble[0] = timming_byte;
+			hdr->timer = timming_byte & 0xF;
 			timming_byte++;
-			if (timming_byte > 0xF)
-				timming_byte = 0x0;
 			
-			hdr->rumble[1] = hdr->rumble[5] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
-			hdr->rumble[2] = hdr->rumble[6] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
-			hdr->rumble[3] = hdr->rumble[7] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
-			hdr->rumble[4] = hdr->rumble[8] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+			hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
+			hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
+			hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
+			hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
 			res = hid_write(handle, buf, sizeof(*hdr));
 			Application::DoEvents();
@@ -1260,17 +1178,18 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	}
 
 	Sleep(sample_rate);
-	//Disable vibration
+	// Disable vibration
 	memset(buf, 0, sizeof(buf));
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x10;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
-	hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-	hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+	hdr->rumble_l[0] = 0x00;
+	hdr->rumble_l[1] = 0x01;
+	hdr->rumble_l[2] = 0x40;
+	hdr->rumble_l[3] = 0x40;
+	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
 	Sleep(sample_rate + 120);
@@ -1278,12 +1197,13 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
-	hdr->rumble[1] = 0x00; hdr->rumble[2] = 0x01; hdr->rumble[3] = 0x40; hdr->rumble[4] = 0x40;
-	hdr->rumble[5] = 0x00; hdr->rumble[6] = 0x01; hdr->rumble[7] = 0x40; hdr->rumble[8] = 0x40;
+	hdr->rumble_l[0] = 0x00;
+	hdr->rumble_l[1] = 0x01;
+	hdr->rumble_l[2] = 0x40;
+	hdr->rumble_l[3] = 0x40;
+	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	pkt->subcmd = 0x48;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
@@ -1292,13 +1212,10 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	hdr = (brcm_hdr *)buf;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
 	hdr->cmd = 0x01;
-	hdr->rumble[0] = timming_byte;
+	hdr->timer = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	pkt->subcmd = 0x30;
-	pkt->spi_read.offset = 0x01;
-	pkt->spi_read.size = 0x00;
+	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf, 0);
 
@@ -1371,20 +1288,16 @@ int usb_command(hid_device *handle) {
 
 	Sleep(16);
 
-	buf_cmd[9] = timming_byte;
+	buf_cmd[9] = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	buf_cmd[18] = 0x40;
 	buf_cmd[19] = 0x01;
 	res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
 	res = hid_read(handle, buf_cmd2, 0);
 	Sleep(16);
 
-	buf_cmd[9] = timming_byte;
+	buf_cmd[9] = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	buf_cmd[18] = 0x30;
 	buf_cmd[19] = 0x1;
 	res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
@@ -1392,16 +1305,12 @@ int usb_command(hid_device *handle) {
 
 	Sleep(16);
 
-	buf_cmd[9] = timming_byte;
+	buf_cmd[9] = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	buf_cmd[18] = 0x38;
 	buf_cmd[19] = 0x22;
-	buf_cmd[9] = timming_byte;
+	buf_cmd[9] = timming_byte & 0xF;
 	timming_byte++;
-	if (timming_byte > 0xF)
-		timming_byte = 0x0;
 	res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
 	res = hid_read(handle, buf_cmd2, 0);
 
@@ -1476,8 +1385,7 @@ int device_connection(){
 }
 
 [STAThread]
-int Main(array<String^>^ args)
-{
+int Main(array<String^>^ args) {
 	while (!device_connection()) {
 		if (MessageBox::Show(L"The device is not paired or the device was disconnected!\n\nTo pair:\n1. Press and hold the sync button until the leds are on\n2. Pair the Bluetooth controller in Windows\n\n To connect again:\n1. Press a button on the controller", L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
 			return 1;
@@ -1507,5 +1415,6 @@ int Main(array<String^>^ args)
 	*/
 
 	Application::Run(myform1);
+
 	return 0;
 }
