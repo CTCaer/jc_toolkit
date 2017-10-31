@@ -1944,6 +1944,7 @@ namespace CppWinFormJoy {
 			this->toolStripLabel_batt->Name = L"toolStripLabel_batt";
 			this->toolStripLabel_batt->Size = System::Drawing::Size(59, 22);
 			this->toolStripLabel_batt->Text = L"Batt_V_%";
+			this->toolStripLabel_batt->Click += gcnew System::EventHandler(this, &FormJoy::toolStripLabel_batt_Click);
 			// 
 			// toolStripLabel_temp
 			// 
@@ -1954,7 +1955,7 @@ namespace CppWinFormJoy {
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->toolStripLabel_temp->Name = L"toolStripLabel_temp";
 			this->toolStripLabel_temp->Size = System::Drawing::Size(45, 22);
-			this->toolStripLabel_temp->Text = L"0.00°C";
+			this->toolStripLabel_temp->Text = L"0.00\u2103";
 			this->toolStripLabel_temp->ToolTipText = resources->GetString(L"toolStripLabel_temp.ToolTipText");
 			this->toolStripLabel_temp->Click += gcnew System::EventHandler(this, &FormJoy::toolStripLabel_temp_Click);
 			// 
@@ -2406,7 +2407,6 @@ namespace CppWinFormJoy {
 	}
 
 	private: System::Void update_temperature() {
-
 		unsigned char temp_info[2];
 		memset(temp_info, 0, sizeof(temp_info));
 		get_temperature(temp_info);
@@ -3341,7 +3341,23 @@ namespace CppWinFormJoy {
 		if (MessageBox::Show(L"HOORAY!!\n\nYou found the easter egg!\n\nMake sure you have a good signal and get the device near your ear.\n\nThen press OK to hear the tune!\n\nIf the tune is slow or choppy:\n1. Close the app\n2. Press the sync button once to turn off the device\n3. Get close to your BT adapter and maintain LoS\n4. Press any other button and run the app again.", L"Easter egg!", MessageBoxButtons::OKCancel, MessageBoxIcon::Information) == System::Windows::Forms::DialogResult::OK)
 		{
 			set_led_busy();
-			play_tune();
+			play_tune(0);
+			update_battery();
+			update_temperature();
+			send_rumble();
+			MessageBox::Show(L"The HD Rumble music has ended.", L"Easter egg!");
+		}
+	}
+
+	private: System::Void toolStripLabel_batt_Click(System::Object^  sender, System::EventArgs^  e) {
+		if (!device_connection()) {
+			MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try again!", L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+			return;
+		}
+		if (MessageBox::Show(L"HOORAY!!\n\nYou found another easter egg!\n\nMake sure you have a good signal and get the device near your ear.\n\nThen press OK to hear the tune!\n\nIf the tune is slow or choppy:\n1. Close the app\n2. Press the sync button once to turn off the device\n3. Get close to your BT adapter and maintain LoS\n4. Press any other button and run the app again.", L"Easter egg 2!", MessageBoxButtons::OKCancel, MessageBoxIcon::Information) == System::Windows::Forms::DialogResult::OK)
+		{
+			set_led_busy();
+			play_tune(1);
 			update_battery();
 			update_temperature();
 			send_rumble();
@@ -3613,6 +3629,7 @@ namespace CppWinFormJoy {
 	private: System::Void toolStripBtn_refresh_Click(System::Object^  sender, System::EventArgs^  e) {
 		full_refresh(true);
 	}
+
 };
 }
 

@@ -984,7 +984,7 @@ int button_test() {
 	return 0;
 }
 
-int play_tune() {
+int play_tune(int tune_no) {
 	int res;
 	u8 buf[0x100];
 	u8 buf2[0x100];
@@ -1000,8 +1000,21 @@ int play_tune() {
 	pkt->subcmd_arg.arg1 = 0x01;
 	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 	res = hid_read(handle, buf2, 0);
+	// This needs to be changed for new bigger tunes.
+	u32 tune[6000];
+	int tune_size;
+	switch (tune_no) {
+		case 0:
+			memcpy(&tune, &tune_SMB, sizeof(tune_SMB));
+			tune_size = sizeof(tune_SMB) / sizeof(u32);
+			break;
+		case 1:
+			memcpy(&tune, &tune_SMO_OK, sizeof(tune_SMO_OK));
+			tune_size = sizeof(tune_SMO_OK) / sizeof(u32);
+			break;
+	}
 
-	for (int i = 0; i < 2740; i++) {
+	for (int i = 0; i < tune_size; i++) {
 		Sleep(15);
 		memset(buf, 0, sizeof(buf));
 		hdr = (brcm_hdr *)buf;

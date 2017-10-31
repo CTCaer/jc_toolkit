@@ -29,7 +29,7 @@ typedef int32_t s32;
 typedef int64_t s64;
 
 extern std::string get_sn(u32 offset, const u16 read_len);
-extern int16_t uint16_to_int16(uint16_t a);
+extern s16 uint16_to_int16(u16 a);
 extern int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf);
 extern int write_spi_data(u32 offset, const u16 write_len, u8* test_buf);
 extern int get_device_info(u8* test_buf);
@@ -37,7 +37,7 @@ extern int get_battery(u8* test_buf);
 extern int get_temperature(u8* test_buf);
 extern int dump_spi(const char *dev_name);
 extern int send_rumble();
-extern int play_tune();
+extern int play_tune(int tune_no);
 extern int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times);
 extern int send_custom_command(u8* arg);
 extern int device_connection();
