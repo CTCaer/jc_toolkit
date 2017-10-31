@@ -2030,7 +2030,7 @@ namespace CppWinFormJoy {
 			this->MaximizeBox = false;
 			this->Name = L"FormJoy";
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
-			this->Text = L"Joy-Con Toolkit v2.5";
+			this->Text = L"Joy-Con Toolkit v2.5.1";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
 			this->groupBoxColor->ResumeLayout(false);
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->EndInit();
