@@ -938,7 +938,7 @@ int button_test() {
 				for (int i = 3; i < 6; i++)
 					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
 			
-				if (handle_ok != 2 || dual_l_handle_enable) {
+				if (handle_ok != 2 || dual_mode_jc_enable) {
 					input_report_cmd += String::Format(L"\r\n\r\nL Stick (Raw/Cal):\r\nX:   {0:X3}   Y:   {1:X3}\r\n",
 						buf_reply[6] | (u16)((buf_reply[7] & 0xF) << 8),
 						(buf_reply[7] >> 4) | (buf_reply[8] << 4));
