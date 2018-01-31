@@ -47,8 +47,10 @@ int handle_ok;
 bool enable_button_test;
 bool allow_full_restore;
 bool cancel_spi_dump;
-hid_device *handle;
-hid_device *handle_l;
+hid_device *handle_l_r_pro;
+hid_device *handle_dual_l;
+bool dual_mode_jc_enable;
+bool dual_l_handle_enable;
 int handler_close;
 int option_is_on;
 

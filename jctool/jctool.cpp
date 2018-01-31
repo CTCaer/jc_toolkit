@@ -111,8 +111,8 @@ int set_led_busy() {
 	timming_byte++;
 	pkt->subcmd = 0x30;
 	pkt->subcmd_arg.arg1 = 0x81;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf, 0);
 
 	//Set breathing HOME Led
 	if (handle_ok != 1) {
@@ -127,8 +127,8 @@ int set_led_busy() {
 		pkt->subcmd_arg.arg2 = 0x20;
 		buf[13] = 0xF2;
 		buf[14] = buf[15] = 0xF0;
-		res = hid_write(handle, buf, 16);
-		res = hid_read(handle, buf, 0);
+		res = hid_write(handle_l_r_pro, buf, 16);
+		res = hid_read(handle_l_r_pro, buf, 0);
 	}
 
 	return 0;
@@ -148,9 +148,9 @@ std::string get_sn(u32 offset, const u16 read_len) {
 		pkt->subcmd = 0x10;
 		pkt->spi_read.offset = offset;
 		pkt->spi_read.size = read_len;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf, sizeof(buf));
+		res = hid_read(handle_l_r_pro, buf, sizeof(buf));
 		if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 			break;
 	}
@@ -180,9 +180,14 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
 		pkt->subcmd = 0x10;
 		pkt->spi_read.offset = offset;
 		pkt->spi_read.size = read_len;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-
-		res = hid_read(handle, buf, sizeof(buf));
+		if (!dual_l_handle_enable) {
+			res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+			res = hid_read(handle_l_r_pro, buf, sizeof(buf));
+		}
+		else {
+			res = hid_write(handle_dual_l, buf, sizeof(*hdr) + sizeof(*pkt));
+			res = hid_read(handle_dual_l, buf, sizeof(buf));
+		}
 		if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 			break;
 	}
@@ -212,9 +217,9 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
 		for (int i = 0; i < write_len; i++)
 			buf[0x10 + i] = test_buf[i];
 
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt) + write_len);
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt) + write_len);
 
-		res = hid_read(handle, buf, sizeof(buf));
+		res = hid_read(handle_l_r_pro, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x1180)
 			break;
 		error_writing++;
@@ -237,9 +242,9 @@ int get_device_info(u8* test_buf) {
 		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
 		pkt->subcmd = 0x02;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf, sizeof(buf));		
+		res = hid_read(handle_l_r_pro, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x0282)
 			break;
 		error_reading++;
@@ -265,9 +270,9 @@ int get_battery(u8* test_buf) {
 		hdr->timer = timming_byte & 0xF;
 		timming_byte++;
 		pkt->subcmd = 0x50;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf, sizeof(buf));
+		res = hid_read(handle_l_r_pro, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x50D0)
 			break;
 		error_reading++;
@@ -297,9 +302,9 @@ int get_temperature(u8* test_buf) {
 		pkt->subcmd = 0x43;
 		pkt->subcmd_arg.arg1 = 0x10;
 		pkt->subcmd_arg.arg2 = 0x01;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf, sizeof(buf));
+		res = hid_read(handle_l_r_pro, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x43C0)
 			break;
 		error_reading++;
@@ -317,8 +322,8 @@ int get_temperature(u8* test_buf) {
 		timming_byte++;
 		pkt->subcmd = 0x40;
 		pkt->subcmd_arg.arg1 = 0x01;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		res = hid_read(handle, buf, 0);
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle_l_r_pro, buf, 0);
 
 		imu_changed = true;
 
@@ -336,9 +341,9 @@ int get_temperature(u8* test_buf) {
 		pkt->subcmd = 0x43;
 		pkt->subcmd_arg.arg1 = 0x20;
 		pkt->subcmd_arg.arg2 = 0x02;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
 
-		res = hid_read(handle, buf, sizeof(buf));
+		res = hid_read(handle_l_r_pro, buf, sizeof(buf));
 		if (*(u16*)&buf[0xD] == 0x43C0)
 			break;
 		error_reading++;
@@ -357,8 +362,8 @@ int get_temperature(u8* test_buf) {
 		timming_byte++;
 		pkt->subcmd = 0x40;
 		pkt->subcmd_arg.arg1 = 0x00;
-		res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-		res = hid_read(handle, buf, 0);
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle_l_r_pro, buf, 0);
 	}
 
 	return 0;
@@ -402,8 +407,8 @@ int dump_spi(const char *dev_name) {
 			pkt->subcmd = 0x10;
 			pkt->spi_read.offset = offset;
 			pkt->spi_read.size = read_len;
-			res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-			res = hid_read(handle, buf, sizeof(buf));
+			res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+			res = hid_read(handle_l_r_pro, buf, sizeof(buf));
 
 			if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
 				break;
@@ -432,8 +437,8 @@ int send_rumble() {
 	timming_byte++;
 	pkt->subcmd = 0x48;
 	pkt->subcmd_arg.arg1 = 0x01;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf2, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf2, 0);
 
 	//New vibration like switch
 	Sleep(16);
@@ -447,8 +452,8 @@ int send_rumble() {
 	hdr->rumble_l[2] = 0x03;
 	hdr->rumble_l[3] = 0x72;
 	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf2, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf2, 0);
 
 	Sleep(81);
 
@@ -459,8 +464,8 @@ int send_rumble() {
 	hdr->rumble_l[2] = 0x40;
 	hdr->rumble_l[3] = 0x40;
 	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf2, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf2, 0);
 
 	Sleep(5);
 
@@ -471,8 +476,8 @@ int send_rumble() {
 	hdr->rumble_l[2] = 0x60;
 	hdr->rumble_l[3] = 0x64;
 	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf2, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf2, 0);
 
 	Sleep(5);
 
@@ -490,8 +495,8 @@ int send_rumble() {
 	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	pkt->subcmd = 0x48;
 	pkt->subcmd_arg.arg1 = 0x00;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf, 0);
 
 	memset(buf, 0, sizeof(buf));
 	hdr = (brcm_hdr *)buf;
@@ -501,8 +506,8 @@ int send_rumble() {
 	timming_byte++;
 	pkt->subcmd = 0x30;
 	pkt->subcmd_arg.arg1 = 0x01;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf, 0);
 
 	// Set HOME Led
 	if (handle_ok != 1) {
@@ -519,8 +524,8 @@ int send_rumble() {
 		buf[13] = buf[14] = buf[15] = buf[16] = buf[17] = buf[18] = 0xF0;
 		buf[19] = buf[22] = buf[25] = buf[28] = buf[31] = 0x00;
 		buf[20] = buf[21] = buf[23] = buf[24] = buf[26] = buf[27] = buf[29] = buf[30] = buf[32] = buf[33] = 0xFF;
-		res = hid_write(handle, buf, 34);
-		res = hid_read(handle, buf, 0);
+		res = hid_write(handle_l_r_pro, buf, 34);
+		res = hid_read(handle_l_r_pro, buf, 0);
 	}
 
 	return 0;
@@ -579,12 +584,12 @@ int send_custom_command(u8* arg) {
 	FormJoy::myform1->textBoxDbg_sent->Text = output_report_sys;
 
 	//Packet size header + subcommand and uint8 argument
-	res_write = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+	res_write = hid_write(handle_l_r_pro, buf_cmd, sizeof(buf_cmd));
 
 	if (res_write < 0)
 		input_report_sys += L"hid_write failed!\r\n\r\n";
 
-	res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+	res = hid_read_timeout(handle_l_r_pro, buf_reply, sizeof(buf_reply), 200);
 
 	byte_seperator = 1;
 	if (res > 12) {
@@ -650,6 +655,7 @@ int button_test() {
 	String^ input_report_sys;
 	u8 buf_cmd[36];
 	u8 buf_reply[0x170];
+	u8 buf_reply_dual_l[0x170];
 	float acc_cal_coeff[3];
 	float gyro_cal_coeff[3];
 	float cal_x[1] = { 0.0f };
@@ -693,6 +699,16 @@ int button_test() {
 	get_spi_data(0x8010, 0x16, user_stick_cal);
 	get_spi_data(0x8026, 0x1A, user_sensor_cal);
 
+	// Parse/Merge stick calibration for Dual Joy-Con
+	if  (dual_mode_jc_enable) {
+		dual_l_handle_enable = true;
+
+		get_spi_data(0x603D, 0x9, factory_stick_cal);
+		get_spi_data(0x8010, 0xB, user_stick_cal);
+
+		dual_l_handle_enable = false;
+	}
+
 	// Analog Stick device parameters
 	FormJoy::myform1->textBox_device_parameters->Text = String::Format(L"Flat surface ACC Offset:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2} (Deadzone)\r\n{6:X3} (Range ratio)",
 		sensor_model[0] | sensor_model[1] << 8,
@@ -720,7 +736,7 @@ int button_test() {
 	}
 
 	// Stick calibration
-	if (handle_ok != 2) {
+	if (handle_ok != 2 || dual_mode_jc_enable) {
 		stick_cal_x_l[1] = (factory_stick_cal[4] << 8) & 0xF00 | factory_stick_cal[3];
 		stick_cal_y_l[1] = (factory_stick_cal[5] << 4) | (factory_stick_cal[4] >> 4);
 		stick_cal_x_l[0] = stick_cal_x_l[1] - ((factory_stick_cal[7] << 8) & 0xF00 | factory_stick_cal[6]);
@@ -733,7 +749,7 @@ int button_test() {
 	else {
 		FormJoy::myform1->textBox_lstick_fcal->Text = L"L Stick Factory:\r\nNo calibration";
 	}
-	if (handle_ok != 1) {
+	if (handle_ok != 1 || dual_mode_jc_enable) {
 		stick_cal_x_r[1] = (factory_stick_cal[10] << 8) & 0xF00 | factory_stick_cal[9];
 		stick_cal_y_r[1] = (factory_stick_cal[11] << 4) | (factory_stick_cal[10] >> 4);
 		stick_cal_x_r[0] = stick_cal_x_r[1] - ((factory_stick_cal[13] << 8) & 0xF00 | factory_stick_cal[12]);
@@ -828,7 +844,7 @@ int button_test() {
 	}
 
 
-	// Enable nxpad standard input report
+	// Enable standard input report
 	memset(buf_cmd, 0, sizeof(buf_cmd));
 	auto hdr = (brcm_hdr *)buf_cmd;
 	auto pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -837,8 +853,32 @@ int button_test() {
 	timming_byte++;
 	pkt->subcmd = 0x03;
 	pkt->subcmd_arg.arg1 = 0x30;
-	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_write(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	if (dual_mode_jc_enable) {
+		// Dual mode: Set Player Led on Left JC
+		memset(buf_cmd, 0, sizeof(buf_cmd));
+		hdr = (brcm_hdr *)buf_cmd;
+		pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x01;
+		hdr->timer = timming_byte & 0xF;
+		timming_byte++;
+		pkt->subcmd = 0x30;
+		pkt->subcmd_arg.arg1 = 0x01;
+		res = hid_write(handle_dual_l, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle_dual_l, buf_cmd, 0);
+		// Dual mode: Set Left JC input report type
+		memset(buf_cmd, 0, sizeof(buf_cmd));
+		hdr = (brcm_hdr *)buf_cmd;
+		pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x01;
+		hdr->timer = timming_byte & 0xF;
+		timming_byte++;
+		pkt->subcmd = 0x03;
+		pkt->subcmd_arg.arg1 = 0x30;
+		res = hid_write(handle_dual_l, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle_dual_l, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	}
 
 	// Enable IMU
 	memset(buf_cmd, 0, sizeof(buf_cmd));
@@ -849,8 +889,8 @@ int button_test() {
 	timming_byte++;
 	pkt->subcmd = 0x40;
 	pkt->subcmd_arg.arg1 = 0x01;
-	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_write(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
 	// Use SPI calibration and convert them to SI acc unit
 	acc_cal_coeff[0] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][0]))) * 4.0f  * 9.8f;
@@ -864,31 +904,41 @@ int button_test() {
 
 	// Input report loop
 	while (enable_button_test) {
-		memset(buf_cmd, 0, sizeof(buf_cmd));
-		res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+		res = hid_read_timeout(handle_l_r_pro, buf_reply, sizeof(buf_reply), 200);
+		if (dual_mode_jc_enable) {
+			res = hid_read_timeout(handle_dual_l, buf_reply_dual_l, sizeof(buf_reply_dual_l), 200);
+			// Merge button and stick data
+			for (int i = 4; i < 9; i++)
+				buf_reply[i] += buf_reply_dual_l[i];
+		}
 
 		if (res > 12) {
 			if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x31 || buf_reply[0] == 0x32 || buf_reply[0] == 0x33) {
-				if (((buf_reply[2] >> 1) & 0x3) == 3)
-					input_report_cmd = String::Format(L"Conn: BT");
-				else if (((buf_reply[2] >> 1) & 0x3) == 0)
-					input_report_cmd = String::Format(L"Conn: USB");
-				else
-					input_report_cmd = String::Format(L"Conn: {0:X}?", (buf_reply[2] >> 1) & 0x3);
-				input_report_cmd += String::Format(L"\r\nBatt: {0:X}/4   ", buf_reply[2] >> 5);
-				if ((buf_reply[2] >> 4) & 0x1)
-					input_report_cmd += L"Charging: Yes\r\n";
-				else
-					input_report_cmd += L"Charging: No\r\n";
+				if (!dual_mode_jc_enable) {
+					if (((buf_reply[2] >> 1) & 0x3) == 3)
+						input_report_cmd = String::Format(L"Conn: BT");
+					else if (((buf_reply[2] >> 1) & 0x3) == 0)
+						input_report_cmd = String::Format(L"Conn: USB");
+					else
+						input_report_cmd = String::Format(L"Conn: {0:X}?", (buf_reply[2] >> 1) & 0x3);
+					input_report_cmd += String::Format(L"\r\nBatt: {0:X}/4   ", buf_reply[2] >> 5);
+					if ((buf_reply[2] >> 4) & 0x1)
+						input_report_cmd += L"Charging: Yes\r\n";
+					else
+						input_report_cmd += L"Charging: No\r\n";
 
-				input_report_cmd += String::Format(L"Vibration decision: ");
-				input_report_cmd += String::Format(L"{0:X}, {1:X}\r\n", (buf_reply[12] >> 7) & 1, (buf_reply[12] >> 4) & 7);
+					input_report_cmd += String::Format(L"Vibration decision: ");
+					input_report_cmd += String::Format(L"{0:X}, {1:X}\r\n", (buf_reply[12] >> 7) & 1, (buf_reply[12] >> 4) & 7);
+				}
+				else {
+					input_report_cmd = String::Format(L"Dual Joy-Con:\r\n\r\n");
+				}
 				input_report_cmd += String::Format(L"\r\nButtons: ");
 
 				for (int i = 3; i < 6; i++)
 					input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
 			
-				if (handle_ok != 2) {
+				if (handle_ok != 2 || dual_l_handle_enable) {
 					input_report_cmd += String::Format(L"\r\n\r\nL Stick (Raw/Cal):\r\nX:   {0:X3}   Y:   {1:X3}\r\n",
 						buf_reply[6] | (u16)((buf_reply[7] & 0xF) << 8),
 						(buf_reply[7] >> 4) | (buf_reply[8] << 4));
@@ -903,6 +953,7 @@ int button_test() {
 					input_report_cmd += String::Format(L"X: {0,5:f2}   Y: {1,5:f2}\r\n",
 						cal_x[1], cal_y[1]);
 				}
+				// If Dual mode, the parsing is done anyway, because handle_ok is 2.
 				if (handle_ok != 1) {
 					input_report_cmd += String::Format(L"\r\n\r\nR Stick (Raw/Cal):\r\nX:   {0:X3}   Y:   {1:X3}\r\n",
 						buf_reply[9] | (u16)((buf_reply[10] & 0xF) << 8),
@@ -950,7 +1001,7 @@ int button_test() {
 				FormJoy::myform1->textBox_btn_test_reply->Text = input_report_cmd;
 				FormJoy::myform1->textBox_btn_test_subreply->Text = input_report_sys;
 			}
-			//Only update every 75ms for better readability. No need for real time parsing.
+			//Only update every 75ms for better readability. No need for real time text print.
 			else if (limit_output > 4) {
 				limit_output = 0;
 			}
@@ -959,6 +1010,7 @@ int button_test() {
 
 		Application::DoEvents();
 	}
+	// Disable standard input report
 	memset(buf_cmd, 0, sizeof(buf_cmd));
 	hdr = (brcm_hdr *)buf_cmd;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -967,9 +1019,23 @@ int button_test() {
 	timming_byte++;
 	pkt->subcmd = 0x03;
 	pkt->subcmd_arg.arg1 = 0x3F;
-	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_write(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	if (dual_mode_jc_enable) {
+		// Dual mode: Set Left JC input report type
+		memset(buf_cmd, 0, sizeof(buf_cmd));
+		hdr = (brcm_hdr *)buf_cmd;
+		pkt = (brcm_cmd_01 *)(hdr + 1);
+		hdr->cmd = 0x01;
+		hdr->timer = timming_byte & 0xF;
+		timming_byte++;
+		pkt->subcmd = 0x03;
+		pkt->subcmd_arg.arg1 = 0x3F;
+		res = hid_write(handle_dual_l, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+		res = hid_read(handle_dual_l, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	}
 
+	// Disable IMU
 	memset(buf_cmd, 0, sizeof(buf_cmd));
 	hdr = (brcm_hdr *)buf_cmd;
 	pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -978,8 +1044,8 @@ int button_test() {
 	timming_byte++;
 	pkt->subcmd = 0x40;
 	pkt->subcmd_arg.arg1 = 0x00;
-	res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_write(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
 
 	return 0;
 }
@@ -998,8 +1064,8 @@ int play_tune(int tune_no) {
 	timming_byte++;
 	pkt->subcmd = 0x48;
 	pkt->subcmd_arg.arg1 = 0x01;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf2, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf2, 0);
 	// This needs to be changed for new bigger tunes.
 	u32 tune[6000];
 	int tune_size;
@@ -1027,7 +1093,7 @@ int play_tune(int tune_no) {
 		hdr->rumble_l[2] = (tune[i] >> 8) & 0xFF;
 		hdr->rumble_l[3] = tune[i] & 0xFF;
 		memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-		res = hid_write(handle, buf, sizeof(*hdr));
+		res = hid_write(handle_l_r_pro, buf, sizeof(*hdr));
 		// Joy-con does not reply when Output Report is 0x10
 
 		Application::DoEvents();
@@ -1048,8 +1114,8 @@ int play_tune(int tune_no) {
 	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	pkt->subcmd = 0x48;
 	pkt->subcmd_arg.arg1 = 0x00;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf, 0);
 
 	memset(buf, 0, sizeof(buf));
 	hdr = (brcm_hdr *)buf;
@@ -1059,8 +1125,8 @@ int play_tune(int tune_no) {
 	timming_byte++;
 	pkt->subcmd = 0x30;
 	pkt->subcmd_arg.arg1 = 0x01;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf, 0);
 
 	return 0;
 }
@@ -1079,8 +1145,8 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	timming_byte++;
 	pkt->subcmd = 0x48;
 	pkt->subcmd_arg.arg1 = 0x01;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf2, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf2, 0);
 
 	if (file_type == 1 || file_type == 2) {
 		for (int i = 0; i < samples * 4; i = i + 4) {
@@ -1106,7 +1172,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			}
 			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
-			res = hid_write(handle, buf, sizeof(*hdr));
+			res = hid_write(handle_l_r_pro, buf, sizeof(*hdr));
 			Application::DoEvents();
 		}
 	}
@@ -1132,7 +1198,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
 			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 			
-			res = hid_write(handle, buf, sizeof(*hdr));
+			res = hid_write(handle_l_r_pro, buf, sizeof(*hdr));
 			Application::DoEvents();
 		}
 		for (int j = 0; j < 1 + loop_times; j++) {
@@ -1151,7 +1217,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 				hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
 				memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
-				res = hid_write(handle, buf, sizeof(*hdr));
+				res = hid_write(handle_l_r_pro, buf, sizeof(*hdr));
 				Application::DoEvents();
 			}
 			Sleep(sample_rate);
@@ -1167,7 +1233,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			hdr->rumble_l[2] = 0x40;
 			hdr->rumble_l[3] = 0x40;
 			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-			res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+			res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
 			Sleep(loop_wait * sample_rate);
 		}
 		for (int i = loop_end * 4; i < samples * 4; i = i + 4) {
@@ -1185,7 +1251,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 			hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
 			memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
-			res = hid_write(handle, buf, sizeof(*hdr));
+			res = hid_write(handle_l_r_pro, buf, sizeof(*hdr));
 			Application::DoEvents();
 		}
 	}
@@ -1203,7 +1269,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	hdr->rumble_l[2] = 0x40;
 	hdr->rumble_l[3] = 0x40;
 	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
 
 	Sleep(sample_rate + 120);
 	memset(buf, 0, sizeof(buf));
@@ -1218,8 +1284,8 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	hdr->rumble_l[3] = 0x40;
 	memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 	pkt->subcmd = 0x48;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf, 0);
 
 	memset(buf, 0, sizeof(buf));
 	hdr = (brcm_hdr *)buf;
@@ -1229,8 +1295,8 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 	timming_byte++;
 	pkt->subcmd = 0x30;
 	pkt->subcmd_arg.arg1 = 0x01;
-	res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-	res = hid_read(handle, buf, 0);
+	res = hid_write(handle_l_r_pro, buf, sizeof(*hdr) + sizeof(*pkt));
+	res = hid_read(handle_l_r_pro, buf, 0);
 
 	return 0;
 }
@@ -1357,18 +1423,37 @@ int test_chamber() {
 
 int device_connection(){
 	handle_ok = 0;
-	if (handle = hid_open(0x57e, 0x2006, nullptr))
-		handle_ok = 1;
-	if (!handle_ok) {
-		if (handle = hid_open(0x57e, 0x2007, nullptr))
-			handle_ok = 2;
+	dual_mode_jc_enable = false;
+	dual_l_handle_enable = false;
+	// Right Joy-Con
+	if (handle_l_r_pro = hid_open(0x57e, 0x2007, nullptr))
+		handle_ok = 2;
+
+	// Dual mode
+	if (handle_ok) {
+		// Left Joy-Con
+		if (handle_dual_l = hid_open(0x57e, 0x2006, nullptr)) {
+			dual_mode_jc_enable = true;
+			return 1;
+		}
 	}
+	else {
+		// Left Joy-Con
+		if (handle_l_r_pro = hid_open(0x57e, 0x2006, nullptr)) {
+			handle_ok = 1;
+			return 1;
+		}
+	}
+
 	if (!handle_ok) {
-		if (handle = hid_open(0x57e, 0x2009, nullptr))
+		// Pro Controller
+		if (handle_l_r_pro = hid_open(0x57e, 0x2009, nullptr)) {
 			handle_ok = 3;
+			return 1;
+		}
 	}
 	/*
-	//usb test
+	// Usb test
 	if (!handle_ok) {
 		hid_init();
 		struct hid_device_info *devs = hid_enumerate(0x057E, 0x200e);
@@ -1382,19 +1467,17 @@ int device_connection(){
 			usb_device_print(devs);
 			handle_l = hid_open_path(devs->path);
 			devs = devs->next;
-			handle = hid_open_path(devs->path);
+			handle_l_r_pro = hid_open_path(devs->path);
 			printf("\nlol\n");
 
-			if (handle)
+			if (handle_l_r_pro)
 				handle_ok = 4;
 		}
 		hid_free_enumeration(devs);
 	}
 	*/
-	if (handle_ok == 0)
+	if (!handle_ok)
 		return 0;
-
-	return 1;
 }
 
 [STAThread]
@@ -1413,14 +1496,14 @@ int Main(array<String^>^ args) {
 
 	/*
 	//usb test
-	usb_init(handle);
+	usb_init(handle_l_r_pro);
 	usb_init(handle_l);
-	usb_command(handle);
-	usb_command(handle);
+	usb_command(handle_l_r_pro);
+	usb_command(handle_l_r_pro);
 	Sleep(2000);
 	if (handle_ok) {
-		usb_deinit(handle);
-		hid_close(handle);
+		usb_deinit(handle_l_r_pro);
+		hid_close(handle_l_r_pro);
 		usb_deinit(handle_l);
 		hid_close(handle_l);
 	}
