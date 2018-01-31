@@ -1476,8 +1476,9 @@ int device_connection(){
 		hid_free_enumeration(devs);
 	}
 	*/
-	if (!handle_ok)
-		return 0;
+
+	// Nothing found
+	return 0;
 }
 
 [STAThread]
