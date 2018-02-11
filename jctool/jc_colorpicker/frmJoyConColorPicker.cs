@@ -28,7 +28,8 @@ using System.Collections.Generic;
 namespace jcColor {
 
     /// <summary>
-    /// Summary description for frmColorPicker.
+    /// Joy-Con Color Picker allows you to pick a Primary and a Secondary color.
+    /// It's a Adobe based color picker with Preset support.
     /// </summary>
     public class JoyConColorPicker : System.Windows.Forms.Form {
 
@@ -163,6 +164,11 @@ namespace jcColor {
 
         #region Constructors / Destructors
 
+        /// <summary>
+        /// Joy-Con Color Picker
+        /// </summary>
+        /// <param name="starting_color">Primary color</param>
+        /// <param name="starting_color2">Secondary color</param>
         public JoyConColorPicker(Color starting_color, Color starting_color2) {
             InitializeComponent();
 
@@ -198,7 +204,6 @@ namespace jcColor {
             m_eyedropColorPicker.MouseUp += new MouseEventHandler(OnEyeDropperSelectionChanged);
 
             this.m_radio_btn_Body.Checked = true;
-            //this.AcceptButton = this.m_cmd_OK;
         }
 
 
@@ -1665,7 +1670,7 @@ namespace jcColor {
             this.btn_Update.TabIndex = 57;
             this.btn_Update.Text = "Update";
             this.btn_Update.UseVisualStyleBackColor = false;
-            this.btn_Update.Click += new System.EventHandler(this.SetColorPreset);
+            this.btn_Update.Click += new System.EventHandler(this.SetPresetColorName);
             // 
             // m_lbl_SelectPreset
             // 
@@ -1690,7 +1695,7 @@ namespace jcColor {
             this.btn_Clear.TabIndex = 60;
             this.btn_Clear.Text = "Clear";
             this.btn_Clear.UseVisualStyleBackColor = false;
-            this.btn_Clear.Click += new System.EventHandler(this.ClearColorPreset);
+            this.btn_Clear.Click += new System.EventHandler(this.ClearPreset);
             // 
             // m_ctrl_BigBox
             // 
@@ -1789,6 +1794,9 @@ namespace jcColor {
 
         #region General Events
 
+        /// <summary>
+        /// Runs when the form is loaded
+        /// </summary>
         private void frmColorPicker_Load(object sender, System.EventArgs e) {
             System.Xml.XmlDocument olddoc = new System.Xml.XmlDocument();
             try {
@@ -2165,7 +2173,7 @@ namespace jcColor {
         private void m_lbl_Preset_Click(object sender, System.EventArgs e) {
             Buttons.RoundButton senderButton = (Buttons.RoundButton)sender;
 
-            UncheckAll(this.panel2);
+            UncheckPreset(this.panel2);
             senderButton.checkedFocus = true;
 
             m_rgb = senderButton.BackColor;
@@ -2187,11 +2195,11 @@ namespace jcColor {
         }
 
 
-        private void UncheckAll(Control ctrl) {
+        private void UncheckPreset(Control ctrl) {
             Buttons.RoundButton chkBtn = ctrl as Buttons.RoundButton;
             if (chkBtn == null) {
                 foreach (Control child in ctrl.Controls) {
-                    UncheckAll(child);
+                    UncheckPreset(child);
                 }
             }
             else {
@@ -2202,7 +2210,7 @@ namespace jcColor {
         }
 
 
-        private void SetColorPreset(object sender, System.EventArgs e) {
+        private void SetPresetColorName(object sender, System.EventArgs e) {
             // Check Retail user colors
             foreach (Control child in panel_RetailUserColors.Controls) {
                 Buttons.RoundButton rB = child as Buttons.RoundButton;
@@ -2238,7 +2246,7 @@ namespace jcColor {
         }
 
 
-        private void ClearColorPreset(object sender, System.EventArgs e) {
+        private void ClearPreset(object sender, System.EventArgs e) {
             // Check Retail user colors
             foreach (Control child in panel_RetailUserColors.Controls) {
                 Buttons.RoundButton rB = child as Buttons.RoundButton;
@@ -2459,6 +2467,7 @@ namespace jcColor {
             }
         }
 
+
         private void convertOldFormatCustomConfig() {
             if (errorCreatingPresets)
                 return;
@@ -2597,7 +2606,8 @@ namespace jcColor {
                 doc.Save(System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\colors.xml");
             }
             catch {
-                MessageBox.Show("Error saving colors.xml!\nPlease check that the file is writable.\n\nThe custom color presets were not saved.", "File not found!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error saving colors.xml!\nPlease check that the file is writable.\n\n" +
+                    "The custom color presets were not saved.", "File not found!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -2628,7 +2638,8 @@ namespace jcColor {
                 doc.Save(System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\colors.xml");
             }
             catch {
-                MessageBox.Show("Error saving colors.xml!\nPlease check that the file is writable.\n\nThe custom color presets were not saved.", "File not found!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error saving colors.xml!\nPlease check that the file is writable.\n\n" +
+                    "The custom color presets were not saved.", "File not found!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
         }

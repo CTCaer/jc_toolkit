@@ -150,9 +150,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Button^ btnWriteBody;
     private: System::Windows::Forms::TextBox^ textBoxSN;
     private: System::Windows::Forms::Label^ label_sn;
-    private: System::Windows::Forms::Button^  btnClrDlg1;
-    private: System::Windows::Forms::Button^  btnClrDlg2;
-    private: System::Windows::Forms::Label^  label_hint;
     private: System::Windows::Forms::Label^  label_mac;
     private: System::Windows::Forms::Label^  label_fw;
     private: System::Windows::Forms::TextBox^  textBoxMAC;
@@ -253,10 +250,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::ToolStripButton^  toolStripBtn_batt;
     private: System::Windows::Forms::ToolStripLabel^  toolStripLabel_batt;
     private: System::Windows::Forms::ToolStripButton^  toolStripBtn_Disconnect;
-    private: System::Windows::Forms::Button^  button1;
+    private: System::Windows::Forms::Button^  btn_change_color;
     private: System::Windows::Forms::Panel^  panel1;
     private: jcColor::JoyConColorPicker^ JCColorPicker;
-
+    private: System::Windows::Forms::Label^  lbl_Buttons_hex_txt;
+    private: System::Windows::Forms::Label^  lbl_Body_hex_txt;
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 #pragma endregion
@@ -278,13 +276,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(FormJoy::typeid));
 			this->btnWriteBody = (gcnew System::Windows::Forms::Button());
 			this->groupBoxColor = (gcnew System::Windows::Forms::GroupBox());
+			this->lbl_Buttons_hex_txt = (gcnew System::Windows::Forms::Label());
+			this->lbl_Body_hex_txt = (gcnew System::Windows::Forms::Label());
 			this->btbRestoreEnable = (gcnew System::Windows::Forms::Button());
 			this->pictureBoxPreview = (gcnew System::Windows::Forms::PictureBox());
+			this->btn_change_color = (gcnew System::Windows::Forms::Button());
 			this->button3 = (gcnew System::Windows::Forms::Button());
-			this->btnClrDlg1 = (gcnew System::Windows::Forms::Button());
-			this->btnClrDlg2 = (gcnew System::Windows::Forms::Button());
-			this->label_hint = (gcnew System::Windows::Forms::Label());
-			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->groupBoxSPI = (gcnew System::Windows::Forms::GroupBox());
 			this->btn_spi_cancel = (gcnew System::Windows::Forms::Button());
 			this->label_progress = (gcnew System::Windows::Forms::Label());
@@ -418,7 +415,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 				static_cast<System::Byte>(161)));
 			this->btnWriteBody->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
 				static_cast<System::Int32>(static_cast<System::Byte>(0)));
-			this->btnWriteBody->Location = System::Drawing::Point(316, 253);
+			this->btnWriteBody->Location = System::Drawing::Point(316, 252);
 			this->btnWriteBody->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->btnWriteBody->Name = L"btnWriteBody";
 			this->btnWriteBody->Size = System::Drawing::Size(128, 48);
@@ -431,13 +428,13 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			// 
 			this->groupBoxColor->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->groupBoxColor->Controls->Add(this->lbl_Buttons_hex_txt);
+			this->groupBoxColor->Controls->Add(this->lbl_Body_hex_txt);
 			this->groupBoxColor->Controls->Add(this->btbRestoreEnable);
 			this->groupBoxColor->Controls->Add(this->pictureBoxPreview);
+			this->groupBoxColor->Controls->Add(this->btn_change_color);
 			this->groupBoxColor->Controls->Add(this->button3);
-			this->groupBoxColor->Controls->Add(this->btnClrDlg1);
 			this->groupBoxColor->Controls->Add(this->btnWriteBody);
-			this->groupBoxColor->Controls->Add(this->btnClrDlg2);
-			this->groupBoxColor->Controls->Add(this->label_hint);
 			this->groupBoxColor->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
 			this->groupBoxColor->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
@@ -450,6 +447,36 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->groupBoxColor->TabIndex = 0;
 			this->groupBoxColor->TabStop = false;
 			this->groupBoxColor->Text = L"Device colors";
+			// 
+			// lbl_Buttons_hex_txt
+			// 
+			this->lbl_Buttons_hex_txt->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->lbl_Buttons_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
+			this->lbl_Buttons_hex_txt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(150)),
+				static_cast<System::Int32>(static_cast<System::Byte>(150)), static_cast<System::Int32>(static_cast<System::Byte>(150)));
+			this->lbl_Buttons_hex_txt->Location = System::Drawing::Point(380, 159);
+			this->lbl_Buttons_hex_txt->Margin = System::Windows::Forms::Padding(0);
+			this->lbl_Buttons_hex_txt->Name = L"lbl_Buttons_hex_txt";
+			this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(64, 48);
+			this->lbl_Buttons_hex_txt->TabIndex = 21;
+			this->lbl_Buttons_hex_txt->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+			// 
+			// lbl_Body_hex_txt
+			// 
+			this->lbl_Body_hex_txt->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->lbl_Body_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
+			this->lbl_Body_hex_txt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(150)),
+				static_cast<System::Int32>(static_cast<System::Byte>(150)), static_cast<System::Int32>(static_cast<System::Byte>(150)));
+			this->lbl_Body_hex_txt->Location = System::Drawing::Point(316, 159);
+			this->lbl_Body_hex_txt->Margin = System::Windows::Forms::Padding(0);
+			this->lbl_Body_hex_txt->Name = L"lbl_Body_hex_txt";
+			this->lbl_Body_hex_txt->Size = System::Drawing::Size(64, 48);
+			this->lbl_Body_hex_txt->TabIndex = 20;
+			this->lbl_Body_hex_txt->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// btbRestoreEnable
 			// 
@@ -484,6 +511,23 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->pictureBoxPreview->TabIndex = 15;
 			this->pictureBoxPreview->TabStop = false;
 			// 
+			// btn_change_color
+			// 
+			this->btn_change_color->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btn_change_color->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+			this->btn_change_color->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btn_change_color->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F));
+			this->btn_change_color->Location = System::Drawing::Point(316, 66);
+			this->btn_change_color->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
+			this->btn_change_color->Name = L"btn_change_color";
+			this->btn_change_color->Size = System::Drawing::Size(128, 48);
+			this->btn_change_color->TabIndex = 19;
+			this->btn_change_color->Text = L"Change Color";
+			this->btn_change_color->UseVisualStyleBackColor = false;
+			this->btn_change_color->Click += gcnew System::EventHandler(this, &FormJoy::button1_Click_1);
+			// 
 			// button3
 			// 
 			this->button3->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
@@ -502,66 +546,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->button3->Text = L"Backup SPI";
 			this->button3->UseVisualStyleBackColor = false;
 			this->button3->Click += gcnew System::EventHandler(this, &FormJoy::button3_Click);
-			// 
-			// btnClrDlg1
-			// 
-			this->btnClrDlg1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->btnClrDlg1->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->btnClrDlg1->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-			this->btnClrDlg1->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F, System::Drawing::FontStyle::Bold));
-			this->btnClrDlg1->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
-				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->btnClrDlg1->Location = System::Drawing::Point(316, 66);
-			this->btnClrDlg1->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
-			this->btnClrDlg1->Name = L"btnClrDlg1";
-			this->btnClrDlg1->Size = System::Drawing::Size(128, 60);
-			this->btnClrDlg1->TabIndex = 4;
-			this->btnClrDlg1->Text = L"Body Color";
-			this->btnClrDlg1->UseVisualStyleBackColor = false;
-			// 
-			// btnClrDlg2
-			// 
-			this->btnClrDlg2->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->btnClrDlg2->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->btnClrDlg2->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-			this->btnClrDlg2->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F, System::Drawing::FontStyle::Bold));
-			this->btnClrDlg2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
-				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->btnClrDlg2->Location = System::Drawing::Point(316, 126);
-			this->btnClrDlg2->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
-			this->btnClrDlg2->Name = L"btnClrDlg2";
-			this->btnClrDlg2->Size = System::Drawing::Size(128, 60);
-			this->btnClrDlg2->TabIndex = 5;
-			this->btnClrDlg2->Text = L"Buttons Color";
-			this->btnClrDlg2->UseVisualStyleBackColor = false;
-			// 
-			// label_hint
-			// 
-			this->label_hint->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
-				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->label_hint->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-				static_cast<System::Byte>(161)));
-			this->label_hint->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
-				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label_hint->Location = System::Drawing::Point(319, 202);
-			this->label_hint->Name = L"label_hint";
-			this->label_hint->Size = System::Drawing::Size(125, 36);
-			this->label_hint->TabIndex = 7;
-			this->label_hint->Text = L"Select colors,\nthen hit write.";
-			// 
-			// button1
-			// 
-			this->button1->Location = System::Drawing::Point(413, 42);
-			this->button1->Name = L"button1";
-			this->button1->Size = System::Drawing::Size(75, 23);
-			this->button1->TabIndex = 19;
-			this->button1->Text = L"button1";
-			this->button1->UseVisualStyleBackColor = true;
-			this->button1->Click += gcnew System::EventHandler(this, &FormJoy::button1_Click_1);
 			// 
 			// groupBoxSPI
 			// 
@@ -2022,7 +2006,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->ClientSize = System::Drawing::Size(1662, 702);
 			this->Controls->Add(this->panel1);
 			this->Controls->Add(this->toolStrip1);
-			this->Controls->Add(this->button1);
 			this->Controls->Add(this->groupBox_dev_param);
 			this->Controls->Add(this->groupBox2);
 			this->Controls->Add(this->groupBox_btn_test);
@@ -2053,7 +2036,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->MaximizeBox = false;
 			this->Name = L"FormJoy";
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
-			this->Text = L"Joy-Con Toolkit v2.5.1";
+			this->Text = L"Joy-Con Toolkit v2.8.2";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
 			this->groupBoxColor->ResumeLayout(false);
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->EndInit();
@@ -2331,11 +2314,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         if (update_color_dialog) {
             this->jcBodyColor = Color::FromArgb(0xFF, (u8)body_color[0], (u8)body_color[1], (u8)body_color[2]);
-            this->btnClrDlg1->Text = L"Body Color\n#" + String::Format("{0:X6}",
+            this->lbl_Body_hex_txt->Text = L"Body:\n#" + String::Format("{0:X6}",
                 ((u8)body_color[0] << 16) + ((u8)body_color[1] << 8) + ((u8)body_color[2]));
 
             this->jcButtonsColor = Color::FromArgb(0xFF, (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
-            this->btnClrDlg2->Text = L"Buttons Color\n#" + String::Format("{0:X6}",
+            this->lbl_Buttons_hex_txt->Text = L"Buttons:\n#" + String::Format("{0:X6}",
                 ((u8)button_color[0] << 16) + ((u8)button_color[1] << 8) + ((u8)button_color[2]));
         }
 
@@ -3695,10 +3678,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
 		// FormJoy::myform1->jcBodyColor = JCColorPicker->PrimaryColor;
 		this->jcBodyColor = JCColorPicker->PrimaryColor;
 		this->jcButtonsColor = JCColorPicker->SecondaryColor;
-		this->btnClrDlg1->Text = L"Body Color\n#" + String::Format("{0:X6}",
+		this->lbl_Body_hex_txt->Text = L"Body:\n#" + String::Format("{0:X6}",
 			(jcBodyColor.R << 16) + (jcBodyColor.G << 8) + (jcBodyColor.B));
 
-		this->btnClrDlg2->Text = L"Buttons Color\n#" + String::Format("{0:X6}",
+		this->lbl_Buttons_hex_txt->Text = L"Buttons:\n#" + String::Format("{0:X6}",
 			(jcButtonsColor.R << 16) + (jcButtonsColor.G << 8) + (jcButtonsColor.B));
 
 		update_joycon_color(jcBodyColor.R, jcBodyColor.G, jcBodyColor.B,
