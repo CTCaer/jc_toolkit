@@ -1,4 +1,4 @@
-// Copyright (c) 2017 CTCaer. All rights reserved.
+// Copyright (c) 2018 CTCaer. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include <cstdio>
@@ -1400,7 +1400,14 @@ int device_connection(){
 [STAThread]
 int Main(array<String^>^ args) {
 	while (!device_connection()) {
-		if (MessageBox::Show(L"The device is not paired or the device was disconnected!\n\nTo pair:\n1. Press and hold the sync button until the leds are on\n2. Pair the Bluetooth controller in Windows\n\n To connect again:\n1. Press a button on the controller", L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
+		if (MessageBox::Show(L"The device is not paired or the device was disconnected!\n\n" +
+			"To pair:\n1. Press and hold the sync button until the leds are on\n" +
+			"2. Pair the Bluetooth controller in Windows\n\n To connect again:\n" +
+			"1. Press a button on the controller\n(If this doesn\'t work, re-pair.)\n\n" +
+			"To re-pair:\n1. Go to 'Settings -> Devices' or Devices and Printers'\n" +
+			"2. Remove the controller\n3. Follow the pair instructions",
+			L"CTCaer's Joy-Con Toolkit - Connection Error!",
+			MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
 			return 1;
 	}
 

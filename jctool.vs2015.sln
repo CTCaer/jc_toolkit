@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.26430.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jctool", "jctool\jctool.vcxproj", "{DF218734-A810-4FFF-8164-638680773512}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "jcColorDialog", "jctool\jc_colorpicker\jcColorDialog.csproj", "{22E08F67-4E40-4A92-876B-410FFD49B20E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|x86 = Release|x86
@@ -12,6 +14,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DF218734-A810-4FFF-8164-638680773512}.Release|x86.ActiveCfg = Release|Win32
 		{DF218734-A810-4FFF-8164-638680773512}.Release|x86.Build.0 = Release|Win32
+		{22E08F67-4E40-4A92-876B-410FFD49B20E}.Release|x86.ActiveCfg = Release|Any CPU
+		{22E08F67-4E40-4A92-876B-410FFD49B20E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
