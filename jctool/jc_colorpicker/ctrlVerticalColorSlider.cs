@@ -1,23 +1,28 @@
 /******************************************************************/
 /*****                                                        *****/
-/*****     Project:           Adobe Color Picker Clone 1      *****/
+/*****     Project:           Joy-Con Color Picker            *****/
 /*****     Filename:          ctrlVerticalColorSlider.cs      *****/
+/*****     Original Project:  Adobe Color Picker Clone 1      *****/
 /*****     Original Author:   Danny Blanchard                 *****/
 /*****                        - scrabcakes@gmail.com          *****/
 /*****     Updates:	                                          *****/
 /*****      3/28/2005 - Initial Version : Danny Blanchard     *****/
+/*****       Feb 2018 - JoyCon Version  : CTCaer              *****/
+/*****                                                        *****/
+/******************************************************************/
+
+/******************************************************************/
+/*****                                                        *****/
+/*****     This version is heavily optimised for use in       *****/
+/*****     CTCaer's Joy-Con Toolkit and other projects.       *****/
 /*****                                                        *****/
 /******************************************************************/
 
 using System;
-using System.Collections;
-using System.ComponentModel;
 using System.Drawing;
-using System.Data;
 using System.Windows.Forms;
 
-namespace adobe_color_picker_clone_part_1
-{
+namespace jcColor {
 	public delegate void EventHandler(object sender, EventArgs e);
 
 	/// <summary>
@@ -94,17 +99,21 @@ namespace adobe_color_picker_clone_part_1
 		/// </summary>
 		private void InitializeComponent()
 		{
-			// 
-			// ctrl1DColorBar
-			// 
-			this.Name = "ctrl1DColorBar";
-			this.Size = new System.Drawing.Size(40, 264);
-			this.Resize += new System.EventHandler(this.ctrl1DColorBar_Resize);
-			this.Load += new System.EventHandler(this.ctrl1DColorBar_Load);
-			this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ctrl1DColorBar_MouseUp);
-			this.Paint += new System.Windows.Forms.PaintEventHandler(this.ctrl1DColorBar_Paint);
-			this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ctrl1DColorBar_MouseMove);
-			this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ctrl1DColorBar_MouseDown);
+            this.SuspendLayout();
+            // 
+            // ctrlVerticalColorSlider
+            // 
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.Name = "ctrlVerticalColorSlider";
+            this.Size = new System.Drawing.Size(40, 264);
+            this.Load += new System.EventHandler(this.ctrl1DColorBar_Load);
+            this.Paint += new System.Windows.Forms.PaintEventHandler(this.ctrl1DColorBar_Paint);
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ctrl1DColorBar_MouseDown);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ctrl1DColorBar_MouseMove);
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ctrl1DColorBar_MouseUp);
+            this.Resize += new System.EventHandler(this.ctrl1DColorBar_Resize);
+            this.ResumeLayout(false);
 
 		}
 		#endregion
@@ -203,7 +212,7 @@ namespace adobe_color_picker_clone_part_1
 
 		#region Events
 
-		public event EventHandler Scroll;
+		public new event EventHandler Scroll;
 
 		#endregion
 
@@ -281,10 +290,12 @@ namespace adobe_color_picker_clone_part_1
 		private void ClearSlider()
 		{
 			Graphics g = this.CreateGraphics();
-			Brush brush = System.Drawing.SystemBrushes.Control;
-			g.FillRectangle(brush, 0, 0, 8, this.Height);				//	clear left hand slider
+			SolidBrush brush = new SolidBrush(Color.FromArgb(70,70,70));
+
+            g.FillRectangle(brush, 0, 0, 8, this.Height);				//	clear left hand slider
 			g.FillRectangle(brush, this.Width - 8, 0, 8, this.Height);	//	clear right hand slider
-		}
+            brush.Dispose();
+        }
 
 
 		/// <summary>
@@ -337,8 +348,7 @@ namespace adobe_color_picker_clone_part_1
 
 			g.FillPolygon(brush, arrow);	//	Fill right arrow with white
 			g.DrawPolygon(pencil, arrow);	//	Draw right arrow border with gray
-
-		}
+        }
 
 
 		/// <summary>
@@ -355,15 +365,15 @@ namespace adobe_color_picker_clone_part_1
 			//	on the top and left side, a white line on the bottom and right side, and a black rectangle (line) 
 			//	inside the gray/white rectangle
 
-			pencil = new Pen(Color.FromArgb(172,168,153));	//	The same gray color used by Photoshop
+			pencil = new Pen(Color.FromArgb(100, 100, 100));	//	The same gray color used by Photoshop
 			g.DrawLine(pencil, this.Width - 10, 2, 9, 2);	//	Draw top line
 			g.DrawLine(pencil, 9, 2, 9, this.Height - 4);	//	Draw left hand line
 
-			pencil = new Pen(Color.White);
+			//pencil = new Pen(Color.FromArgb(120, 120, 120));
 			g.DrawLine(pencil, this.Width - 9, 2, this.Width - 9,this.Height - 3);	//	Draw right hand line
 			g.DrawLine(pencil, this.Width - 9,this.Height - 3, 9,this.Height - 3);	//	Draw bottome line
 
-			pencil = new Pen(Color.Black);
+			pencil = new Pen(Color.FromArgb(85, 85, 85));
 			g.DrawRectangle(pencil, 10, 3, this.Width - 20, this.Height - 7);	//	Draw inner black rectangle
 		}
 

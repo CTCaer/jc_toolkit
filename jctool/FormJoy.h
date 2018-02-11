@@ -1,4 +1,4 @@
-// Copyright (c) 2017 CTCaer. All rights reserved.
+// Copyright (c) 2018 CTCaer. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #pragma once
@@ -136,14 +136,15 @@ namespace CppWinFormJoy {
 	private: float lf_pitch;
 	private: float hf_gain;
 	private: float hf_pitch;
+	private: Color jcBodyColor;
+	private: Color jcButtonsColor;
+    private: System::Drawing::Size previous_size;
 	private: System::Windows::Forms::GroupBox^  groupBoxColor;
 	private: System::Windows::Forms::Button^ btnWriteBody;
 	private: System::Windows::Forms::TextBox^ textBoxSN;
 	private: System::Windows::Forms::Label^ label_sn;
 	private: System::Windows::Forms::Button^  btnClrDlg1;
-	private: System::Windows::Forms::ColorDialog^  colorDialog1;
 	private: System::Windows::Forms::Button^  btnClrDlg2;
-	private: System::Windows::Forms::ColorDialog^  colorDialog2;
 	private: System::Windows::Forms::Label^  label_hint;
 	private: System::Windows::Forms::Label^  label_mac;
 	private: System::Windows::Forms::Label^  label_fw;
@@ -245,6 +246,9 @@ namespace CppWinFormJoy {
 	private: System::Windows::Forms::ToolStripButton^  toolStripBtn_batt;
 	private: System::Windows::Forms::ToolStripLabel^  toolStripLabel_batt;
 	private: System::Windows::Forms::ToolStripButton^  toolStripBtn_Disconnect;
+    private: System::Windows::Forms::Button^  button1;
+    private: System::Windows::Forms::Panel^  panel1;
+    private: jcColor::JoyConColorPicker^ JCColorPicker;
 
 	private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
@@ -272,14 +276,13 @@ namespace CppWinFormJoy {
 			this->btnClrDlg1 = (gcnew System::Windows::Forms::Button());
 			this->btnClrDlg2 = (gcnew System::Windows::Forms::Button());
 			this->label_hint = (gcnew System::Windows::Forms::Label());
+			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->groupBoxSPI = (gcnew System::Windows::Forms::GroupBox());
 			this->btn_spi_cancel = (gcnew System::Windows::Forms::Button());
 			this->label_progress = (gcnew System::Windows::Forms::Label());
 			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->textBoxSN = (gcnew System::Windows::Forms::TextBox());
 			this->label_sn = (gcnew System::Windows::Forms::Label());
-			this->colorDialog1 = (gcnew System::Windows::Forms::ColorDialog());
-			this->colorDialog2 = (gcnew System::Windows::Forms::ColorDialog());
 			this->label_mac = (gcnew System::Windows::Forms::Label());
 			this->label_fw = (gcnew System::Windows::Forms::Label());
 			this->textBoxMAC = (gcnew System::Windows::Forms::TextBox());
@@ -372,6 +375,7 @@ namespace CppWinFormJoy {
 			this->toolStripLabel_temp = (gcnew System::Windows::Forms::ToolStripLabel());
 			this->toolStripBtn_refresh = (gcnew System::Windows::Forms::ToolStripButton());
 			this->toolStripBtn_Disconnect = (gcnew System::Windows::Forms::ToolStripButton());
+			this->panel1 = (gcnew System::Windows::Forms::Panel());
 			this->groupBoxColor->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
 			this->groupBoxSPI->SuspendLayout();
@@ -508,7 +512,6 @@ namespace CppWinFormJoy {
 			this->btnClrDlg1->TabIndex = 4;
 			this->btnClrDlg1->Text = L"Body Color";
 			this->btnClrDlg1->UseVisualStyleBackColor = false;
-			this->btnClrDlg1->Click += gcnew System::EventHandler(this, &FormJoy::btnClrDlg1_Click);
 			// 
 			// btnClrDlg2
 			// 
@@ -527,7 +530,6 @@ namespace CppWinFormJoy {
 			this->btnClrDlg2->TabIndex = 5;
 			this->btnClrDlg2->Text = L"Buttons Color";
 			this->btnClrDlg2->UseVisualStyleBackColor = false;
-			this->btnClrDlg2->Click += gcnew System::EventHandler(this, &FormJoy::btnClrDlg2_Click);
 			// 
 			// label_hint
 			// 
@@ -542,6 +544,16 @@ namespace CppWinFormJoy {
 			this->label_hint->Size = System::Drawing::Size(125, 36);
 			this->label_hint->TabIndex = 7;
 			this->label_hint->Text = L"Select colors,\nthen hit write.";
+			// 
+			// button1
+			// 
+			this->button1->Location = System::Drawing::Point(413, 42);
+			this->button1->Name = L"button1";
+			this->button1->Size = System::Drawing::Size(75, 23);
+			this->button1->TabIndex = 19;
+			this->button1->Text = L"button1";
+			this->button1->UseVisualStyleBackColor = true;
+			this->button1->Click += gcnew System::EventHandler(this, &FormJoy::button1_Click_1);
 			// 
 			// groupBoxSPI
 			// 
@@ -641,16 +653,6 @@ namespace CppWinFormJoy {
 			this->label_sn->TabIndex = 3;
 			this->label_sn->Text = L"S/N:";
 			this->label_sn->Click += gcnew System::EventHandler(this, &FormJoy::label_sn_Click);
-			// 
-			// colorDialog1
-			// 
-			this->colorDialog1->AnyColor = true;
-			this->colorDialog1->FullOpen = true;
-			// 
-			// colorDialog2
-			// 
-			this->colorDialog2->AnyColor = true;
-			this->colorDialog2->FullOpen = true;
 			// 
 			// label_mac
 			// 
@@ -1992,6 +1994,17 @@ namespace CppWinFormJoy {
 				L"o connect again.";
 			this->toolStripBtn_Disconnect->Click += gcnew System::EventHandler(this, &FormJoy::toolStripBtn_Disconnect_Click);
 			// 
+			// panel1
+			// 
+			this->panel1->AutoSize = true;
+			this->panel1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->panel1->Location = System::Drawing::Point(0, 25);
+			this->panel1->Margin = System::Windows::Forms::Padding(0);
+			this->panel1->Name = L"panel1";
+			this->panel1->Size = System::Drawing::Size(0, 0);
+			this->panel1->TabIndex = 45;
+			// 
 			// FormJoy
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(7, 17);
@@ -1999,7 +2012,9 @@ namespace CppWinFormJoy {
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->ClientSize = System::Drawing::Size(1662, 702);
+			this->Controls->Add(this->panel1);
 			this->Controls->Add(this->toolStrip1);
+			this->Controls->Add(this->button1);
 			this->Controls->Add(this->groupBox_dev_param);
 			this->Controls->Add(this->groupBox2);
 			this->Controls->Add(this->groupBox_btn_test);
@@ -2130,13 +2145,13 @@ namespace CppWinFormJoy {
 			unsigned char button_color[0x3];
 			memset(button_color, 0, 0x3);
 
-			body_color[0] = (u8)colorDialog1->Color.R;
-			body_color[1] = (u8)colorDialog1->Color.G;
-			body_color[2] = (u8)colorDialog1->Color.B;
+            body_color[0] = (u8)jcBodyColor.R;
+            body_color[1] = (u8)jcBodyColor.G;
+            body_color[2] = (u8)jcBodyColor.B;
 
-			button_color[0] = (u8)colorDialog2->Color.R;
-			button_color[1] = (u8)colorDialog2->Color.G;
-			button_color[2] = (u8)colorDialog2->Color.B;
+            button_color[0] = (u8)jcButtonsColor.R;
+            button_color[1] = (u8)jcButtonsColor.G;
+            button_color[2] = (u8)jcButtonsColor.B;
 
 			write_spi_data(0x6050, 0x3, body_color);
 			write_spi_data(0x6053, 0x3, button_color);
@@ -2149,42 +2164,6 @@ namespace CppWinFormJoy {
 
 			update_battery();
 			update_temperature();
-		}
-	}
-
-	private: System::Void btnClrDlg1_Click(System::Object^ sender, System::EventArgs^ e) {
-		if(handle_ok != 3 )
-			this->colorDialog1->CustomColors = getCustomColorFromConfig("bodycolors");
-		else
-			this->colorDialog1->CustomColors = getCustomColorFromConfig("bodycolors_pro");
-
-		if (colorDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
-		{
-			this->btnClrDlg1->Text = L"Body Color\n#" + String::Format("{0:X6}", (colorDialog1->Color.R << 16) + (colorDialog1->Color.G << 8) + (colorDialog1->Color.B));
-
-			update_joycon_color(colorDialog1->Color.R, colorDialog1->Color.G, colorDialog1->Color.B, colorDialog2->Color.R, colorDialog2->Color.G, colorDialog2->Color.B);
-
-			this->btnWriteBody->Enabled = true;
-
-			if (handle_ok != 3)
-				saveCustomColorToConfig(this->colorDialog1, "bodycolors");
-			else
-				saveCustomColorToConfig(this->colorDialog1, "bodycolors_pro");
-		}
-	}
-
-	private: System::Void btnClrDlg2_Click(System::Object^ sender, System::EventArgs^ e) {
-		this->colorDialog2->CustomColors = getCustomColorFromConfig("buttoncolors");
-		if (colorDialog2->ShowDialog() == System::Windows::Forms::DialogResult::OK)
-		{
-			this->btnClrDlg2->Text = L"Buttons Color\n#" + String::Format("{0:X6}", (colorDialog2->Color.R << 16) + (colorDialog2->Color.G << 8) + (colorDialog2->Color.B));
-
-			update_joycon_color(colorDialog1->Color.R, colorDialog1->Color.G, colorDialog1->Color.B, colorDialog2->Color.R, 
-				colorDialog2->Color.G, colorDialog2->Color.B);
-			
-			this->btnWriteBody->Enabled = true;
-			
-			saveCustomColorToConfig(this->colorDialog2, "buttoncolors");
 		}
 	}
 
@@ -2319,14 +2298,17 @@ namespace CppWinFormJoy {
 		get_spi_data(0x6050, 0x3, body_color);
 		get_spi_data(0x6053, 0x3, button_color);
 
-		update_joycon_color((u8)body_color[0], (u8)body_color[1], (u8)body_color[2], (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
+        update_joycon_color((u8)body_color[0], (u8)body_color[1], (u8)body_color[2],
+            (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
 
 		if (update_color_dialog) {
-			this->colorDialog1->Color = Color::FromArgb(0xFF, (u8)body_color[0], (u8)body_color[1], (u8)body_color[2]);
-			this->btnClrDlg1->Text = L"Body Color\n#" + String::Format("{0:X6}", ((u8)body_color[0] << 16) + ((u8)body_color[1] << 8) + ((u8)body_color[2]));
+            this->jcBodyColor = Color::FromArgb(0xFF, (u8)body_color[0], (u8)body_color[1], (u8)body_color[2]);
+            this->btnClrDlg1->Text = L"Body Color\n#" + String::Format("{0:X6}",
+                ((u8)body_color[0] << 16) + ((u8)body_color[1] << 8) + ((u8)body_color[2]));
 
-			this->colorDialog2->Color = Color::FromArgb(0xFF, (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
-			this->btnClrDlg2->Text = L"Buttons Color\n#" + String::Format("{0:X6}", ((u8)button_color[0] << 16) + ((u8)button_color[1] << 8) + ((u8)button_color[2]));
+            this->jcButtonsColor = Color::FromArgb(0xFF, (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
+            this->btnClrDlg2->Text = L"Buttons Color\n#" + String::Format("{0:X6}",
+                ((u8)button_color[0] << 16) + ((u8)button_color[1] << 8) + ((u8)button_color[2]));
 		}
 
 	}
@@ -3630,6 +3612,58 @@ namespace CppWinFormJoy {
 		full_refresh(true);
 	}
 
+    private: System::Void button1_Click_1(System::Object^  sender, System::EventArgs^  e) {
+        Color testcolor;
+
+        // Any smart way to have it load on start? but still open after disposing?
+        JCColorPicker = gcnew jcColor::JoyConColorPicker(this->jcBodyColor, this->jcButtonsColor);
+
+        previous_size = this->ClientSize;
+
+        this->ClientSize = System::Drawing::Size(738, 474);
+        //JCColorPicker->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Dpi;
+        JCColorPicker->TopLevel = false;
+        //JCColorPicker->Size = System::Drawing::Size(738, 424);
+        this->panel1->Controls->Add(JCColorPicker);
+    
+        JCColorPicker->FormBorderStyle = System::Windows::Forms::FormBorderStyle::None;
+        this->menuStrip1->Enabled = false;
+        this->toolStrip1->Enabled = false;
+        JCColorPicker->m_cmd_Cancel->Click += gcnew System::EventHandler(this, &FormJoy::Color_Picker_Cancel);
+        JCColorPicker->m_cmd_OK->Click += gcnew System::EventHandler(this, &FormJoy::Color_Picker_OK);
+        JCColorPicker->Show();
+
+
+    }
+
+    private: System::Void Color_Picker_Cancel(System::Object^  sender, System::EventArgs^  e) {
+        this->ClientSize = previous_size;
+        this->menuStrip1->Enabled = true;
+        this->toolStrip1->Enabled = true;
+        
+    }
+    
+    private: System::Void Color_Picker_OK(System::Object^  sender, System::EventArgs^  e) {
+		// Or backcolor?
+		// FormJoy::myform1->jcBodyColor = JCColorPicker->PrimaryColor;
+		this->jcBodyColor = JCColorPicker->PrimaryColor;
+		this->jcButtonsColor = JCColorPicker->SecondaryColor;
+		this->btnClrDlg1->Text = L"Body Color\n#" + String::Format("{0:X6}",
+			(jcBodyColor.R << 16) + (jcBodyColor.G << 8) + (jcBodyColor.B));
+
+		this->btnClrDlg2->Text = L"Buttons Color\n#" + String::Format("{0:X6}",
+			(jcButtonsColor.R << 16) + (jcButtonsColor.G << 8) + (jcButtonsColor.B));
+
+		update_joycon_color(jcBodyColor.R, jcBodyColor.G, jcBodyColor.B,
+			jcButtonsColor.R, jcButtonsColor.G, jcButtonsColor.B);
+
+		this->btnWriteBody->Enabled = true;
+
+        this->ClientSize = previous_size;
+        this->menuStrip1->Enabled = true;
+        this->toolStrip1->Enabled = true;
+
+    }
 };
 }
 

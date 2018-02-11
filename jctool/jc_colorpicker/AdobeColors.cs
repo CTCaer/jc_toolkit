@@ -1,19 +1,26 @@
 /******************************************************************/
 /*****                                                        *****/
-/*****     Project:           Adobe Color Picker Clone 1      *****/
+/*****     Project:           Joy-Con Color Picker            *****/
 /*****     Filename:          AdobeColors.cs                  *****/
+/*****     Original Project:  Adobe Color Picker Clone 1      *****/
 /*****     Original Author:   Danny Blanchard                 *****/
 /*****                        - scrabcakes@gmail.com          *****/
 /*****     Updates:	                                          *****/
 /*****      3/28/2005 - Initial Version : Danny Blanchard     *****/
+/*****       Feb 2018 - JoyCon Version  : CTCaer              *****/
 /*****                                                        *****/
 /******************************************************************/
 
-using System;
+/******************************************************************/
+/*****                                                        *****/
+/*****     This version is heavily optimised for use in       *****/
+/*****     CTCaer's Joy-Con Toolkit and other projects.       *****/
+/*****                                                        *****/
+/******************************************************************/
+
 using System.Drawing;
 
-namespace adobe_color_picker_clone_part_1
-{
+namespace jcColor {
 	/// <summary>
 	/// Summary description for AdobeColors.
 	/// </summary>
@@ -221,56 +228,7 @@ namespace adobe_color_picker_clone_part_1
 			else					hsl.H = 0.0;
 
 			return hsl; 
-		} 
-
-
-		/// <summary>
-		/// Converts RGB to CMYK
-		/// </summary>
-		/// <param name="c">A color to convert.</param>
-		/// <returns>A CMYK object</returns>
-		public static CMYK RGB_to_CMYK(Color c)
-		{
-			CMYK _cmyk = new CMYK();
-			double low = 1.0;
-
-			_cmyk.C = (double)(255 - c.R)/255;
-			if ( low > _cmyk.C )
-				low = _cmyk.C;
-
-			_cmyk.M = (double)(255 - c.G)/255;
-			if ( low > _cmyk.M )
-				low = _cmyk.M;
-
-			_cmyk.Y = (double)(255 - c.B)/255;
-			if ( low > _cmyk.Y )
-				low = _cmyk.Y;
-
-			if ( low > 0.0 )
-			{
-				_cmyk.K = low;
-			}
-
-			return _cmyk;
 		}
-
-
-		/// <summary>
-		/// Converts CMYK to RGB
-		/// </summary>
-		/// <param name="_cmyk">A color to convert</param>
-		/// <returns>A Color object</returns>
-		public static Color CMYK_to_RGB(CMYK _cmyk)
-		{
-			int red, green, blue;
-
-			red =	Round(255 - (255 * _cmyk.C));
-			green =	Round(255 - (255 * _cmyk.M));
-			blue =	Round(255 - (255 * _cmyk.Y));
-
-			return Color.FromArgb(red, green, blue);
-		}
-
 
 		/// <summary>
 		/// Custom rounding function.
@@ -348,77 +306,6 @@ namespace adobe_color_picker_clone_part_1
 
 			#endregion
 		} 
-
-
-		public class CMYK 
-		{ 
-			#region Class Variables
-
-			public CMYK() 
-			{ 
-				_c=0; 
-				_m=0; 
-				_y=0; 
-				_k=0; 
-			} 
-
-
-			double _c; 
-			double _m; 
-			double _y; 
-			double _k;
-
-			#endregion
-
-			#region Public Methods
-
-			public double C 
-			{ 
-				get{return _c;} 
-				set 
-				{ 
-					_c=value; 
-					_c=_c>1 ? 1 : _c<0 ? 0 : _c; 
-				} 
-			} 
-
-
-			public double M 
-			{ 
-				get{return _m;} 
-				set 
-				{ 
-					_m=value; 
-					_m=_m>1 ? 1 : _m<0 ? 0 : _m; 
-				} 
-			} 
-
-
-			public double Y 
-			{ 
-				get{return _y;} 
-				set 
-				{ 
-					_y=value; 
-					_y=_y>1 ? 1 : _y<0 ? 0 : _y; 
-				} 
-			} 
-
-
-			public double K 
-			{ 
-				get{return _k;} 
-				set 
-				{ 
-					_k=value; 
-					_k=_k>1 ? 1 : _k<0 ? 0 : _k; 
-				} 
-			} 
-
-
-			#endregion
-		} 
-
 
 		#endregion
 	}

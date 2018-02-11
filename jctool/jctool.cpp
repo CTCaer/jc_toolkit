@@ -1,4 +1,4 @@
-// Copyright (c) 2017 CTCaer. All rights reserved.
+// Copyright (c) 2018 CTCaer. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include <cstdio>

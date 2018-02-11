@@ -59,7 +59,8 @@
       </LogicalName>
     </EmbeddedResource>
     <PostBuildEvent>
-      <Command>copy /Y "$(ProjectDir)Colors.config" "$(OutDir)Colors.config"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -107,7 +108,11 @@
     <Image Include="pro2.ico" />
     <Image Include="pro_small.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="jc_colorpicker\jcColorDialog.csproj">
+      <Project>{22e08f67-4e40-4a92-876b-410ffd49b20e}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

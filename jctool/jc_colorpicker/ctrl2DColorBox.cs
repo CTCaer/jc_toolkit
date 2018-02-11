@@ -1,24 +1,28 @@
 /******************************************************************/
 /*****                                                        *****/
-/*****     Project:           Adobe Color Picker Clone 1      *****/
+/*****     Project:           Joy-Con Color Picker            *****/
 /*****     Filename:          ctrl2DColorBox.cs               *****/
+/*****     Original Project:  Adobe Color Picker Clone 1      *****/
 /*****     Original Author:   Danny Blanchard                 *****/
 /*****                        - scrabcakes@gmail.com          *****/
 /*****     Updates:	                                          *****/
 /*****      3/28/2005 - Initial Version : Danny Blanchard     *****/
+/*****       Feb 2018 - JoyCon Version  : CTCaer              *****/
 /*****                                                        *****/
 /******************************************************************/
 
-using System;
-using System.Collections;
-using System.ComponentModel;
+/******************************************************************/
+/*****                                                        *****/
+/*****     This version is heavily optimised for use in       *****/
+/*****     CTCaer's Joy-Con Toolkit and other projects.       *****/
+/*****                                                        *****/
+/******************************************************************/
+
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Data;
 using System.Windows.Forms;
 
-namespace adobe_color_picker_clone_part_1
-{
+namespace jcColor {
 	/// <summary>
 	/// Summary description for ctrl2DColorBox.
 	/// </summary>
@@ -94,17 +98,21 @@ namespace adobe_color_picker_clone_part_1
 		/// </summary>
 		private void InitializeComponent()
 		{
-			// 
-			// ctrl2DColorBox
-			// 
-			this.Name = "ctrl2DColorBox";
-			this.Size = new System.Drawing.Size(260, 260);
-			this.Resize += new System.EventHandler(this.ctrl2DColorBox_Resize);
-			this.Load += new System.EventHandler(this.ctrl2DColorBox_Load);
-			this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ctrl2DColorBox_MouseUp);
-			this.Paint += new System.Windows.Forms.PaintEventHandler(this.ctrl2DColorBox_Paint);
-			this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ctrl2DColorBox_MouseMove);
-			this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ctrl2DColorBox_MouseDown);
+            this.SuspendLayout();
+            // 
+            // ctrl2DColorBox
+            // 
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.ForeColor = System.Drawing.Color.DeepSkyBlue;
+            this.Name = "ctrl2DColorBox";
+            this.Size = new System.Drawing.Size(260, 260);
+            this.Load += new System.EventHandler(this.ctrl2DColorBox_Load);
+            this.Paint += new System.Windows.Forms.PaintEventHandler(this.ctrl2DColorBox_Paint);
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.ctrl2DColorBox_MouseDown);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.ctrl2DColorBox_MouseMove);
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.ctrl2DColorBox_MouseUp);
+            this.Resize += new System.EventHandler(this.ctrl2DColorBox_Resize);
+            this.ResumeLayout(false);
 
 		}
 		#endregion
@@ -206,7 +214,7 @@ namespace adobe_color_picker_clone_part_1
 
 		#region Events
 
-		public event EventHandler Scroll;
+		public new event EventHandler Scroll;
 
 		#endregion
 
@@ -325,8 +333,9 @@ namespace adobe_color_picker_clone_part_1
 						hsl_end.L = hsl_start.L;							//	line drawn
 				
 						LinearGradientBrush br = new LinearGradientBrush(new Rectangle(start_x + 1,i + 2, end_x - start_x + 1, 1), AdobeColors.HSL_to_RGB(hsl_start), AdobeColors.HSL_to_RGB(hsl_end), 0, false); 
-						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1)); 
-					}
+						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1));
+                        br.Dispose();
+                    }
 					
 					break;
 					//		  H=0,H=1,H=2,H=3.....H=360
@@ -348,8 +357,9 @@ namespace adobe_color_picker_clone_part_1
 						hsl_end.H = hsl_start.H;							//	line drawn
 				
 						LinearGradientBrush br = new LinearGradientBrush(new Rectangle(i + 2,start_y + 1, 1, end_y - start_y + 2), AdobeColors.HSL_to_RGB(hsl_start), AdobeColors.HSL_to_RGB(hsl_end), 90, false); 
-						g.FillRectangle(br,new Rectangle(i + 2, start_y + 2, 1, end_y - start_y + 1)); 
-					}
+						g.FillRectangle(br,new Rectangle(i + 2, start_y + 2, 1, end_y - start_y + 1));
+                        br.Dispose();
+                    }
 					break;
 					//		  H=0,H=1,H=2,H=3.....H=360
 					//	S=100
@@ -370,8 +380,9 @@ namespace adobe_color_picker_clone_part_1
 						hsl_end.H = hsl_start.H;							//	line drawn
 				
 						LinearGradientBrush br = new LinearGradientBrush(new Rectangle(i + 2,start_y + 1, 1, end_y - start_y + 2), AdobeColors.HSL_to_RGB(hsl_start), AdobeColors.HSL_to_RGB(hsl_end), 90, false); 
-						g.FillRectangle(br,new Rectangle(i + 2, start_y + 2, 1, end_y - start_y + 1)); 
-					}
+						g.FillRectangle(br,new Rectangle(i + 2, start_y + 2, 1, end_y - start_y + 1));
+                        br.Dispose();
+                    }
 
 					break;
 					//		  B=0,B=1,B=2,B=3.....B=100
@@ -392,8 +403,9 @@ namespace adobe_color_picker_clone_part_1
 						green = Round(255 - (255 * (double)i/(this.Height - 4)));	//	green WILL change for each horizontal line drawn
 
 						LinearGradientBrush br = new LinearGradientBrush(new Rectangle(start_x + 1,i + 2, end_x - start_x + 1, 1), Color.FromArgb(red, green, start_b), Color.FromArgb(red, green, end_b), 0, false); 
-						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1));  
-					}
+						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1));
+                        br.Dispose();
+                    }
 
 					break;
 					//		  B=0,B=1,B=2,B=3.....B=100
@@ -414,8 +426,9 @@ namespace adobe_color_picker_clone_part_1
 						red = Round(255 - (255 * (double)i/(this.Height - 4)));		//	red WILL change for each horizontal line drawn
 
 						LinearGradientBrush br = new LinearGradientBrush(new Rectangle(start_x + 1,i + 2, end_x - start_x + 1, 1), Color.FromArgb(red, green, start_b2), Color.FromArgb(red, green, end_b2), 0, false); 
-						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1)); 
-					}
+						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1));
+                        br.Dispose();
+                    }
 
 					break;
 					//		  R=0,R=1,R=2,R=3.....R=100
@@ -436,8 +449,9 @@ namespace adobe_color_picker_clone_part_1
 						green = Round(255 - (255 * (double)i/(this.Height - 4)));	//	green WILL change for each horizontal line drawn
 
 						LinearGradientBrush br = new LinearGradientBrush(new Rectangle(start_x + 1,i + 2, end_x - start_x + 1, 1), Color.FromArgb(start_r, green, blue), Color.FromArgb(end_r, green, blue), 0, false); 
-						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1)); 
-					}
+						g.FillRectangle(br,new Rectangle(start_x + 2,i + 2, end_x - start_x + 1 , 1));
+                        br.Dispose();
+                    }
 
 					break;
 			}
@@ -499,15 +513,15 @@ namespace adobe_color_picker_clone_part_1
 			//	on the top and left side, a white line on the bottom and right side, and a black rectangle (line) 
 			//	inside the gray/white rectangle
 
-			pencil = new Pen(Color.FromArgb(172,168,153));	//	The same gray color used by Photoshop
+			pencil = new Pen(Color.FromArgb(100, 100, 100));	//	The same gray color used by Photoshop
 			g.DrawLine(pencil, this.Width - 2, 0, 0, 0);	//	Draw top line
 			g.DrawLine(pencil, 0, 0, 0, this.Height - 2);	//	Draw left hand line
 
-			pencil = new Pen(Color.White);
+			//pencil = new Pen(Color.White);
 			g.DrawLine(pencil, this.Width - 1, 0, this.Width - 1,this.Height - 1);	//	Draw right hand line
 			g.DrawLine(pencil, this.Width - 1,this.Height - 1, 0,this.Height - 1);	//	Draw bottome line
 
-			pencil = new Pen(Color.Black);
+			pencil = new Pen(Color.FromArgb(85, 85, 85));
 			g.DrawRectangle(pencil, 1, 1, this.Width - 3, this.Height - 3);	//	Draw inner black rectangle
 		}
 
@@ -562,8 +576,9 @@ namespace adobe_color_picker_clone_part_1
 				hsl_end.L = hsl_start.L;
 				
 				LinearGradientBrush br = new LinearGradientBrush(new Rectangle(2,2, this.Width - 4, 1), AdobeColors.HSL_to_RGB(hsl_start), AdobeColors.HSL_to_RGB(hsl_end), 0, false); 
-				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1)); 
-			}
+				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1));
+                br.Dispose();
+            }
 		}
 
 
@@ -587,8 +602,9 @@ namespace adobe_color_picker_clone_part_1
 				hsl_end.H = hsl_start.H;
 				
 				LinearGradientBrush br = new LinearGradientBrush(new Rectangle(2,2, 1, this.Height - 4), AdobeColors.HSL_to_RGB(hsl_start), AdobeColors.HSL_to_RGB(hsl_end), 90, false); 
-				g.FillRectangle(br,new Rectangle(i + 2, 2, 1, this.Height - 4)); 
-			}
+				g.FillRectangle(br,new Rectangle(i + 2, 2, 1, this.Height - 4));
+                br.Dispose();
+            }
 		}
 
 
@@ -612,8 +628,9 @@ namespace adobe_color_picker_clone_part_1
 				hsl_end.H = hsl_start.H;
 				
 				LinearGradientBrush br = new LinearGradientBrush(new Rectangle(2,2, 1, this.Height - 4), AdobeColors.HSL_to_RGB(hsl_start), AdobeColors.HSL_to_RGB(hsl_end), 90, false); 
-				g.FillRectangle(br,new Rectangle(i + 2, 2, 1, this.Height - 4)); 
-			}
+				g.FillRectangle(br,new Rectangle(i + 2, 2, 1, this.Height - 4));
+                br.Dispose();
+            }
 		}
 
 
@@ -632,8 +649,9 @@ namespace adobe_color_picker_clone_part_1
 				int green = Round(255 - (255 * (double)i/(this.Height - 4)));
 
 				LinearGradientBrush br = new LinearGradientBrush(new Rectangle(2,2, this.Width - 4, 1), Color.FromArgb(red, green, 0), Color.FromArgb(red, green, 255), 0, false); 
-				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1)); 
-			}
+				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1));
+                br.Dispose();
+            }
 		}
 
 
@@ -652,8 +670,9 @@ namespace adobe_color_picker_clone_part_1
 				int red = Round(255 - (255 * (double)i/(this.Height - 4)));
 
 				LinearGradientBrush br = new LinearGradientBrush(new Rectangle(2,2, this.Width - 4, 1), Color.FromArgb(red, green, 0), Color.FromArgb(red, green, 255), 0, false); 
-				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1)); 
-			}
+				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1));
+                br.Dispose();
+            }
 		}
 
 
@@ -672,8 +691,9 @@ namespace adobe_color_picker_clone_part_1
 				int green = Round(255 - (255 * (double)i/(this.Height - 4)));
 
 				LinearGradientBrush br = new LinearGradientBrush(new Rectangle(2,2, this.Width - 4, 1), Color.FromArgb(0, green, blue), Color.FromArgb(255, green, blue), 0, false); 
-				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1)); 
-			}
+				g.FillRectangle(br,new Rectangle(2,i + 2, this.Width - 4, 1));
+                br.Dispose();
+            }
 		}
 
 
