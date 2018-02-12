@@ -109,7 +109,7 @@
     <Image Include="pro_small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="jc_colorpicker\jcColorDialog.csproj">
+    <ProjectReference Include="jc_colorpicker\jcColorDialog.vs2015.csproj">
       <Project>{22e08f67-4e40-4a92-876b-410ffd49b20e}</Project>
     </ProjectReference>
   </ItemGroup>
