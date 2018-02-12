@@ -1999,8 +1999,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			// 
 			// FormJoy
 			// 
-			this->AutoScaleDimensions = System::Drawing::SizeF(7, 17);
-			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
+			this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
+			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Dpi;
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->ClientSize = System::Drawing::Size(1662, 702);
