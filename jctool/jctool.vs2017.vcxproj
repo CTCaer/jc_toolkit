@@ -63,6 +63,10 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>$(ProjectDir)dpiawarev2.manifest.xml</AdditionalManifestFiles>
+      <EnableDpiAwareness>false</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Reference Include="System" />
