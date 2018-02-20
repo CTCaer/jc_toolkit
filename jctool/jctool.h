@@ -6,7 +6,7 @@ using namespace System;
 
 template <typename T> T CLAMP(const T& value, const T& low, const T& high)
 {
-	return value < low ? low : (value > high ? high : value);
+    return value < low ? low : (value > high ? high : value);
 }
 
 typedef uint8_t u8;
@@ -43,9 +43,9 @@ int handler_close;
 int option_is_on;
 
 namespace CppWinFormJoy {
-	class images
-	{
-		//For annoying designer..
-		//Todo.
-	};
+    class images
+    {
+        //For annoying designer..
+        //Todo.
+    };
 }
