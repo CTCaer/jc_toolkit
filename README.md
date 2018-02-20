@@ -1,9 +1,10 @@
 # Joy-Con Toolkit
-Joy-Con Toolkit
 
 ## Prerequisites:
 
-Needs .NET Framework 4.5.2
+**Microsoft Visual C++ 2017 (x86) Redistributable** (All Windows versions)
+
+**Microsoft .NET Framework 4.7.1** (for Windows lower than Windows 10)
 
 ## References:
 
