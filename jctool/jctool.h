@@ -3,16 +3,6 @@
 #include "hidapi.h"
 
 using namespace System;
-using namespace System::ComponentModel;
-using namespace System::Collections;
-using namespace System::Windows::Forms;
-using namespace System::Data;
-using namespace System::Drawing;
-using namespace System::Resources;
-using namespace System::Xml;
-using namespace System::Collections::Generic;
-using namespace System::IO;
-using namespace System::Globalization;
 
 template <typename T> T CLAMP(const T& value, const T& low, const T& high)
 {

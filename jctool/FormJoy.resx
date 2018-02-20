@@ -170,12 +170,9 @@ Click to change between Celsius and Fahrenheit </value>
     <value>Make a backup first!
 If you lose your serial number, bad things will happen!
 
-If you currently have the stock S/N, this will also create a backup of it inside the SPI.
+If you currently have the stock S/N, this will create a backup of it inside SPI.
 
-Restore it either here from the SPI backed up S/N or through Restore option from your SPI backup.
-
-
-Maximum 15 ASCII characters.</value>
+Restore it either here from the SPI backed up S/N or through Restore option.</value>
   </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>

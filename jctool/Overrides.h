@@ -1,5 +1,8 @@
 #pragma once
 namespace Overrides {
+	using namespace System::Windows::Forms;
+	using namespace System::Drawing;
+
 	public ref class TestColorTable : ProfessionalColorTable
 	{
 		public: property Color ToolStripDropDownBackground

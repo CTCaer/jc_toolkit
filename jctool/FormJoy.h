@@ -12,6 +12,12 @@
 #include "luts.h"
 
 namespace CppWinFormJoy {
+    using namespace System::ComponentModel;
+    using namespace System::Drawing;
+    using namespace System::Globalization;
+    using namespace System::IO;
+    using namespace System::Resources;
+    using namespace System::Windows::Forms;
 
 /// <summary>
 /// Summary for FormJoy
@@ -92,13 +98,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
             L"Set how many additional times the loop will be played.\n\nChoose a number from 0 to 999");
             
         //Initialise locations on start for easy designing
-        this->menuStrip1->Size = System::Drawing::Size(485, 24);
-        this->groupRst->Location = System::Drawing::Point(494, 36);
-        this->groupBox_chg_sn->Location = System::Drawing::Point(494, 36);
-        this->groupBoxVib->Location = System::Drawing::Point(494, 36);
-        this->groupBox_btn_test->Location = System::Drawing::Point(494, 36);
+        this->grpBox_DebugCmd->Location = System::Drawing::Point(494, 36);
+        this->grpBox_Restore->Location = System::Drawing::Point(494, 36);
+        this->grpBox_ChangeSN->Location = System::Drawing::Point(494, 36);
+        this->grpBox_VibPlayer->Location = System::Drawing::Point(494, 36);
+        this->grpBox_ButtonTest->Location = System::Drawing::Point(494, 36);
         this->ClientSize = System::Drawing::Size(485, 474);
-			
+		reset_window_option(true);
+
         vib_file_type = 0;
         vib_sample_rate = 0;
         vib_samples = 0;
@@ -143,8 +150,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: float lf_pitch;
     private: float hf_gain;
     private: float hf_pitch;
-	private: Color jcBodyColor;
-	private: Color jcButtonsColor;
+    private: Color jcBodyColor;
+    private: Color jcButtonsColor;
     private: System::Drawing::Size previous_size;
     private: System::Windows::Forms::GroupBox^  groupBoxColor;
     private: System::Windows::Forms::Button^ btnWriteBody;
@@ -156,7 +163,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::TextBox^  textBoxFW;
     private: System::Windows::Forms::TextBox^  textBoxDev;
     private: System::Windows::Forms::Label^  label_dev;
-    private: System::Windows::Forms::Button^  button3;
+    private: System::Windows::Forms::Button^  btn_makeBackup;
     private: System::Windows::Forms::GroupBox^  groupBoxSPI;
     private: System::Windows::Forms::Label^  label6;
     private: System::Windows::Forms::PictureBox^  pictureBoxPreview;
@@ -173,7 +180,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::TextBox^  textBoxDbg_cmd;
     private: System::Windows::Forms::TextBox^  textBoxDbg_subcmd;
     private: System::Windows::Forms::Label^  label4;
-    private: System::Windows::Forms::GroupBox^  groupRst;
+    private: System::Windows::Forms::GroupBox^  grpBox_Restore;
     private: System::Windows::Forms::Button^  btnLoadBackup;
     private: System::Windows::Forms::Label^  label_rst_mac;
     private: System::Windows::Forms::TextBox^  textBox2;
@@ -197,8 +204,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Label^  label11;
     private: System::Windows::Forms::Label^  label10;
     private: System::Windows::Forms::Label^  label9;
-    private: System::Windows::Forms::GroupBox^  groupDbg;
-    private: System::Windows::Forms::GroupBox^  groupBox_chg_sn;
+    private: System::Windows::Forms::GroupBox^  grpBox_DebugCmd;
+    private: System::Windows::Forms::GroupBox^  grpBox_ChangeSN;
     private: System::Windows::Forms::Button^  btnChangeSn;
     private: System::Windows::Forms::TextBox^  textBox_chg_sn;
     private: System::Windows::Forms::Label^  label13;
@@ -206,7 +213,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::ToolTip^  toolTip1;
     public: System::Windows::Forms::TextBox^  textBoxDbg_sent;
     public: System::Windows::Forms::TextBox^  textBoxDbg_reply;
-    private: System::Windows::Forms::GroupBox^  groupBoxVib;
+    private: System::Windows::Forms::GroupBox^  grpBox_VibPlayer;
     private: System::Windows::Forms::Button^  btnVibPlay;
     private: System::Windows::Forms::Button^  btnLoadVib;
     private: System::Windows::Forms::Label^  label_vib_loaded;
@@ -228,12 +235,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Button^  btnRestore_SN;
     private: System::Windows::Forms::GroupBox^  groupBox_vib_info;
     private: System::Windows::Forms::TextBox^  textBox_vib_loop_times;
-    private: System::Windows::Forms::GroupBox^  groupBox_btn_test;
+    private: System::Windows::Forms::GroupBox^  grpBox_ButtonTest;
     public: System::Windows::Forms::TextBox^  textBox_btn_test_reply;
     public: System::Windows::Forms::TextBox^  textBox_btn_test_subreply;
     private: System::Windows::Forms::ToolStripMenuItem^  buttonTestToolStripMenuItem;
     private: System::Windows::Forms::Button^  btn_run_btn_test;
-    private: System::Windows::Forms::GroupBox^  groupBox2;
+    private: System::Windows::Forms::GroupBox^  grpBox_StickCal;
     public: System::Windows::Forms::TextBox^  textBox_lstick_ucal;
     public: System::Windows::Forms::TextBox^  textBox_rstick_ucal;
     public: System::Windows::Forms::TextBox^  textBox_lstick_fcal;
@@ -242,7 +249,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     public: System::Windows::Forms::TextBox^  textBox_6axis_cal;
     public: System::Windows::Forms::TextBox^  textBox_6axis_ucal;
     public: System::Windows::Forms::TextBox^  textBox_device_parameters2;
-    private: System::Windows::Forms::GroupBox^  groupBox_dev_param;
+    private: System::Windows::Forms::GroupBox^  grpBox_dev_param;
     private: System::Windows::Forms::Button^  btn_spi_cancel;
     private: System::Windows::Forms::ToolStrip^  toolStrip1;
     private: System::Windows::Forms::ToolStripLabel^  toolStripLabel_temp;
@@ -251,10 +258,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::ToolStripLabel^  toolStripLabel_batt;
     private: System::Windows::Forms::ToolStripButton^  toolStripBtn_Disconnect;
     private: System::Windows::Forms::Button^  btn_change_color;
-    private: System::Windows::Forms::Panel^  panel1;
+    private: System::Windows::Forms::Panel^  panel_filler;
     private: jcColor::JoyConColorPicker^ JCColorPicker;
     private: System::Windows::Forms::Label^  lbl_Buttons_hex_txt;
     private: System::Windows::Forms::Label^  lbl_Body_hex_txt;
+    private: System::Windows::Forms::GroupBox^  grpBox_accGyroCal;
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 #pragma endregion
@@ -281,7 +289,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->btbRestoreEnable = (gcnew System::Windows::Forms::Button());
 			this->pictureBoxPreview = (gcnew System::Windows::Forms::PictureBox());
 			this->btn_change_color = (gcnew System::Windows::Forms::Button());
-			this->button3 = (gcnew System::Windows::Forms::Button());
+			this->btn_makeBackup = (gcnew System::Windows::Forms::Button());
 			this->groupBoxSPI = (gcnew System::Windows::Forms::GroupBox());
 			this->btn_spi_cancel = (gcnew System::Windows::Forms::Button());
 			this->label_progress = (gcnew System::Windows::Forms::Label());
@@ -308,7 +316,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBoxDbg_cmd = (gcnew System::Windows::Forms::TextBox());
 			this->textBoxDbg_subcmd = (gcnew System::Windows::Forms::TextBox());
 			this->label4 = (gcnew System::Windows::Forms::Label());
-			this->groupDbg = (gcnew System::Windows::Forms::GroupBox());
+			this->grpBox_DebugCmd = (gcnew System::Windows::Forms::GroupBox());
 			this->textBoxDbg_reply_cmd = (gcnew System::Windows::Forms::TextBox());
 			this->textBoxDbg_reply = (gcnew System::Windows::Forms::TextBox());
 			this->textBoxDbg_sent = (gcnew System::Windows::Forms::TextBox());
@@ -321,11 +329,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBoxDbg_hamp = (gcnew System::Windows::Forms::TextBox());
 			this->textBoxDbg_hfreq = (gcnew System::Windows::Forms::TextBox());
 			this->label8 = (gcnew System::Windows::Forms::Label());
-			this->groupRst = (gcnew System::Windows::Forms::GroupBox());
+			this->grpBox_Restore = (gcnew System::Windows::Forms::GroupBox());
 			this->comboBox1 = (gcnew System::Windows::Forms::ComboBox());
 			this->label7 = (gcnew System::Windows::Forms::Label());
 			this->grpRstUser = (gcnew System::Windows::Forms::GroupBox());
-			this->label5 = (gcnew System::Windows::Forms::Label());
 			this->checkBox3 = (gcnew System::Windows::Forms::CheckBox());
 			this->checkBox2 = (gcnew System::Windows::Forms::CheckBox());
 			this->checkBox1 = (gcnew System::Windows::Forms::CheckBox());
@@ -333,16 +340,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBox2 = (gcnew System::Windows::Forms::TextBox());
 			this->label_rst_mac = (gcnew System::Windows::Forms::Label());
 			this->btnLoadBackup = (gcnew System::Windows::Forms::Button());
+			this->label5 = (gcnew System::Windows::Forms::Label());
 			this->errorProvider1 = (gcnew System::Windows::Forms::ErrorProvider(this->components));
 			this->errorProvider2 = (gcnew System::Windows::Forms::ErrorProvider(this->components));
-			this->groupBox_chg_sn = (gcnew System::Windows::Forms::GroupBox());
+			this->grpBox_ChangeSN = (gcnew System::Windows::Forms::GroupBox());
 			this->btnRestore_SN = (gcnew System::Windows::Forms::Button());
 			this->label13 = (gcnew System::Windows::Forms::Label());
 			this->label_sn_change_warning = (gcnew System::Windows::Forms::Label());
 			this->btnChangeSn = (gcnew System::Windows::Forms::Button());
 			this->textBox_chg_sn = (gcnew System::Windows::Forms::TextBox());
 			this->toolTip1 = (gcnew System::Windows::Forms::ToolTip(this->components));
-			this->groupBoxVib = (gcnew System::Windows::Forms::GroupBox());
+			this->grpBox_VibPlayer = (gcnew System::Windows::Forms::GroupBox());
 			this->groupBox_vib_info = (gcnew System::Windows::Forms::GroupBox());
 			this->textBox_vib_loop_times = (gcnew System::Windows::Forms::TextBox());
 			this->label_hdrumble_filename = (gcnew System::Windows::Forms::Label());
@@ -362,46 +370,48 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->btn_enable_expert_mode = (gcnew System::Windows::Forms::Button());
 			this->textBox_btn_test_reply = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_btn_test_subreply = (gcnew System::Windows::Forms::TextBox());
-			this->groupBox_btn_test = (gcnew System::Windows::Forms::GroupBox());
+			this->grpBox_ButtonTest = (gcnew System::Windows::Forms::GroupBox());
 			this->btn_run_btn_test = (gcnew System::Windows::Forms::Button());
-			this->groupBox2 = (gcnew System::Windows::Forms::GroupBox());
-			this->textBox_6axis_ucal = (gcnew System::Windows::Forms::TextBox());
-			this->textBox_6axis_cal = (gcnew System::Windows::Forms::TextBox());
+			this->grpBox_StickCal = (gcnew System::Windows::Forms::GroupBox());
 			this->textBox_lstick_fcal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_rstick_fcal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_rstick_ucal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_lstick_ucal = (gcnew System::Windows::Forms::TextBox());
+			this->textBox_6axis_ucal = (gcnew System::Windows::Forms::TextBox());
+			this->textBox_6axis_cal = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_device_parameters = (gcnew System::Windows::Forms::TextBox());
 			this->textBox_device_parameters2 = (gcnew System::Windows::Forms::TextBox());
-			this->groupBox_dev_param = (gcnew System::Windows::Forms::GroupBox());
+			this->grpBox_dev_param = (gcnew System::Windows::Forms::GroupBox());
 			this->toolStrip1 = (gcnew System::Windows::Forms::ToolStrip());
 			this->toolStripBtn_batt = (gcnew System::Windows::Forms::ToolStripButton());
 			this->toolStripLabel_batt = (gcnew System::Windows::Forms::ToolStripLabel());
 			this->toolStripLabel_temp = (gcnew System::Windows::Forms::ToolStripLabel());
 			this->toolStripBtn_refresh = (gcnew System::Windows::Forms::ToolStripButton());
 			this->toolStripBtn_Disconnect = (gcnew System::Windows::Forms::ToolStripButton());
-			this->panel1 = (gcnew System::Windows::Forms::Panel());
+			this->panel_filler = (gcnew System::Windows::Forms::Panel());
+			this->grpBox_accGyroCal = (gcnew System::Windows::Forms::GroupBox());
 			this->groupBoxColor->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
 			this->groupBoxSPI->SuspendLayout();
 			this->menuStrip1->SuspendLayout();
-			this->groupDbg->SuspendLayout();
-			this->groupRst->SuspendLayout();
+			this->grpBox_DebugCmd->SuspendLayout();
+			this->grpBox_Restore->SuspendLayout();
 			this->grpRstUser->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider1))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider2))->BeginInit();
-			this->groupBox_chg_sn->SuspendLayout();
-			this->groupBoxVib->SuspendLayout();
+			this->grpBox_ChangeSN->SuspendLayout();
+			this->grpBox_VibPlayer->SuspendLayout();
 			this->groupBox_vib_info->SuspendLayout();
 			this->groupBox_vib_eq->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_amp))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_amp))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_freq))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_freq))->BeginInit();
-			this->groupBox_btn_test->SuspendLayout();
-			this->groupBox2->SuspendLayout();
-			this->groupBox_dev_param->SuspendLayout();
+			this->grpBox_ButtonTest->SuspendLayout();
+			this->grpBox_StickCal->SuspendLayout();
+			this->grpBox_dev_param->SuspendLayout();
 			this->toolStrip1->SuspendLayout();
+			this->grpBox_accGyroCal->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// btnWriteBody
@@ -433,8 +443,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->groupBoxColor->Controls->Add(this->btbRestoreEnable);
 			this->groupBoxColor->Controls->Add(this->pictureBoxPreview);
 			this->groupBoxColor->Controls->Add(this->btn_change_color);
-			this->groupBoxColor->Controls->Add(this->button3);
+			this->groupBoxColor->Controls->Add(this->btn_makeBackup);
 			this->groupBoxColor->Controls->Add(this->btnWriteBody);
+			this->groupBoxColor->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
 			this->groupBoxColor->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
 			this->groupBoxColor->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
@@ -452,30 +463,32 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			// 
 			this->lbl_Buttons_hex_txt->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->lbl_Buttons_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+			this->lbl_Buttons_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
 			this->lbl_Buttons_hex_txt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(150)),
 				static_cast<System::Int32>(static_cast<System::Byte>(150)), static_cast<System::Int32>(static_cast<System::Byte>(150)));
-			this->lbl_Buttons_hex_txt->Location = System::Drawing::Point(380, 159);
+			this->lbl_Buttons_hex_txt->Location = System::Drawing::Point(316, 183);
 			this->lbl_Buttons_hex_txt->Margin = System::Windows::Forms::Padding(0);
 			this->lbl_Buttons_hex_txt->Name = L"lbl_Buttons_hex_txt";
-			this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(64, 48);
+			this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(128, 24);
 			this->lbl_Buttons_hex_txt->TabIndex = 21;
+			this->lbl_Buttons_hex_txt->Text = L"#Buttons Color";
 			this->lbl_Buttons_hex_txt->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// lbl_Body_hex_txt
 			// 
 			this->lbl_Body_hex_txt->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->lbl_Body_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+			this->lbl_Body_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
 			this->lbl_Body_hex_txt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(150)),
 				static_cast<System::Int32>(static_cast<System::Byte>(150)), static_cast<System::Int32>(static_cast<System::Byte>(150)));
 			this->lbl_Body_hex_txt->Location = System::Drawing::Point(316, 159);
 			this->lbl_Body_hex_txt->Margin = System::Windows::Forms::Padding(0);
 			this->lbl_Body_hex_txt->Name = L"lbl_Body_hex_txt";
-			this->lbl_Body_hex_txt->Size = System::Drawing::Size(64, 48);
+			this->lbl_Body_hex_txt->Size = System::Drawing::Size(128, 24);
 			this->lbl_Body_hex_txt->TabIndex = 20;
+			this->lbl_Body_hex_txt->Text = L"#Body Color";
 			this->lbl_Body_hex_txt->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// btbRestoreEnable
@@ -504,10 +517,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->pictureBoxPreview->BackgroundImageLayout = System::Windows::Forms::ImageLayout::Zoom;
 			this->pictureBoxPreview->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->pictureBoxPreview->Location = System::Drawing::Point(1, 90);
+			this->pictureBoxPreview->Location = System::Drawing::Point(2, 90);
 			this->pictureBoxPreview->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->pictureBoxPreview->Name = L"pictureBoxPreview";
 			this->pictureBoxPreview->Size = System::Drawing::Size(312, 192);
+			this->pictureBoxPreview->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
 			this->pictureBoxPreview->TabIndex = 15;
 			this->pictureBoxPreview->TabStop = false;
 			// 
@@ -526,26 +540,26 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->btn_change_color->TabIndex = 19;
 			this->btn_change_color->Text = L"Change Color";
 			this->btn_change_color->UseVisualStyleBackColor = false;
-			this->btn_change_color->Click += gcnew System::EventHandler(this, &FormJoy::button1_Click_1);
+			this->btn_change_color->Click += gcnew System::EventHandler(this, &FormJoy::btn_change_color_Click);
 			// 
-			// button3
+			// btn_makeBackup
 			// 
-			this->button3->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+			this->btn_makeBackup->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->button3->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+			this->btn_makeBackup->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
 				static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
-			this->button3->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-			this->button3->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F, System::Drawing::FontStyle::Bold));
-			this->button3->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+			this->btn_makeBackup->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->btn_makeBackup->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F, System::Drawing::FontStyle::Bold));
+			this->btn_makeBackup->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->button3->Location = System::Drawing::Point(169, 25);
-			this->button3->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
-			this->button3->Name = L"button3";
-			this->button3->Size = System::Drawing::Size(144, 36);
-			this->button3->TabIndex = 1;
-			this->button3->Text = L"Backup SPI";
-			this->button3->UseVisualStyleBackColor = false;
-			this->button3->Click += gcnew System::EventHandler(this, &FormJoy::button3_Click);
+			this->btn_makeBackup->Location = System::Drawing::Point(169, 25);
+			this->btn_makeBackup->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
+			this->btn_makeBackup->Name = L"btn_makeBackup";
+			this->btn_makeBackup->Size = System::Drawing::Size(144, 36);
+			this->btn_makeBackup->TabIndex = 1;
+			this->btn_makeBackup->Text = L"Backup SPI";
+			this->btn_makeBackup->UseVisualStyleBackColor = false;
+			this->btn_makeBackup->Click += gcnew System::EventHandler(this, &FormJoy::btn_makeBackup_Click);
 			// 
 			// groupBoxSPI
 			// 
@@ -936,37 +950,37 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->label4->Text = L"The debug feature is only for developer use!\r\n\r\nNo one is responsible for any com"
 				L"mand sent.";
 			// 
-			// groupDbg
+			// grpBox_DebugCmd
 			// 
-			this->groupDbg->Controls->Add(this->textBoxDbg_reply_cmd);
-			this->groupDbg->Controls->Add(this->textBoxDbg_reply);
-			this->groupDbg->Controls->Add(this->textBoxDbg_sent);
-			this->groupDbg->Controls->Add(this->label12);
-			this->groupDbg->Controls->Add(this->label11);
-			this->groupDbg->Controls->Add(this->label10);
-			this->groupDbg->Controls->Add(this->label9);
-			this->groupDbg->Controls->Add(this->textBoxDbg_lfamp);
-			this->groupDbg->Controls->Add(this->textBoxDbg_lfreq);
-			this->groupDbg->Controls->Add(this->textBoxDbg_hamp);
-			this->groupDbg->Controls->Add(this->textBoxDbg_hfreq);
-			this->groupDbg->Controls->Add(this->label8);
-			this->groupDbg->Controls->Add(this->label1);
-			this->groupDbg->Controls->Add(this->label4);
-			this->groupDbg->Controls->Add(this->textBoxDbg_SubcmdArg);
-			this->groupDbg->Controls->Add(this->textBoxDbg_subcmd);
-			this->groupDbg->Controls->Add(this->btnDbg_send_cmd);
-			this->groupDbg->Controls->Add(this->textBoxDbg_cmd);
-			this->groupDbg->Controls->Add(this->label2);
-			this->groupDbg->Controls->Add(this->label3);
-			this->groupDbg->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_reply_cmd);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_reply);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_sent);
+			this->grpBox_DebugCmd->Controls->Add(this->label12);
+			this->grpBox_DebugCmd->Controls->Add(this->label11);
+			this->grpBox_DebugCmd->Controls->Add(this->label10);
+			this->grpBox_DebugCmd->Controls->Add(this->label9);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_lfamp);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_lfreq);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_hamp);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_hfreq);
+			this->grpBox_DebugCmd->Controls->Add(this->label8);
+			this->grpBox_DebugCmd->Controls->Add(this->label1);
+			this->grpBox_DebugCmd->Controls->Add(this->label4);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_SubcmdArg);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_subcmd);
+			this->grpBox_DebugCmd->Controls->Add(this->btnDbg_send_cmd);
+			this->grpBox_DebugCmd->Controls->Add(this->textBoxDbg_cmd);
+			this->grpBox_DebugCmd->Controls->Add(this->label2);
+			this->grpBox_DebugCmd->Controls->Add(this->label3);
+			this->grpBox_DebugCmd->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_DebugCmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupDbg->Location = System::Drawing::Point(494, 36);
-			this->groupDbg->Name = L"groupDbg";
-			this->groupDbg->Size = System::Drawing::Size(220, 399);
-			this->groupDbg->TabIndex = 23;
-			this->groupDbg->TabStop = false;
-			this->groupDbg->Text = L"Debug: Custom Command";
-			this->groupDbg->Visible = false;
+			this->grpBox_DebugCmd->Location = System::Drawing::Point(494, 36);
+			this->grpBox_DebugCmd->Name = L"grpBox_DebugCmd";
+			this->grpBox_DebugCmd->Size = System::Drawing::Size(220, 399);
+			this->grpBox_DebugCmd->TabIndex = 23;
+			this->grpBox_DebugCmd->TabStop = false;
+			this->grpBox_DebugCmd->Text = L"Debug: Custom Command";
 			// 
 			// textBoxDbg_reply_cmd
 			// 
@@ -1144,24 +1158,25 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->label8->TabIndex = 23;
 			this->label8->Text = L"Vibration:";
 			// 
-			// groupRst
+			// grpBox_Restore
 			// 
-			this->groupRst->Controls->Add(this->comboBox1);
-			this->groupRst->Controls->Add(this->label7);
-			this->groupRst->Controls->Add(this->grpRstUser);
-			this->groupRst->Controls->Add(this->btn_restore);
-			this->groupRst->Controls->Add(this->textBox2);
-			this->groupRst->Controls->Add(this->label_rst_mac);
-			this->groupRst->Controls->Add(this->btnLoadBackup);
-			this->groupRst->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+			this->grpBox_Restore->Controls->Add(this->comboBox1);
+			this->grpBox_Restore->Controls->Add(this->label7);
+			this->grpBox_Restore->Controls->Add(this->grpRstUser);
+			this->grpBox_Restore->Controls->Add(this->btn_restore);
+			this->grpBox_Restore->Controls->Add(this->textBox2);
+			this->grpBox_Restore->Controls->Add(this->label_rst_mac);
+			this->grpBox_Restore->Controls->Add(this->btnLoadBackup);
+			this->grpBox_Restore->Controls->Add(this->label5);
+			this->grpBox_Restore->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_Restore->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupRst->Location = System::Drawing::Point(736, 36);
-			this->groupRst->Name = L"groupRst";
-			this->groupRst->Size = System::Drawing::Size(220, 399);
-			this->groupRst->TabIndex = 24;
-			this->groupRst->TabStop = false;
-			this->groupRst->Text = L"Restore";
-			this->groupRst->Visible = false;
+			this->grpBox_Restore->Location = System::Drawing::Point(724, 36);
+			this->grpBox_Restore->Name = L"grpBox_Restore";
+			this->grpBox_Restore->Size = System::Drawing::Size(220, 399);
+			this->grpBox_Restore->TabIndex = 24;
+			this->grpBox_Restore->TabStop = false;
+			this->grpBox_Restore->Text = L"Restore";
 			// 
 			// comboBox1
 			// 
@@ -1204,15 +1219,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->grpRstUser->TabIndex = 7;
 			this->grpRstUser->TabStop = false;
 			this->grpRstUser->Visible = false;
-			// 
-			// label5
-			// 
-			this->label5->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
-				static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->label5->Location = System::Drawing::Point(6, 17);
-			this->label5->Name = L"label5";
-			this->label5->Size = System::Drawing::Size(188, 153);
-			this->label5->TabIndex = 3;
 			// 
 			// checkBox3
 			// 
@@ -1304,6 +1310,20 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->btnLoadBackup->UseVisualStyleBackColor = false;
 			this->btnLoadBackup->Click += gcnew System::EventHandler(this, &FormJoy::btnLoadBackup_Click);
 			// 
+			// label5
+			// 
+			this->label5->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(161)));
+			this->label5->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
+				static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->label5->Location = System::Drawing::Point(15, 101);
+			this->label5->Name = L"label5";
+			this->label5->Size = System::Drawing::Size(188, 167);
+			this->label5->TabIndex = 3;
+			this->label5->Text = L"This will restore the user calibration from the selected backup.\n\nIf you have any"
+				L" problem with the analog stick or the 6-Axis sensor you can choose to factory re"
+				L"set user calibration.";
+			// 
 			// errorProvider1
 			// 
 			this->errorProvider1->ContainerControl = this;
@@ -1312,24 +1332,24 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			// 
 			this->errorProvider2->ContainerControl = this;
 			// 
-			// groupBox_chg_sn
+			// grpBox_ChangeSN
 			// 
-			this->groupBox_chg_sn->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+			this->grpBox_ChangeSN->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->groupBox_chg_sn->Controls->Add(this->btnRestore_SN);
-			this->groupBox_chg_sn->Controls->Add(this->label13);
-			this->groupBox_chg_sn->Controls->Add(this->label_sn_change_warning);
-			this->groupBox_chg_sn->Controls->Add(this->btnChangeSn);
-			this->groupBox_chg_sn->Controls->Add(this->textBox_chg_sn);
-			this->groupBox_chg_sn->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+			this->grpBox_ChangeSN->Controls->Add(this->btnRestore_SN);
+			this->grpBox_ChangeSN->Controls->Add(this->label13);
+			this->grpBox_ChangeSN->Controls->Add(this->label_sn_change_warning);
+			this->grpBox_ChangeSN->Controls->Add(this->btnChangeSn);
+			this->grpBox_ChangeSN->Controls->Add(this->textBox_chg_sn);
+			this->grpBox_ChangeSN->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_ChangeSN->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox_chg_sn->Location = System::Drawing::Point(964, 36);
-			this->groupBox_chg_sn->Name = L"groupBox_chg_sn";
-			this->groupBox_chg_sn->Size = System::Drawing::Size(220, 399);
-			this->groupBox_chg_sn->TabIndex = 25;
-			this->groupBox_chg_sn->TabStop = false;
-			this->groupBox_chg_sn->Text = L"Change S/N";
-			this->groupBox_chg_sn->Visible = false;
+			this->grpBox_ChangeSN->Location = System::Drawing::Point(954, 36);
+			this->grpBox_ChangeSN->Name = L"grpBox_ChangeSN";
+			this->grpBox_ChangeSN->Size = System::Drawing::Size(220, 399);
+			this->grpBox_ChangeSN->TabIndex = 25;
+			this->grpBox_ChangeSN->TabStop = false;
+			this->grpBox_ChangeSN->Text = L"Change S/N";
 			// 
 			// btnRestore_SN
 			// 
@@ -1399,22 +1419,23 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBox_chg_sn->Size = System::Drawing::Size(186, 25);
 			this->textBox_chg_sn->TabIndex = 0;
 			// 
-			// groupBoxVib
+			// grpBox_VibPlayer
 			// 
-			this->groupBoxVib->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+			this->grpBox_VibPlayer->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->groupBoxVib->Controls->Add(this->groupBox_vib_info);
-			this->groupBoxVib->Controls->Add(this->groupBox_vib_eq);
-			this->groupBoxVib->Controls->Add(this->btnVibPlay);
-			this->groupBoxVib->Controls->Add(this->btnLoadVib);
-			this->groupBoxVib->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+			this->grpBox_VibPlayer->Controls->Add(this->groupBox_vib_info);
+			this->grpBox_VibPlayer->Controls->Add(this->groupBox_vib_eq);
+			this->grpBox_VibPlayer->Controls->Add(this->btnVibPlay);
+			this->grpBox_VibPlayer->Controls->Add(this->btnLoadVib);
+			this->grpBox_VibPlayer->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_VibPlayer->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBoxVib->Location = System::Drawing::Point(1192, 35);
-			this->groupBoxVib->Name = L"groupBoxVib";
-			this->groupBoxVib->Size = System::Drawing::Size(220, 399);
-			this->groupBoxVib->TabIndex = 26;
-			this->groupBoxVib->TabStop = false;
-			this->groupBoxVib->Text = L"HD Rumble Player";
+			this->grpBox_VibPlayer->Location = System::Drawing::Point(1183, 36);
+			this->grpBox_VibPlayer->Name = L"grpBox_VibPlayer";
+			this->grpBox_VibPlayer->Size = System::Drawing::Size(220, 399);
+			this->grpBox_VibPlayer->TabIndex = 26;
+			this->grpBox_VibPlayer->TabStop = false;
+			this->grpBox_VibPlayer->Text = L"HD Rumble Player";
 			// 
 			// groupBox_vib_info
 			// 
@@ -1703,20 +1724,20 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBox_btn_test_subreply->TabStop = false;
 			this->textBox_btn_test_subreply->Text = L"Acc/meter (Raw/Cal):\r\nX: \r\nY: \r\nX: \r\n\r\nGyroscope (Raw/Cal):\r\nX: \r\nY: \r\nZ: ";
 			// 
-			// groupBox_btn_test
+			// grpBox_ButtonTest
 			// 
-			this->groupBox_btn_test->Controls->Add(this->btn_run_btn_test);
-			this->groupBox_btn_test->Controls->Add(this->textBox_btn_test_reply);
-			this->groupBox_btn_test->Controls->Add(this->textBox_btn_test_subreply);
-			this->groupBox_btn_test->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+			this->grpBox_ButtonTest->Controls->Add(this->btn_run_btn_test);
+			this->grpBox_ButtonTest->Controls->Add(this->textBox_btn_test_reply);
+			this->grpBox_ButtonTest->Controls->Add(this->textBox_btn_test_subreply);
+			this->grpBox_ButtonTest->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_ButtonTest->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox_btn_test->Location = System::Drawing::Point(1418, 36);
-			this->groupBox_btn_test->Name = L"groupBox_btn_test";
-			this->groupBox_btn_test->Size = System::Drawing::Size(232, 399);
-			this->groupBox_btn_test->TabIndex = 36;
-			this->groupBox_btn_test->TabStop = false;
-			this->groupBox_btn_test->Text = L"Button test";
-			this->groupBox_btn_test->Visible = false;
+			this->grpBox_ButtonTest->Location = System::Drawing::Point(1418, 36);
+			this->grpBox_ButtonTest->Name = L"grpBox_ButtonTest";
+			this->grpBox_ButtonTest->Size = System::Drawing::Size(220, 399);
+			this->grpBox_ButtonTest->TabIndex = 36;
+			this->grpBox_ButtonTest->TabStop = false;
+			this->grpBox_ButtonTest->Text = L"Button test";
 			// 
 			// btn_run_btn_test
 			// 
@@ -1731,58 +1752,26 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->btn_run_btn_test->TabIndex = 36;
 			this->btn_run_btn_test->Text = L"Turn on";
 			this->btn_run_btn_test->UseVisualStyleBackColor = false;
-			this->btn_run_btn_test->Click += gcnew System::EventHandler(this, &FormJoy::button1_Click);
+			this->btn_run_btn_test->Click += gcnew System::EventHandler(this, &FormJoy::btn_run_btn_test_Click);
 			// 
-			// groupBox2
+			// grpBox_StickCal
 			// 
-			this->groupBox2->Controls->Add(this->textBox_6axis_ucal);
-			this->groupBox2->Controls->Add(this->textBox_6axis_cal);
-			this->groupBox2->Controls->Add(this->textBox_lstick_fcal);
-			this->groupBox2->Controls->Add(this->textBox_rstick_fcal);
-			this->groupBox2->Controls->Add(this->textBox_rstick_ucal);
-			this->groupBox2->Controls->Add(this->textBox_lstick_ucal);
-			this->groupBox2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+			this->grpBox_StickCal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->grpBox_StickCal->Controls->Add(this->textBox_lstick_fcal);
+			this->grpBox_StickCal->Controls->Add(this->textBox_rstick_fcal);
+			this->grpBox_StickCal->Controls->Add(this->textBox_rstick_ucal);
+			this->grpBox_StickCal->Controls->Add(this->textBox_lstick_ucal);
+			this->grpBox_StickCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_StickCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
 				static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox2->Location = System::Drawing::Point(14, 445);
-			this->groupBox2->Name = L"groupBox2";
-			this->groupBox2->Size = System::Drawing::Size(398, 212);
-			this->groupBox2->TabIndex = 37;
-			this->groupBox2->TabStop = false;
-			this->groupBox2->Text = L"Calibration";
-			// 
-			// textBox_6axis_ucal
-			// 
-			this->textBox_6axis_ucal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
-				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->textBox_6axis_ucal->BorderStyle = System::Windows::Forms::BorderStyle::None;
-			this->textBox_6axis_ucal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
-			this->textBox_6axis_ucal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
-				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-			this->textBox_6axis_ucal->Location = System::Drawing::Point(238, 119);
-			this->textBox_6axis_ucal->Multiline = true;
-			this->textBox_6axis_ucal->Name = L"textBox_6axis_ucal";
-			this->textBox_6axis_ucal->ReadOnly = true;
-			this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 88);
-			this->textBox_6axis_ucal->TabIndex = 43;
-			this->textBox_6axis_ucal->TabStop = false;
-			this->textBox_6axis_ucal->Text = L"6-Axis User (XYZ):\r\nAccelerometer\r\n\r\n\r\n\r\nGyroscope:";
-			// 
-			// textBox_6axis_cal
-			// 
-			this->textBox_6axis_cal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
-				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->textBox_6axis_cal->BorderStyle = System::Windows::Forms::BorderStyle::None;
-			this->textBox_6axis_cal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
-			this->textBox_6axis_cal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
-				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->textBox_6axis_cal->Location = System::Drawing::Point(238, 22);
-			this->textBox_6axis_cal->Multiline = true;
-			this->textBox_6axis_cal->Name = L"textBox_6axis_cal";
-			this->textBox_6axis_cal->ReadOnly = true;
-			this->textBox_6axis_cal->Size = System::Drawing::Size(156, 95);
-			this->textBox_6axis_cal->TabIndex = 42;
-			this->textBox_6axis_cal->TabStop = false;
-			this->textBox_6axis_cal->Text = L"6-Axis Factory (XYZ):\r\nAccelerometer\r\n\r\n\r\n\r\nGyroscope";
+			this->grpBox_StickCal->Location = System::Drawing::Point(14, 445);
+			this->grpBox_StickCal->Margin = System::Windows::Forms::Padding(0, 0, 0, 39);
+			this->grpBox_StickCal->Name = L"grpBox_StickCal";
+			this->grpBox_StickCal->Size = System::Drawing::Size(218, 218);
+			this->grpBox_StickCal->TabIndex = 37;
+			this->grpBox_StickCal->TabStop = false;
+			this->grpBox_StickCal->Text = L"Stick Calibration";
 			// 
 			// textBox_lstick_fcal
 			// 
@@ -1852,6 +1841,42 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBox_lstick_ucal->TabStop = false;
 			this->textBox_lstick_ucal->Text = L"L Stick User:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
 			// 
+			// textBox_6axis_ucal
+			// 
+			this->textBox_6axis_ucal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBox_6axis_ucal->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBox_6axis_ucal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
+			this->textBox_6axis_ucal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+			this->textBox_6axis_ucal->Location = System::Drawing::Point(6, 119);
+			this->textBox_6axis_ucal->Margin = System::Windows::Forms::Padding(0);
+			this->textBox_6axis_ucal->Multiline = true;
+			this->textBox_6axis_ucal->Name = L"textBox_6axis_ucal";
+			this->textBox_6axis_ucal->ReadOnly = true;
+			this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 75);
+			this->textBox_6axis_ucal->TabIndex = 43;
+			this->textBox_6axis_ucal->TabStop = false;
+			this->textBox_6axis_ucal->Text = L"6-Axis User (XYZ):\r\nAcc:\r\n\r\n\r\nGyro:";
+			// 
+			// textBox_6axis_cal
+			// 
+			this->textBox_6axis_cal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->textBox_6axis_cal->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->textBox_6axis_cal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
+			this->textBox_6axis_cal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+			this->textBox_6axis_cal->Location = System::Drawing::Point(6, 22);
+			this->textBox_6axis_cal->Margin = System::Windows::Forms::Padding(0);
+			this->textBox_6axis_cal->Multiline = true;
+			this->textBox_6axis_cal->Name = L"textBox_6axis_cal";
+			this->textBox_6axis_cal->ReadOnly = true;
+			this->textBox_6axis_cal->Size = System::Drawing::Size(156, 75);
+			this->textBox_6axis_cal->TabIndex = 42;
+			this->textBox_6axis_cal->TabStop = false;
+			this->textBox_6axis_cal->Text = L"6-Axis Factory (XYZ):\r\nAcc:\r\n\r\n\r\nGyro:";
+			// 
 			// textBox_device_parameters
 			// 
 			this->textBox_device_parameters->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
@@ -1877,7 +1902,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBox_device_parameters2->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
 			this->textBox_device_parameters2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-			this->textBox_device_parameters2->Location = System::Drawing::Point(157, 78);
+			this->textBox_device_parameters2->Location = System::Drawing::Point(155, 78);
 			this->textBox_device_parameters2->Multiline = true;
 			this->textBox_device_parameters2->Name = L"textBox_device_parameters2";
 			this->textBox_device_parameters2->ReadOnly = true;
@@ -1886,18 +1911,19 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->textBox_device_parameters2->TabStop = false;
 			this->textBox_device_parameters2->Text = L"Stick Parameters 2:\r\n";
 			// 
-			// groupBox_dev_param
+			// grpBox_dev_param
 			// 
-			this->groupBox_dev_param->Controls->Add(this->textBox_device_parameters);
-			this->groupBox_dev_param->Controls->Add(this->textBox_device_parameters2);
-			this->groupBox_dev_param->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
-				static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
-			this->groupBox_dev_param->Location = System::Drawing::Point(418, 445);
-			this->groupBox_dev_param->Name = L"groupBox_dev_param";
-			this->groupBox_dev_param->Size = System::Drawing::Size(308, 212);
-			this->groupBox_dev_param->TabIndex = 43;
-			this->groupBox_dev_param->TabStop = false;
-			this->groupBox_dev_param->Text = L"6-Axis and Stick Device Parameters";
+			this->grpBox_dev_param->Controls->Add(this->textBox_device_parameters);
+			this->grpBox_dev_param->Controls->Add(this->textBox_device_parameters2);
+			this->grpBox_dev_param->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_dev_param->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->grpBox_dev_param->Location = System::Drawing::Point(408, 445);
+			this->grpBox_dev_param->Name = L"grpBox_dev_param";
+			this->grpBox_dev_param->Size = System::Drawing::Size(306, 218);
+			this->grpBox_dev_param->TabIndex = 43;
+			this->grpBox_dev_param->TabStop = false;
+			this->grpBox_dev_param->Text = L"6-Axis and Stick Device Parameters";
 			// 
 			// toolStrip1
 			// 
@@ -1949,7 +1975,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 				static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
 			this->toolStripLabel_temp->Name = L"toolStripLabel_temp";
 			this->toolStripLabel_temp->Size = System::Drawing::Size(45, 22);
-			this->toolStripLabel_temp->Text = L"0.00\u2103";
+			this->toolStripLabel_temp->Text = L"0.00oC";
 			this->toolStripLabel_temp->ToolTipText = resources->GetString(L"toolStripLabel_temp.ToolTipText");
 			this->toolStripLabel_temp->Click += gcnew System::EventHandler(this, &FormJoy::toolStripLabel_temp_Click);
 			// 
@@ -1986,17 +2012,34 @@ public ref class FormJoy : public System::Windows::Forms::Form
 				L"o connect again.";
 			this->toolStripBtn_Disconnect->Click += gcnew System::EventHandler(this, &FormJoy::toolStripBtn_Disconnect_Click);
 			// 
-			// panel1
+			// panel_filler
 			// 
-			this->panel1->AutoSize = true;
-			this->panel1->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+			this->panel_filler->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
+			this->panel_filler->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
-			this->panel1->Location = System::Drawing::Point(0, 25);
-			this->panel1->Margin = System::Windows::Forms::Padding(0);
-			this->panel1->Name = L"panel1";
-			this->panel1->Size = System::Drawing::Size(0, 0);
-			this->panel1->TabIndex = 45;
+			this->panel_filler->BackgroundImageLayout = System::Windows::Forms::ImageLayout::None;
+			this->panel_filler->Location = System::Drawing::Point(0, 0);
+			this->panel_filler->Margin = System::Windows::Forms::Padding(0);
+			this->panel_filler->Name = L"panel_filler";
+			this->panel_filler->Size = System::Drawing::Size(0, 0);
+			this->panel_filler->TabIndex = 45;
 			// 
+			// grpBox_accGyroCal
+			// 
+			this->grpBox_accGyroCal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+				static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+			this->grpBox_accGyroCal->Controls->Add(this->textBox_6axis_ucal);
+			this->grpBox_accGyroCal->Controls->Add(this->textBox_6axis_cal);
+			this->grpBox_accGyroCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+			this->grpBox_accGyroCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+				static_cast<System::Int32>(static_cast<System::Byte>(206)));
+			this->grpBox_accGyroCal->Location = System::Drawing::Point(236, 445);
+			this->grpBox_accGyroCal->Margin = System::Windows::Forms::Padding(0);
+			this->grpBox_accGyroCal->Name = L"grpBox_accGyroCal";
+			this->grpBox_accGyroCal->Size = System::Drawing::Size(168, 218);
+			this->grpBox_accGyroCal->TabIndex = 47;
+			this->grpBox_accGyroCal->TabStop = false;
+			this->grpBox_accGyroCal->Text = L"Acc/Gyro Calibration";
 			// FormJoy
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
@@ -2004,16 +2047,18 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
 				static_cast<System::Int32>(static_cast<System::Byte>(70)));
 			this->ClientSize = System::Drawing::Size(1662, 702);
-			this->Controls->Add(this->panel1);
+			this->Controls->Add(this->menuStrip1);
 			this->Controls->Add(this->toolStrip1);
-			this->Controls->Add(this->groupBox_dev_param);
-			this->Controls->Add(this->groupBox2);
-			this->Controls->Add(this->groupBox_btn_test);
+			this->Controls->Add(this->panel_filler);
+			this->Controls->Add(this->grpBox_dev_param);
+			this->Controls->Add(this->grpBox_StickCal);
+			this->Controls->Add(this->grpBox_accGyroCal);
+			this->Controls->Add(this->grpBox_ButtonTest);
 			this->Controls->Add(this->btn_enable_expert_mode);
-			this->Controls->Add(this->groupBoxVib);
-			this->Controls->Add(this->groupBox_chg_sn);
-			this->Controls->Add(this->groupRst);
-			this->Controls->Add(this->groupDbg);
+			this->Controls->Add(this->grpBox_VibPlayer);
+			this->Controls->Add(this->grpBox_ChangeSN);
+			this->Controls->Add(this->grpBox_Restore);
+			this->Controls->Add(this->grpBox_DebugCmd);
 			this->Controls->Add(this->groupBoxColor);
 			this->Controls->Add(this->textBoxDev);
 			this->Controls->Add(this->label_dev);
@@ -2024,7 +2069,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->Controls->Add(this->label_mac);
 			this->Controls->Add(this->textBoxSN);
 			this->Controls->Add(this->label_sn);
-			this->Controls->Add(this->menuStrip1);
+			this->DoubleBuffered = true;
 			this->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(161)));
 			this->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
@@ -2035,6 +2080,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->MaximizeBox = false;
 			this->Name = L"FormJoy";
+			this->SizeGripStyle = System::Windows::Forms::SizeGripStyle::Hide;
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
 			this->Text = L"Joy-Con Toolkit v2.8.2";
 			this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
@@ -2043,16 +2089,16 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			this->groupBoxSPI->ResumeLayout(false);
 			this->menuStrip1->ResumeLayout(false);
 			this->menuStrip1->PerformLayout();
-			this->groupDbg->ResumeLayout(false);
-			this->groupDbg->PerformLayout();
-			this->groupRst->ResumeLayout(false);
-			this->groupRst->PerformLayout();
+			this->grpBox_DebugCmd->ResumeLayout(false);
+			this->grpBox_DebugCmd->PerformLayout();
+			this->grpBox_Restore->ResumeLayout(false);
+			this->grpBox_Restore->PerformLayout();
 			this->grpRstUser->ResumeLayout(false);
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider1))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->errorProvider2))->EndInit();
-			this->groupBox_chg_sn->ResumeLayout(false);
-			this->groupBox_chg_sn->PerformLayout();
-			this->groupBoxVib->ResumeLayout(false);
+			this->grpBox_ChangeSN->ResumeLayout(false);
+			this->grpBox_ChangeSN->PerformLayout();
+			this->grpBox_VibPlayer->ResumeLayout(false);
 			this->groupBox_vib_info->ResumeLayout(false);
 			this->groupBox_vib_info->PerformLayout();
 			this->groupBox_vib_eq->ResumeLayout(false);
@@ -2061,14 +2107,16 @@ public ref class FormJoy : public System::Windows::Forms::Form
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_amp))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_hf_freq))->EndInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_lf_freq))->EndInit();
-			this->groupBox_btn_test->ResumeLayout(false);
-			this->groupBox_btn_test->PerformLayout();
-			this->groupBox2->ResumeLayout(false);
-			this->groupBox2->PerformLayout();
-			this->groupBox_dev_param->ResumeLayout(false);
-			this->groupBox_dev_param->PerformLayout();
+			this->grpBox_ButtonTest->ResumeLayout(false);
+			this->grpBox_ButtonTest->PerformLayout();
+			this->grpBox_StickCal->ResumeLayout(false);
+			this->grpBox_StickCal->PerformLayout();
+			this->grpBox_dev_param->ResumeLayout(false);
+			this->grpBox_dev_param->PerformLayout();
 			this->toolStrip1->ResumeLayout(false);
 			this->toolStrip1->PerformLayout();
+			this->grpBox_accGyroCal->ResumeLayout(false);
+			this->grpBox_accGyroCal->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -2087,6 +2135,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
                 return;
             }
+            this->toolStripBtn_Disconnect->Enabled = true;
         }
 
         if (check_connection)
@@ -2167,7 +2216,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
     }
 
-    private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) {
+    private: System::Void btn_makeBackup_Click(System::Object^  sender, System::EventArgs^  e) {
         if (!device_connection()) {
             MessageBox::Show(L"The device was disconnected!\n\n" +
                 L"Press a button on the controller to connect\nand try to backup your SPI flash again!",
@@ -2212,6 +2261,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             msclr::interop::marshal_context context;
             handler_close = 1;
             this->groupBoxColor->Visible = false;
+            reset_window_option(true);
             Application::DoEvents();
             send_rumble();
             set_led_busy();
@@ -2233,10 +2283,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void update_joycon_color(u8 r, u8 g, u8 b, u8 rb, u8 gb, u8 bb) {
-        // Stretches the image to fit the pictureBox.
-        this->pictureBoxPreview->SizeMode = PictureBoxSizeMode::StretchImage;
-        this->pictureBoxPreview->ClientSize = System::Drawing::Size(295, 295);
-        
         Bitmap^ MyImage;
         if (handle_ok == 1) {
             MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.base64_l_joy")));
@@ -2296,8 +2342,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             System::Drawing::Imaging::PixelFormat format = MyImage->PixelFormat;
             MyImage = MyImage->Clone(cloneRect, format);
         }
-        this->pictureBoxPreview->ClientSize = System::Drawing::Size(312, 192);
         this->pictureBoxPreview->Image = dynamic_cast<Image^>(MyImage);
+        this->pictureBoxPreview->ClientSize = System::Drawing::Size(312, 192);
+        this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
     }
 
     private: System::Void update_colors_from_spi(bool update_color_dialog) {
@@ -2314,11 +2361,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         if (update_color_dialog) {
             this->jcBodyColor = Color::FromArgb(0xFF, (u8)body_color[0], (u8)body_color[1], (u8)body_color[2]);
-            this->lbl_Body_hex_txt->Text = L"Body:\n#" + String::Format("{0:X6}",
+            this->lbl_Body_hex_txt->Text = L"Body: #" + String::Format("{0:X6}",
                 ((u8)body_color[0] << 16) + ((u8)body_color[1] << 8) + ((u8)body_color[2]));
 
             this->jcButtonsColor = Color::FromArgb(0xFF, (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
-            this->lbl_Buttons_hex_txt->Text = L"Buttons:\n#" + String::Format("{0:X6}",
+            this->lbl_Buttons_hex_txt->Text = L"Buttons: #" + String::Format("{0:X6}",
                 ((u8)button_color[0] << 16) + ((u8)button_color[1] << 8) + ((u8)button_color[2]));
         }
 
@@ -2461,17 +2508,23 @@ public ref class FormJoy : public System::Windows::Forms::Form
         if (option_is_on != 1) {
             reset_window_option(false);
             this->ClientSize = System::Drawing::Size(738, 474);
-            this->groupDbg->Visible = true;
+            this->Controls->Add(this->grpBox_DebugCmd);
+            this->Controls->Add(this->btn_enable_expert_mode);
             option_is_on = 1;
         }
         else
             reset_window_option(true);
     }
 
+    private: System::Void btn_enable_expert_mode_Click(System::Object^  sender, System::EventArgs^  e) {
+        disable_expert_mode = false;
+        this->grpBox_DebugCmd->Text = L"Debug: Expert Mode";
+    }
+
     private: System::Void btbRestoreEnable_Click(System::Object^  sender, System::EventArgs^  e) {
         if (option_is_on != 2) {
             reset_window_option(false);
-            this->groupRst->Visible = true;
+            this->Controls->Add(this->grpBox_Restore);
             this->ClientSize = System::Drawing::Size(738, 474);
             option_is_on = 2;
         }
@@ -2482,9 +2535,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Void label_sn_Click(System::Object^  sender, System::EventArgs^  e) {
         if (option_is_on != 3) {
             reset_window_option(false);
-
             this->ClientSize = System::Drawing::Size(738, 474);
-            this->groupBox_chg_sn->Visible = true;
+            this->Controls->Add(this->grpBox_ChangeSN);
             option_is_on = 3;
         }
         else
@@ -2494,9 +2546,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Void btnPlayVibEnable_Click(System::Object^  sender, System::EventArgs^  e) {
         if (option_is_on != 4) {
             reset_window_option(false);
-
             this->ClientSize = System::Drawing::Size(738, 474);
-            this->groupBoxVib->Visible = true;
+            this->Controls->Add(this->grpBox_VibPlayer);
             option_is_on = 4;
         }
         else
@@ -2506,9 +2557,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Void buttonTestToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
         if (option_is_on != 5) {
             reset_window_option(false);
-
             this->ClientSize = System::Drawing::Size(738, 695);
-            this->groupBox_btn_test->Visible = true;
+            this->Controls->Add(this->grpBox_ButtonTest);
+            this->Controls->Add(this->grpBox_StickCal);
+            this->Controls->Add(this->grpBox_dev_param);
+            this->Controls->Add(this->grpBox_accGyroCal);
             this->btn_run_btn_test->Text = L"Turn on";
             option_is_on = 5;
         }
@@ -2520,9 +2573,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     private: System::Void reset_window_option(bool reset_all) {
         enable_button_test = false;
-        this->groupDbg->Visible = false;
-        this->groupRst->Visible = false;
-        this->groupBox_chg_sn->Visible = false;
+        this->Controls->Remove(this->grpBox_DebugCmd);
+        this->Controls->Remove(this->grpBox_Restore);
+        this->Controls->Remove(this->grpBox_ChangeSN);
+        this->Controls->Remove(this->grpBox_VibPlayer);
+        this->Controls->Remove(this->grpBox_ButtonTest);
+
+        this->Controls->Remove(this->btn_enable_expert_mode);
+        this->Controls->Remove(this->grpBox_StickCal);
+        this->Controls->Remove(this->grpBox_dev_param);
+        this->Controls->Remove(this->grpBox_accGyroCal);
+
         this->textBoxDbg_sent->Visible = false;
         this->textBoxDbg_reply->Visible = false;
         this->textBoxDbg_reply_cmd->Visible = false;
@@ -2660,6 +2721,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 this->label7->Visible = false;
                 this->btn_restore->Visible = false;
                 this->grpRstUser->Visible = false;
+                this->label5->Visible = true;
                 
                 return;
             }
@@ -2695,6 +2757,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     this->comboBox1->Visible = false;
                     this->btn_restore->Visible = false;
                     this->grpRstUser->Visible = false;
+                    this->label5->Visible = true;
 
                     return;
                 }
@@ -2735,6 +2798,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 this->comboBox1->Visible = false;
                 this->btn_restore->Visible = false;
                 this->grpRstUser->Visible = false;
+                this->label5->Visible = true;
                 
                 return;
             }
@@ -2760,6 +2824,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     this->comboBox1->Visible = true;
                     this->btn_restore->Visible = true;
                     this->btn_restore->Enabled = true;
+                    this->label5->Visible = false;
                     allow_full_restore = false;
                 }
                 else {
@@ -2768,6 +2833,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     this->comboBox1->Visible = false;
                     this->btn_restore->Visible = false;
                     this->grpRstUser->Visible = false;
+                    this->label5->Visible = true;
                 }
             }
             else {
@@ -2778,6 +2844,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 this->comboBox1->Visible = true;
                 this->btn_restore->Visible = true;
                 this->btn_restore->Enabled = true;
+                this->label5->Visible = false;
             }
         }
     }
@@ -2804,29 +2871,28 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Void comboBox1_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e) {
         this->grpRstUser->Visible = false;
         this->label7->Visible = false;
-        this->label7->Size = System::Drawing::Size(188, 121);
         this->btn_restore->Text = L"Restore";
-        this->label5->Text = L"This will restore the user calibration from the selected backup.\n\n" +
-            L"If you have any problem with the analog stick or the 6-Axis sensor you can choose to factory reset user calibration.";
-        this->label7->Text = L"This allows for the device colors to be restored from the loaded backup.\n\nFor mor"
-            L"e options click on the list above.";
+        this->label7->Text = L"This allows for the device colors to be restored from the loaded backup.\n\n"+
+            L"For more options click on the list above.";
 
         if (this->comboBox1->SelectedIndex == 0) {
             this->label7->Visible = true;
         }
         if (this->comboBox1->SelectedIndex == 1) {
             this->label7->Visible = true;
-            this->label7->Size = System::Drawing::Size(188, 230);
             this->label7->Text = L"This will restore your S/N from the selected backup.\n\n" +
-                L"Make sure that this backup was your original one!\n\nIf somehow you completely lost your S/N, " +
-                L"check the plastic sliver it was wrapped inside the box. It is printed on a white label.";
+                L"Make sure that this backup was your original one!\n\nIf you lost your S/N, " +
+                L"check the plastic sliver it was wrapped inside the box.";
         }
         else if (this->comboBox1->SelectedIndex == 2) {
+            this->label7->Visible = true;
+            this->label7->Text =
+                L"This lets you restore the chosen user calibrations from your SPI backup.";
             this->grpRstUser->Visible = true;
             if (handle_ok == 1) {
                 this->checkBox2->Visible = false;
                 this->checkBox1->Visible = true;
-                this->checkBox1->Location = System::Drawing::Point(6, 212);
+                this->checkBox1->Location = this->checkBox2->Location;
             }
             else if (handle_ok == 2) {
                 this->checkBox2->Visible = true;
@@ -2835,19 +2901,19 @@ public ref class FormJoy : public System::Windows::Forms::Form
             else if (handle_ok == 3) {
                 this->checkBox2->Visible = true;
                 this->checkBox1->Visible = true;
-                this->checkBox1->Location = System::Drawing::Point(6, 186);
             }
 
         }
         else if (this->comboBox1->SelectedIndex == 3) {
-            this->label5->Text = 
+            this->label7->Visible = true;
+            this->label7->Text =
                 L"This option does the same factory reset with the option inside Switch's controller calibration menu.";
             this->btn_restore->Text = L"Reset";
             this->grpRstUser->Visible = true;
             if (handle_ok == 1) {
                 this->checkBox2->Visible = false;
                 this->checkBox1->Visible = true;
-                this->checkBox1->Location = System::Drawing::Point(6, 212);
+                this->checkBox1->Location = this->checkBox2->Location;
             }
             else if (handle_ok == 2) {
                 this->checkBox2->Visible = true;
@@ -2856,15 +2922,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
             else if (handle_ok == 3) {
                 this->checkBox2->Visible = true;
                 this->checkBox1->Visible = true;
-                this->checkBox1->Location = System::Drawing::Point(6, 186);
             }
         }
         else if (this->comboBox1->SelectedIndex == 4) {
             this->label7->Visible = true;
-            this->label7->Size = System::Drawing::Size(188, 230);
-            this->label7->Text = L"This basically restores the Factory Configuration\nand the User Calibration. " +
-                L"It restores the only 2 4KB sectors that are usable in the writable 40KB region.\n\n" +
-                L"To preserve the factory configuration from accidental overwrite, " +
+            this->label7->Text = L"This restores the Factory and User configuration.\n\n" +
+                L"To preserve factory configuration from accidental overwrite, " +
                 L"the full restore is disabled if the backup does not match your device.";
             if (!allow_full_restore)
                 this->btn_restore->Enabled = false;
@@ -2878,6 +2941,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 MessageBoxButtons::OK, MessageBoxIcon::Stop);
             return;
         }
+        this->menuStrip1->Enabled = false;
+        this->toolStrip1->Enabled = false;
         set_led_busy();
         if (this->comboBox1->SelectedIndex == 0) {
             if (MessageBox::Show(L"The device color will be restored with the backup values!\n\nAre you sure you want to continue?",
@@ -3084,6 +3149,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             }
 
         }
+        this->menuStrip1->Enabled = true;
+        this->toolStrip1->Enabled = true;
     }
 
     private: System::Void textBoxDbg_subcmd_Validating(System::Object^ sender, CancelEventArgs^ e)
@@ -3569,8 +3636,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         update_temperature();
 
     }
-
-            
+     
     private: System::Void btnVib_reset_eq_Click(System::Object^  sender, System::EventArgs^  e) {
         this->trackBar_lf_amp->Value = 10;
         this->trackBar_lf_freq->Value = 10;
@@ -3591,12 +3657,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         vib_converted = 0;
     }
 
-    private: System::Void btn_enable_expert_mode_Click(System::Object^  sender, System::EventArgs^  e) {
-        disable_expert_mode = false;
-        this->groupDbg->Text = L"Expert Mode";
-    }
-
-    private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
+    private: System::Void btn_run_btn_test_Click(System::Object^  sender, System::EventArgs^  e) {
         if (!device_connection()) {
             MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try again!",
                 L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
@@ -3637,51 +3698,64 @@ public ref class FormJoy : public System::Windows::Forms::Form
         custom_cmd[5] = 0x06;
         custom_cmd[6] = 0x00;
         send_custom_command(custom_cmd);
+        this->toolStripBtn_Disconnect->Enabled = false;
     }
     private: System::Void toolStripBtn_refresh_Click(System::Object^  sender, System::EventArgs^  e) {
         full_refresh(true);
     }
 
-    private: System::Void button1_Click_1(System::Object^  sender, System::EventArgs^  e) {
+    private: System::Void btn_change_color_Click(System::Object^  sender, System::EventArgs^  e) {
         Color testcolor;
-
-        // Any smart way to have it load on start? but still open after disposing?
         JCColorPicker = gcnew jcColor::JoyConColorPicker(this->jcBodyColor, this->jcButtonsColor);
 
         previous_size = this->ClientSize;
 
         this->ClientSize = System::Drawing::Size(738, 474);
-        //JCColorPicker->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Dpi;
         JCColorPicker->TopLevel = false;
-        //JCColorPicker->Size = System::Drawing::Size(738, 424);
         this->panel1->Controls->Add(JCColorPicker);
-    
         JCColorPicker->FormBorderStyle = System::Windows::Forms::FormBorderStyle::None;
         this->menuStrip1->Enabled = false;
         this->toolStrip1->Enabled = false;
         JCColorPicker->m_cmd_Cancel->Click += gcnew System::EventHandler(this, &FormJoy::Color_Picker_Cancel);
         JCColorPicker->m_cmd_OK->Click += gcnew System::EventHandler(this, &FormJoy::Color_Picker_OK);
+
+        if (option_is_on == 5) {
+            this->Controls->Remove(this->grpBox_dev_param);
+            this->Controls->Remove(this->grpBox_StickCal);
+            this->Controls->Remove(this->grpBox_accGyroCal);
+        }
         JCColorPicker->Show();
 
 
     }
 
     private: System::Void Color_Picker_Cancel(System::Object^  sender, System::EventArgs^  e) {
-        this->ClientSize = previous_size;
+        this->panel_filler->Location = System::Drawing::Point(0, 0);
+        this->panel_filler->Size = System::Drawing::Size(0, 0);
+        if (option_is_on == 5) {
+            this->Controls->Add(this->grpBox_StickCal);
+            this->Controls->Add(this->grpBox_dev_param);
+            this->Controls->Add(this->grpBox_accGyroCal);
+        }
         this->menuStrip1->Enabled = true;
         this->toolStrip1->Enabled = true;
         
     }
     
     private: System::Void Color_Picker_OK(System::Object^  sender, System::EventArgs^  e) {
-		// Or backcolor?
-		// FormJoy::myform1->jcBodyColor = JCColorPicker->PrimaryColor;
+        this->panel_filler->Location = System::Drawing::Point(0, 0);
+        this->panel_filler->Size = System::Drawing::Size(0, 0);
+        if (option_is_on == 5) {
+            this->Controls->Add(this->grpBox_StickCal);
+            this->Controls->Add(this->grpBox_dev_param);
+            this->Controls->Add(this->grpBox_accGyroCal);
+        }
 		this->jcBodyColor = JCColorPicker->PrimaryColor;
 		this->jcButtonsColor = JCColorPicker->SecondaryColor;
-		this->lbl_Body_hex_txt->Text = L"Body:\n#" + String::Format("{0:X6}",
+        this->lbl_Body_hex_txt->Text = L"Body: #" + String::Format("{0:X6}",
 			(jcBodyColor.R << 16) + (jcBodyColor.G << 8) + (jcBodyColor.B));
 
-		this->lbl_Buttons_hex_txt->Text = L"Buttons:\n#" + String::Format("{0:X6}",
+        this->lbl_Buttons_hex_txt->Text = L"Buttons: #" + String::Format("{0:X6}",
 			(jcButtonsColor.R << 16) + (jcButtonsColor.G << 8) + (jcButtonsColor.B));
 
 		update_joycon_color(jcBodyColor.R, jcBodyColor.G, jcBodyColor.B,
