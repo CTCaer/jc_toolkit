@@ -2412,7 +2412,7 @@ namespace jcColor {
                 settings.IndentChars = "\t";
                 settings.ConformanceLevel = System.Xml.ConformanceLevel.Document;
                 using (System.Xml.XmlWriter writer = System.Xml.XmlWriter.Create("colors.xml", settings)) {
-                    string newXml = "\n<configuration>\n\t<startup>\n\t\t<supportedRuntime version='v4.0' sku='.NETFramework,Version=v4.5.2' />" +
+                    string newXml = "\n<configuration>\n\t<startup>\n\t\t<supportedRuntime version='v4.0' sku='.NETFramework,Version=v4.7.1' />" +
                     "\n\t</startup>\n\t<!--Values are in RGB-->\n</configuration>";
                     writer.WriteRaw(newXml);
                 }

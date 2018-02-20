@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+ <RetailColors>
+    <RC key="retailpreset_01" rgb_color="828282" tooltip="Grey" />
+    <RC key="retailpreset_02" rgb_color="0AB9E6" tooltip="Neon Blue" />
+    <RC key="retailpreset_03" rgb_color="FF3C28" tooltip="Neon Red" />
+    <RC key="retailpreset_04" rgb_color="E6FF00" tooltip="Neon Yellow" />
+    <RC key="retailpreset_05" rgb_color="FF3278" tooltip="Neon Pink" />
+    <RC key="retailpreset_06" rgb_color="1EDC00" tooltip="Neon Green" />
+    <RC key="retailpreset_07" rgb_color="E10F00" tooltip="Red" />
+    <RC key="retailpreset_08" rgb_color="323232" tooltip="Pro Black" />
+ </RetailColors>
+ <RetailColorsButtons>
+    <RC key="retailpreset_09" rgb_color="0F0F0F" tooltip="Grey Buttons" />
+    <RC key="retailpreset_10" rgb_color="001E1E" tooltip="Neon Blue Buttons" />
+    <RC key="retailpreset_11" rgb_color="1E0A0A" tooltip="Neon Red Buttons" />
+    <RC key="retailpreset_12" rgb_color="142800" tooltip="Neon Yellow Buttons" />
+    <RC key="retailpreset_13" rgb_color="28001E" tooltip="Neon Pink Buttons" />
+    <RC key="retailpreset_14" rgb_color="002800" tooltip="Neon Green Buttons" />
+    <RC key="retailpreset_15" rgb_color="280A0A" tooltip="Red Buttons" />
+    <RC key="retailpreset_16" rgb_color="FFFFFF" tooltip="Pro Black Buttons" />
+  </RetailColorsButtons>
+</configuration>
