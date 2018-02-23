@@ -2183,7 +2183,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Name = L"FormJoy";
             this->SizeGripStyle = System::Windows::Forms::SizeGripStyle::Hide;
             this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
-            this->Text = L"Joy-Con Toolkit v3.0.0";
+            this->Text = L"Joy-Con Toolkit v3.0.1";
             this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
             this->SizeChanged += gcnew System::EventHandler(this, &FormJoy::fixToolstripOverlap);
             this->grpBox_Color->ResumeLayout(false);
@@ -3960,14 +3960,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
         
         this->grpBox_Color->Margin = System::Windows::Forms::Padding(0, 0, 14, titleHeight);
         this->grpBox_StickCal->Margin = System::Windows::Forms::Padding(0, 0, 0, titleHeight);
-    }
-
-    private: System::Void sizeChangedTextbox(System::Object^  sender, System::EventArgs^  e) {
-        this->label1->Text += "\r\ngrpBoxSize: " + this->grpBox_StickCal->Size.ToString() + 
-            ", grpBoxClientSize: " + this->grpBox_StickCal->ClientSize.ToString() + 
-            "\r\nTextSize: " + this->textBox_rstick_ucal->Size.ToString() +
-            ", TextClientSize: " + this->textBox_rstick_ucal->ClientSize.ToString();
-
     }
 };
 }
