@@ -835,7 +835,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->lbl_subcmdArgs->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)));
-            this->lbl_subcmdArgs->Location = System::Drawing::Point(13, 120);
+            this->lbl_subcmdArgs->Location = System::Drawing::Point(13, 121);
             this->lbl_subcmdArgs->Name = L"lbl_subcmdArgs";
             this->lbl_subcmdArgs->Size = System::Drawing::Size(124, 17);
             this->lbl_subcmdArgs->TabIndex = 15;
@@ -852,12 +852,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->textBoxDbg_SubcmdArg->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->textBoxDbg_SubcmdArg->Location = System::Drawing::Point(16, 140);
+            this->textBoxDbg_SubcmdArg->Location = System::Drawing::Point(16, 141);
             this->textBoxDbg_SubcmdArg->Margin = System::Windows::Forms::Padding(0);
             this->textBoxDbg_SubcmdArg->MaxLength = 50;
             this->textBoxDbg_SubcmdArg->Multiline = true;
             this->textBoxDbg_SubcmdArg->Name = L"textBoxDbg_SubcmdArg";
-            this->textBoxDbg_SubcmdArg->Size = System::Drawing::Size(188, 38);
+            this->textBoxDbg_SubcmdArg->Size = System::Drawing::Size(188, 44);
             this->textBoxDbg_SubcmdArg->TabIndex = 25;
             this->textBoxDbg_SubcmdArg->Text = L"00";
             this->textBoxDbg_SubcmdArg->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
@@ -872,7 +872,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_dbgSendCmd->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
             this->btn_dbgSendCmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->btn_dbgSendCmd->Location = System::Drawing::Point(73, 194);
+            this->btn_dbgSendCmd->Location = System::Drawing::Point(73, 193);
             this->btn_dbgSendCmd->Name = L"btn_dbgSendCmd";
             this->btn_dbgSendCmd->Size = System::Drawing::Size(75, 34);
             this->btn_dbgSendCmd->TabIndex = 17;
@@ -944,9 +944,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->lbl_dbgDisclaimer->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->lbl_dbgDisclaimer->Location = System::Drawing::Point(20, 275);
+            this->lbl_dbgDisclaimer->Location = System::Drawing::Point(26, 275);
             this->lbl_dbgDisclaimer->Name = L"lbl_dbgDisclaimer";
-            this->lbl_dbgDisclaimer->Size = System::Drawing::Size(178, 97);
+            this->lbl_dbgDisclaimer->Size = System::Drawing::Size(170, 97);
             this->lbl_dbgDisclaimer->TabIndex = 22;
             this->lbl_dbgDisclaimer->Text = L"The debug feature is only for developer use!\r\n\r\nNo one is responsible for any com"
                 L"mand sent.";
@@ -995,12 +995,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->textBoxDbg_reply_cmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
                 static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->textBoxDbg_reply_cmd->Location = System::Drawing::Point(20, 280);
+            this->textBoxDbg_reply_cmd->Location = System::Drawing::Point(26, 278);
             this->textBoxDbg_reply_cmd->Margin = System::Windows::Forms::Padding(0);
             this->textBoxDbg_reply_cmd->Multiline = true;
             this->textBoxDbg_reply_cmd->Name = L"textBoxDbg_reply_cmd";
             this->textBoxDbg_reply_cmd->ReadOnly = true;
-            this->textBoxDbg_reply_cmd->Size = System::Drawing::Size(178, 45);
+            this->textBoxDbg_reply_cmd->Size = System::Drawing::Size(170, 45);
             this->textBoxDbg_reply_cmd->TabIndex = 34;
             this->textBoxDbg_reply_cmd->TabStop = false;
             this->textBoxDbg_reply_cmd->Text = L"Reply buttons and sticks";
@@ -1015,12 +1015,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->textBoxDbg_reply->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->textBoxDbg_reply->Location = System::Drawing::Point(20, 325);
+            this->textBoxDbg_reply->Location = System::Drawing::Point(26, 324);
             this->textBoxDbg_reply->Margin = System::Windows::Forms::Padding(0);
             this->textBoxDbg_reply->Multiline = true;
             this->textBoxDbg_reply->Name = L"textBoxDbg_reply";
             this->textBoxDbg_reply->ReadOnly = true;
-            this->textBoxDbg_reply->Size = System::Drawing::Size(178, 69);
+            this->textBoxDbg_reply->Size = System::Drawing::Size(170, 69);
             this->textBoxDbg_reply->TabIndex = 33;
             this->textBoxDbg_reply->TabStop = false;
             this->textBoxDbg_reply->Text = L"Reply text";
@@ -1035,12 +1035,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->textBoxDbg_sent->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->textBoxDbg_sent->Location = System::Drawing::Point(20, 237);
+            this->textBoxDbg_sent->Location = System::Drawing::Point(26, 234);
             this->textBoxDbg_sent->Margin = System::Windows::Forms::Padding(0);
             this->textBoxDbg_sent->Multiline = true;
             this->textBoxDbg_sent->Name = L"textBoxDbg_sent";
             this->textBoxDbg_sent->ReadOnly = true;
-            this->textBoxDbg_sent->Size = System::Drawing::Size(178, 47);
+            this->textBoxDbg_sent->Size = System::Drawing::Size(170, 47);
             this->textBoxDbg_sent->TabIndex = 32;
             this->textBoxDbg_sent->TabStop = false;
             this->textBoxDbg_sent->Text = L"Sent text";
@@ -1635,7 +1635,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_hf_amp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_hf_amp->LargeChange = 1;
-            this->trackBar_hf_amp->Location = System::Drawing::Point(113, 91);
+            this->trackBar_hf_amp->Location = System::Drawing::Point(111, 91);
+            this->trackBar_hf_amp->Margin = System::Windows::Forms::Padding(0);
             this->trackBar_hf_amp->Maximum = 20;
             this->trackBar_hf_amp->Name = L"trackBar_hf_amp";
             this->trackBar_hf_amp->Orientation = System::Windows::Forms::Orientation::Vertical;
@@ -1650,7 +1651,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_lf_amp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_lf_amp->LargeChange = 1;
-            this->trackBar_lf_amp->Location = System::Drawing::Point(15, 91);
+            this->trackBar_lf_amp->Location = System::Drawing::Point(13, 91);
+            this->trackBar_lf_amp->Margin = System::Windows::Forms::Padding(0);
             this->trackBar_lf_amp->Maximum = 20;
             this->trackBar_lf_amp->Name = L"trackBar_lf_amp";
             this->trackBar_lf_amp->Orientation = System::Windows::Forms::Orientation::Vertical;
@@ -1665,7 +1667,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_hf_freq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_hf_freq->LargeChange = 1;
-            this->trackBar_hf_freq->Location = System::Drawing::Point(162, 91);
+            this->trackBar_hf_freq->Location = System::Drawing::Point(160, 91);
+            this->trackBar_hf_freq->Margin = System::Windows::Forms::Padding(0);
             this->trackBar_hf_freq->Maximum = 20;
             this->trackBar_hf_freq->Name = L"trackBar_hf_freq";
             this->trackBar_hf_freq->Orientation = System::Windows::Forms::Orientation::Vertical;
@@ -1680,7 +1683,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_lf_freq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_lf_freq->LargeChange = 1;
-            this->trackBar_lf_freq->Location = System::Drawing::Point(64, 91);
+            this->trackBar_lf_freq->Location = System::Drawing::Point(62, 91);
+            this->trackBar_lf_freq->Margin = System::Windows::Forms::Padding(0);
             this->trackBar_lf_freq->Maximum = 20;
             this->trackBar_lf_freq->Name = L"trackBar_lf_freq";
             this->trackBar_lf_freq->Orientation = System::Windows::Forms::Orientation::Vertical;
@@ -1755,7 +1759,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_btn_test_reply->Multiline = true;
             this->textBox_btn_test_reply->Name = L"textBox_btn_test_reply";
             this->textBox_btn_test_reply->ReadOnly = true;
-            this->textBox_btn_test_reply->Size = System::Drawing::Size(205, 160);
+            this->textBox_btn_test_reply->Size = System::Drawing::Size(205, 172);
             this->textBox_btn_test_reply->TabIndex = 35;
             this->textBox_btn_test_reply->TabStop = false;
             this->textBox_btn_test_reply->Text = L"Conn:\r\nBatt:       Charging: Yes\r\nVibration decision:\r\n\r\nButtons:\r\n\r\nL Stick (Raw"
@@ -1774,7 +1778,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_btn_test_subreply->Multiline = true;
             this->textBox_btn_test_subreply->Name = L"textBox_btn_test_subreply";
             this->textBox_btn_test_subreply->ReadOnly = true;
-            this->textBox_btn_test_subreply->Size = System::Drawing::Size(205, 107);
+            this->textBox_btn_test_subreply->Size = System::Drawing::Size(205, 140);
             this->textBox_btn_test_subreply->TabIndex = 35;
             this->textBox_btn_test_subreply->TabStop = false;
             this->textBox_btn_test_subreply->Text = L"Acc/meter (Raw/Cal):\r\nX: \r\nY: \r\nX: \r\n\r\nGyroscope (Raw/Cal):\r\nX: \r\nY: \r\nZ: ";
@@ -1828,7 +1832,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_StickCal->Location = System::Drawing::Point(14, 445);
             this->grpBox_StickCal->Margin = System::Windows::Forms::Padding(0, 0, 0, 39);
             this->grpBox_StickCal->Name = L"grpBox_StickCal";
-            this->grpBox_StickCal->Size = System::Drawing::Size(218, 218);
+            this->grpBox_StickCal->Size = System::Drawing::Size(218, 215);
             this->grpBox_StickCal->TabIndex = 37;
             this->grpBox_StickCal->TabStop = false;
             this->grpBox_StickCal->Text = L"Stick Calibration";
@@ -1848,7 +1852,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_lstick_fcal->Multiline = true;
             this->textBox_lstick_fcal->Name = L"textBox_lstick_fcal";
             this->textBox_lstick_fcal->ReadOnly = true;
-            this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 35);
+            this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_fcal->TabIndex = 40;
             this->textBox_lstick_fcal->TabStop = false;
             this->textBox_lstick_fcal->Text = L"L Stick Factory:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
@@ -1863,12 +1867,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_rstick_fcal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
             this->textBox_rstick_fcal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-            this->textBox_rstick_fcal->Location = System::Drawing::Point(6, 123);
+            this->textBox_rstick_fcal->Location = System::Drawing::Point(6, 119);
             this->textBox_rstick_fcal->Margin = System::Windows::Forms::Padding(0);
             this->textBox_rstick_fcal->Multiline = true;
             this->textBox_rstick_fcal->Name = L"textBox_rstick_fcal";
             this->textBox_rstick_fcal->ReadOnly = true;
-            this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 35);
+            this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_rstick_fcal->TabIndex = 39;
             this->textBox_rstick_fcal->TabStop = false;
             this->textBox_rstick_fcal->Text = L"R Stick Factory:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
@@ -1883,12 +1887,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_rstick_ucal->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
             this->textBox_rstick_ucal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->textBox_rstick_ucal->Location = System::Drawing::Point(6, 168);
+            this->textBox_rstick_ucal->Location = System::Drawing::Point(6, 163);
             this->textBox_rstick_ucal->Margin = System::Windows::Forms::Padding(0);
             this->textBox_rstick_ucal->Multiline = true;
             this->textBox_rstick_ucal->Name = L"textBox_rstick_ucal";
             this->textBox_rstick_ucal->ReadOnly = true;
-            this->textBox_rstick_ucal->Size = System::Drawing::Size(207, 35);
+            this->textBox_rstick_ucal->Size = System::Drawing::Size(207, 44);
             this->textBox_rstick_ucal->TabIndex = 38;
             this->textBox_rstick_ucal->TabStop = false;
             this->textBox_rstick_ucal->Text = L"R Stick User:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
@@ -1908,7 +1912,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_lstick_ucal->Multiline = true;
             this->textBox_lstick_ucal->Name = L"textBox_lstick_ucal";
             this->textBox_lstick_ucal->ReadOnly = true;
-            this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 35);
+            this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_ucal->TabIndex = 37;
             this->textBox_lstick_ucal->TabStop = false;
             this->textBox_lstick_ucal->Text = L"L Stick User:\r\nCenter X,Y: (   ,    )\r\nX: [    -    ] Y: [    -    ]";
@@ -1928,7 +1932,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_6axis_ucal->Multiline = true;
             this->textBox_6axis_ucal->Name = L"textBox_6axis_ucal";
             this->textBox_6axis_ucal->ReadOnly = true;
-            this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 75);
+            this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 88);
             this->textBox_6axis_ucal->TabIndex = 43;
             this->textBox_6axis_ucal->TabStop = false;
             this->textBox_6axis_ucal->Text = L"6-Axis User (XYZ):\r\nAcc:\r\n\r\n\r\nGyro:";
@@ -1948,7 +1952,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_6axis_cal->Multiline = true;
             this->textBox_6axis_cal->Name = L"textBox_6axis_cal";
             this->textBox_6axis_cal->ReadOnly = true;
-            this->textBox_6axis_cal->Size = System::Drawing::Size(156, 75);
+            this->textBox_6axis_cal->Size = System::Drawing::Size(156, 88);
             this->textBox_6axis_cal->TabIndex = 42;
             this->textBox_6axis_cal->TabStop = false;
             this->textBox_6axis_cal->Text = L"6-Axis Factory (XYZ):\r\nAcc:\r\n\r\n\r\nGyro:";
@@ -1966,7 +1970,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->txtBox_devParameters->Multiline = true;
             this->txtBox_devParameters->Name = L"txtBox_devParameters";
             this->txtBox_devParameters->ReadOnly = true;
-            this->txtBox_devParameters->Size = System::Drawing::Size(124, 145);
+            this->txtBox_devParameters->Size = System::Drawing::Size(135, 185);
             this->txtBox_devParameters->TabIndex = 41;
             this->txtBox_devParameters->TabStop = false;
             this->txtBox_devParameters->Text = L"Flat surface ACC Offsets:\r\n\r\n\r\n\r\nStick Parameters:";
@@ -1979,12 +1983,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->txtBox_devParameters2->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F));
             this->txtBox_devParameters2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-            this->txtBox_devParameters2->Location = System::Drawing::Point(155, 78);
+            this->txtBox_devParameters2->Location = System::Drawing::Point(155, 77);
             this->txtBox_devParameters2->Margin = System::Windows::Forms::Padding(0);
             this->txtBox_devParameters2->Multiline = true;
             this->txtBox_devParameters2->Name = L"txtBox_devParameters2";
             this->txtBox_devParameters2->ReadOnly = true;
-            this->txtBox_devParameters2->Size = System::Drawing::Size(135, 91);
+            this->txtBox_devParameters2->Size = System::Drawing::Size(140, 130);
             this->txtBox_devParameters2->TabIndex = 42;
             this->txtBox_devParameters2->TabStop = false;
             this->txtBox_devParameters2->Text = L"Stick Parameters 2:";
@@ -2001,7 +2005,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_dev_param->Location = System::Drawing::Point(408, 445);
             this->grpBox_dev_param->Margin = System::Windows::Forms::Padding(0);
             this->grpBox_dev_param->Name = L"grpBox_dev_param";
-            this->grpBox_dev_param->Size = System::Drawing::Size(306, 218);
+            this->grpBox_dev_param->Size = System::Drawing::Size(306, 215);
             this->grpBox_dev_param->TabIndex = 43;
             this->grpBox_dev_param->TabStop = false;
             this->grpBox_dev_param->Text = L"6-Axis and Stick Device Parameters";
@@ -2017,10 +2021,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 this->toolStripBtn_batt,
                     this->toolStripLabel_batt, this->toolStripLabel_temp, this->toolStripBtn_refresh, this->toolStripBtn_Disconnect
             });
-            this->toolStrip1->Location = System::Drawing::Point(0, 677);
+            this->toolStrip1->Location = System::Drawing::Point(0, 669);
             this->toolStrip1->Name = L"toolStrip1";
-            this->toolStrip1->Padding = System::Windows::Forms::Padding(6, 0, 6, 0);
-            this->toolStrip1->Size = System::Drawing::Size(1662, 25);
+            this->toolStrip1->Padding = System::Windows::Forms::Padding(6, 1, 6, 3);
+            this->toolStrip1->Size = System::Drawing::Size(1646, 25);
             this->toolStrip1->Stretch = true;
             this->toolStrip1->TabIndex = 44;
             this->toolStrip1->Text = L"toolStrip1";
@@ -2033,9 +2037,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStripBtn_batt->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Image;
             this->toolStripBtn_batt->ImageScaling = System::Windows::Forms::ToolStripItemImageScaling::None;
             this->toolStripBtn_batt->ImageTransparentColor = System::Drawing::Color::Magenta;
+            this->toolStripBtn_batt->Margin = System::Windows::Forms::Padding(0);
             this->toolStripBtn_batt->Name = L"toolStripBtn_batt";
             this->toolStripBtn_batt->Padding = System::Windows::Forms::Padding(0, 0, 4, 0);
-            this->toolStripBtn_batt->Size = System::Drawing::Size(23, 22);
+            this->toolStripBtn_batt->Size = System::Drawing::Size(23, 21);
             this->toolStripBtn_batt->Text = L"toolStripBtn_batt";
             this->toolStripBtn_batt->Click += gcnew System::EventHandler(this, &FormJoy::pictureBoxBattery_Click);
             // 
@@ -2046,9 +2051,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStripLabel_batt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
             this->toolStripLabel_batt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->toolStripLabel_batt->Margin = System::Windows::Forms::Padding(0);
             this->toolStripLabel_batt->Name = L"toolStripLabel_batt";
             this->toolStripLabel_batt->Padding = System::Windows::Forms::Padding(4, 0, 0, 0);
-            this->toolStripLabel_batt->Size = System::Drawing::Size(63, 22);
+            this->toolStripLabel_batt->Size = System::Drawing::Size(63, 21);
             this->toolStripLabel_batt->Text = L"Batt_V_%";
             this->toolStripLabel_batt->Click += gcnew System::EventHandler(this, &FormJoy::toolStripLabel_batt_Click);
             // 
@@ -2059,9 +2065,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStripLabel_temp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
             this->toolStripLabel_temp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->toolStripLabel_temp->Margin = System::Windows::Forms::Padding(0);
             this->toolStripLabel_temp->Name = L"toolStripLabel_temp";
             this->toolStripLabel_temp->Padding = System::Windows::Forms::Padding(4, 0, 4, 0);
-            this->toolStripLabel_temp->Size = System::Drawing::Size(56, 22);
+            this->toolStripLabel_temp->Size = System::Drawing::Size(56, 21);
             this->toolStripLabel_temp->Text = L"0.00oC";
             this->toolStripLabel_temp->ToolTipText = resources->GetString(L"toolStripLabel_temp.ToolTipText");
             this->toolStripLabel_temp->Click += gcnew System::EventHandler(this, &FormJoy::toolStripLabel_temp_Click);
@@ -2075,9 +2082,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
             this->toolStripBtn_refresh->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"toolStripBtn_refresh.Image")));
             this->toolStripBtn_refresh->ImageTransparentColor = System::Drawing::Color::Magenta;
+            this->toolStripBtn_refresh->Margin = System::Windows::Forms::Padding(0);
             this->toolStripBtn_refresh->Name = L"toolStripBtn_refresh";
             this->toolStripBtn_refresh->Padding = System::Windows::Forms::Padding(4, 0, 4, 0);
-            this->toolStripBtn_refresh->Size = System::Drawing::Size(64, 22);
+            this->toolStripBtn_refresh->Size = System::Drawing::Size(64, 21);
             this->toolStripBtn_refresh->Text = L"Refresh";
             this->toolStripBtn_refresh->ToolTipText = L"Refresh connected controller info.\r\n\r\nIf you connected a new controller and disco"
                 L"nnected the old one,\r\nit will show the new controller.";
@@ -2093,9 +2101,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(60)), static_cast<System::Int32>(static_cast<System::Byte>(40)));
             this->toolStripBtn_Disconnect->Image = (cli::safe_cast<System::Drawing::Image^>(resources->GetObject(L"toolStripBtn_Disconnect.Image")));
             this->toolStripBtn_Disconnect->ImageTransparentColor = System::Drawing::Color::Magenta;
+            this->toolStripBtn_Disconnect->Margin = System::Windows::Forms::Padding(0);
             this->toolStripBtn_Disconnect->Name = L"toolStripBtn_Disconnect";
             this->toolStripBtn_Disconnect->Padding = System::Windows::Forms::Padding(4, 0, 4, 0);
-            this->toolStripBtn_Disconnect->Size = System::Drawing::Size(83, 22);
+            this->toolStripBtn_Disconnect->Size = System::Drawing::Size(83, 21);
             this->toolStripBtn_Disconnect->Text = L"Disconnect";
             this->toolStripBtn_Disconnect->ToolTipText = L"Disconnects the device.\r\n\r\nAdditionally performs a reboot.\r\nAfter 4s it\'s ready t"
                 L"o connect again.";
@@ -2125,7 +2134,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_accGyroCal->Location = System::Drawing::Point(236, 445);
             this->grpBox_accGyroCal->Margin = System::Windows::Forms::Padding(0);
             this->grpBox_accGyroCal->Name = L"grpBox_accGyroCal";
-            this->grpBox_accGyroCal->Size = System::Drawing::Size(168, 218);
+            this->grpBox_accGyroCal->Size = System::Drawing::Size(168, 215);
             this->grpBox_accGyroCal->TabIndex = 47;
             this->grpBox_accGyroCal->TabStop = false;
             this->grpBox_accGyroCal->Text = L"Acc/Gyro Calibration";
@@ -2138,7 +2147,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
             this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
-            this->ClientSize = System::Drawing::Size(1662, 702);
+            this->ClientSize = System::Drawing::Size(1646, 694);
             this->Controls->Add(this->menuStrip1);
             this->Controls->Add(this->toolStrip1);
             this->Controls->Add(this->panel_filler);
@@ -2632,6 +2641,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
             reset_window_option(false);
             this->Controls->Add(this->grpBox_DebugCmd);
             this->Controls->Add(this->btn_enableExpertMode);
+            // Recalculate buggy textboxes for high DPI
+            this->textBoxDbg_SubcmdArg->Size = System::Drawing::Size(188, 44);
+            this->textBoxDbg_sent->Size = System::Drawing::Size(170, 47);
+            this->textBoxDbg_reply_cmd->Size = System::Drawing::Size(170, 45);
+            this->textBoxDbg_reply->Size = System::Drawing::Size(170, 69);
             option_is_on = 1;
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
@@ -2660,6 +2674,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             reset_window_option(false);
             this->Controls->Add(this->grpBox_ChangeSN);
             option_is_on = 3;
+            this->textBox_chg_sn->Size = System::Drawing::Size(186, 25);
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
         else
@@ -2684,6 +2699,18 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
+            // Recalculate buggy textboxes for high DPI
+            this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
+            this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
+            this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 44);
+            this->textBox_rstick_ucal->Size = System::Drawing::Size(207, 44);
+            this->textBox_6axis_cal->Size = System::Drawing::Size(156, 88);
+            this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 88);
+            this->txtBox_devParameters->Size = System::Drawing::Size(135, 185);
+            this->txtBox_devParameters2->Size = System::Drawing::Size(140, 130);
+            this->textBox_btn_test_reply->Size = System::Drawing::Size(205, 172);
+            this->textBox_btn_test_subreply->Size = System::Drawing::Size(205, 140);
+
             this->btn_runBtnTest->Text = L"Turn on";
             option_is_on = 5;
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
@@ -3863,6 +3890,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
+            this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
+            this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
+            this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 44);
+            this->textBox_rstick_ucal->Size = System::Drawing::Size(207, 44);
+            this->textBox_6axis_cal->Size = System::Drawing::Size(156, 88);
+            this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 88);
+            this->txtBox_devParameters->Size = System::Drawing::Size(135, 185);
+            this->txtBox_devParameters2->Size = System::Drawing::Size(140, 130);
+
+            this->textBox_btn_test_reply->Size = System::Drawing::Size(205, 172);
+            this->textBox_btn_test_subreply->Size = System::Drawing::Size(205, 140);
         }
         this->menuStrip1->Enabled = true;
         this->toolStrip1->Enabled = true;
@@ -3877,6 +3915,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
+            this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
+            this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
+            this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 44);
+            this->textBox_rstick_ucal->Size = System::Drawing::Size(207, 44);
+            this->textBox_6axis_cal->Size = System::Drawing::Size(156, 88);
+            this->textBox_6axis_ucal->Size = System::Drawing::Size(156, 88);
+            this->txtBox_devParameters->Size = System::Drawing::Size(135, 185);
+            this->txtBox_devParameters2->Size = System::Drawing::Size(140, 130);
+
+            this->textBox_btn_test_reply->Size = System::Drawing::Size(205, 172);
+            this->textBox_btn_test_subreply->Size = System::Drawing::Size(205, 140);
         }
         this->jcBodyColor = JCColorPicker->PrimaryColor;
         this->jcButtonsColor = JCColorPicker->SecondaryColor;
@@ -3911,6 +3960,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
         
         this->grpBox_Color->Margin = System::Windows::Forms::Padding(0, 0, 14, titleHeight);
         this->grpBox_StickCal->Margin = System::Windows::Forms::Padding(0, 0, 0, titleHeight);
+    }
+
+    private: System::Void sizeChangedTextbox(System::Object^  sender, System::EventArgs^  e) {
+        this->label1->Text += "\r\ngrpBoxSize: " + this->grpBox_StickCal->Size.ToString() + 
+            ", grpBoxClientSize: " + this->grpBox_StickCal->ClientSize.ToString() + 
+            "\r\nTextSize: " + this->textBox_rstick_ucal->Size.ToString() +
+            ", TextClientSize: " + this->textBox_rstick_ucal->ClientSize.ToString();
+
     }
 };
 }
