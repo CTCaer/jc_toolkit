@@ -694,7 +694,7 @@ int button_test() {
     get_spi_data(0x8026, 0x1A, user_sensor_cal);
 
     // Analog Stick device parameters
-    FormJoy::myform1->textBox_device_parameters->Text = String::Format(L"Flat surface ACC Offset:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2} (Deadzone)\r\n{6:X3} (Range ratio)",
+    FormJoy::myform1->txtBox_devParameters->Text = String::Format(L"Flat surface ACC Offset:\r\n{0:X4} {1:X4} {2:X4}\r\n\r\n\r\nStick Parameters:\r\n{3:X3} {4:X3}\r\n{5:X2} (Deadzone)\r\n{6:X3} (Range ratio)",
         sensor_model[0] | sensor_model[1] << 8,
         sensor_model[2] | sensor_model[3] << 8,
         sensor_model[4] | sensor_model[5] << 8,
@@ -703,18 +703,18 @@ int button_test() {
         ((stick_model[5] << 4) | (stick_model[4] >> 4)));
 
     for (int i = 0; i < 10; i = i + 3) {
-        FormJoy::myform1->textBox_device_parameters->Text += String::Format(L"\r\n{0:X3} {1:X3}",
+        FormJoy::myform1->txtBox_devParameters->Text += String::Format(L"\r\n{0:X3} {1:X3}",
             (stick_model[7 + i] << 8) & 0xF00 | stick_model[6 + i],
             (stick_model[8 + i] << 4) | (stick_model[7 + i] >> 4));
     }
 
-    FormJoy::myform1->textBox_device_parameters2->Text = String::Format(L"Stick Parameters 2:\r\n{0:X3} {1:X3}\r\n{2:X2} (Deadzone)\r\n{3:X3} (Range ratio)",
+    FormJoy::myform1->txtBox_devParameters2->Text = String::Format(L"Stick Parameters 2:\r\n{0:X3} {1:X3}\r\n{2:X2} (Deadzone)\r\n{3:X3} (Range ratio)",
         (stick_model[19] << 8) & 0xF00 | stick_model[18], (stick_model[20] << 4) | (stick_model[19] >> 4),
         (stick_model[22] << 8) & 0xF00 | stick_model[21],
         ((stick_model[23] << 4) | (stick_model[22] >> 4)));
 
     for (int i = 0; i < 10; i = i + 3) {
-        FormJoy::myform1->textBox_device_parameters2->Text += String::Format(L"\r\n{0:X3} {1:X3}",
+        FormJoy::myform1->txtBox_devParameters2->Text += String::Format(L"\r\n{0:X3} {1:X3}",
             (stick_model[25 + i] << 8) & 0xF00 | stick_model[24 + i],
             (stick_model[26 + i] << 4) | (stick_model[25 + i] >> 4));
     }
