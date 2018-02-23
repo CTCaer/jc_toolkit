@@ -2375,67 +2375,90 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     private: System::Void update_joycon_color(u8 r, u8 g, u8 b, u8 rb, u8 gb, u8 bb) {
         Bitmap^ MyImage;
-        if (handle_ok == 1) {
-            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.base64_l_joy")));
-        }
-        else if (handle_ok == 3) {
-            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.base64_pro")));
-        }
-        else {
-            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.base64_r_joy")));
-        }
+        Bitmap^ MyImageLayer;
+        Color gotColor;
 
-        float color_coeff = 0.0;
+        // Apply body color 
+        switch (handle_ok) {
+        case 1:
+            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_body")));
+            break;
+        case 2:
+            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_body")));
+            break;
+        case 3:
+            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
+            break;
+        default:
+            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
+            break;
+        }
         for (int x = 0; x < MyImage->Width; x++)
         {
             for (int y = 0; y < MyImage->Height; y++)
             {
-                Color gotColor = MyImage->GetPixel(x, y);
-                color_coeff = gotColor.R / 255.0f;
-
-                if (gotColor.R <= 255 && gotColor.R > 100){
-                    gotColor = Color::FromArgb(gotColor.A, CLAMP(r*color_coeff, 0.0f, 255.0f),
-                        CLAMP(g*color_coeff, 0.0f, 255.0f), CLAMP(b*color_coeff, 0.0f, 255.0f));
-                }
-                else if (handle_ok != 3 && gotColor.R <= 100 && gotColor.R != 78 && gotColor.R > 30) {
-                    if (gotColor.R == 100)
-                        gotColor = Color::FromArgb(gotColor.A, rb, gb, bb);
-                    else {
-                        gotColor = Color::FromArgb(gotColor.A, CLAMP(rb*color_coeff, 0.0f, 255.0f),
-                            CLAMP(gb*color_coeff, 0.0f, 255.0f), CLAMP(bb*color_coeff, 0.0f, 255.0f));
-                    }
-                }
-                else if (handle_ok == 3 && gotColor.R <= 100 && gotColor.R != 78 && gotColor.R > 30) {
-                    if (rb == 255 && gb == 255 && bb == 255) {
-                        //Do nothing
-                    }
-                    else {
-                        if (gotColor.R == 100)
-                            gotColor = Color::FromArgb(gotColor.A, rb, gb, bb);
-                        else {
-                            gotColor = Color::FromArgb(gotColor.A, CLAMP(rb*color_coeff, 0.0f, 255.0f),
-                                CLAMP(gb*color_coeff, 0.0f, 255.0f), CLAMP(bb*color_coeff, 0.0f, 255.0f));
-                        }
-                    }
+                gotColor = MyImage->GetPixel(x, y);
+                if (gotColor.R == 255){
+                    gotColor = Color::FromArgb(gotColor.A, r, g, b);
                 }
                 MyImage->SetPixel(x, y, gotColor);
-
             }
         }
 
-        if (handle_ok == 3) {
-            System::Drawing::Rectangle cloneRect = System::Drawing::Rectangle(0, 100, 520, 320);
-            System::Drawing::Imaging::PixelFormat format = MyImage->PixelFormat;
-            MyImage = MyImage->Clone(cloneRect, format);
+        // Apply buttons color 
+        switch (handle_ok) {
+        case 1:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_buttons")));
+            break;
+        case 2:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_buttons")));
+            break;
+        case 3:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
+            break;
+        default:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
+            break;
         }
-        else {
-            System::Drawing::Rectangle cloneRect = System::Drawing::Rectangle(1, 66, 346, 213);
-            System::Drawing::Imaging::PixelFormat format = MyImage->PixelFormat;
-            MyImage = MyImage->Clone(cloneRect, format);
+        for (int x = 0; x < MyImageLayer->Width; x++) {
+            for (int y = 0; y < MyImageLayer->Height; y++) {
+                gotColor = MyImageLayer->GetPixel(x, y);
+                if (gotColor.R == 100) {
+                    gotColor = Color::FromArgb(gotColor.A, rb, gb, bb);
+                }
+                MyImageLayer->SetPixel(x, y, gotColor);
+            }
         }
+        MyImage = drawLayeredImage(MyImage, MyImageLayer);
+
+        // Apply outlines
+        switch (handle_ok) {
+        case 1:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_lines")));
+            break;
+        case 2:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_lines")));
+            break;
+        case 3:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_lines")));
+            break;
+        default:
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_lines")));
+            break;
+        }
+        MyImage = drawLayeredImage(MyImage, MyImageLayer);
+
+        // Draw image
         this->pictureBoxPreview->Image = dynamic_cast<Image^>(MyImage);
         this->pictureBoxPreview->ClientSize = System::Drawing::Size(312, 192);
         this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
+    }
+
+    private: Bitmap^ drawLayeredImage(Bitmap^ baseImage, Bitmap^ layerImage) {
+        Graphics^ g = System::Drawing::Graphics::FromImage(baseImage);
+        g->CompositingMode = System::Drawing::Drawing2D::CompositingMode::SourceOver;
+        g->DrawImage(layerImage, 0, 0);
+        return baseImage;
     }
 
     private: System::Void update_colors_from_spi(bool update_color_dialog) {
@@ -2501,52 +2524,52 @@ public ref class FormJoy : public System::Windows::Forms::Form
         switch (batt) {
             case 0:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_0")));
                 this->toolStripBtn_batt->ToolTipText = L"Empty\n\nDisconnected?";
                 break;
             case 1:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_0_chr")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_0_chr")));
                 this->toolStripBtn_batt->ToolTipText = L"Empty, Charging.";
                 break;
             case 2:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_25")));
                 this->toolStripBtn_batt->ToolTipText = L"Low\n\nPlease charge your device!";
                 break;
             case 3:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_25_chr")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_25_chr")));
                 this->toolStripBtn_batt->ToolTipText = L"Low\n\nCharging";
                 break;
             case 4:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_50")));
                 this->toolStripBtn_batt->ToolTipText = L"Medium";
                 break;
             case 5:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_50_chr")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_50_chr")));
                 this->toolStripBtn_batt->ToolTipText = L"Medium\n\nCharging";
                 break;
             case 6:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_75")));
                 this->toolStripBtn_batt->ToolTipText = L"Good";
                 break;
             case 7:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_75_chr")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_75_chr")));
                 this->toolStripBtn_batt->ToolTipText = L"Good\n\nCharging";
                 break;
             case 8:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_100")));
                 this->toolStripBtn_batt->ToolTipText = L"Full";
                 break;
             case 9:
                 this->toolStripBtn_batt->Image =
-                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"$this.batt_100_chr")));
+                    (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_100_chr")));
                 this->toolStripBtn_batt->ToolTipText = L"Almost full\n\nCharging";
                 break;
         }
