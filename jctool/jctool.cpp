@@ -137,6 +137,7 @@ int set_led_busy() {
 std::string get_sn(u32 offset, const u16 read_len) {
     int res;
     u8 buf[0x100];
+    int error_reading = 0;
     std::string test = "";
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -153,6 +154,10 @@ std::string get_sn(u32 offset, const u16 read_len) {
         res = hid_read(handle, buf, sizeof(buf));
         if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
             break;
+
+        error_reading++;
+        if (error_reading == 125)
+            return "Error!";
     }
 
     if (res >= 0x14 + read_len) {
@@ -170,6 +175,7 @@ std::string get_sn(u32 offset, const u16 read_len) {
 int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
     int res;
     u8 buf[0x100];
+    int error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -185,6 +191,10 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
         res = hid_read(handle, buf, sizeof(buf));
         if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
             break;
+
+        error_reading++;
+        if (error_reading == 250)
+            return 1;
     }
     if (res >= 0x14 + read_len) {
             for (int i = 0; i < read_len; i++) {

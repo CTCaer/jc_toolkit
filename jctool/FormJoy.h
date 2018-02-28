@@ -2239,6 +2239,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             }
             this->toolStripBtn_Disconnect->Enabled = true;
             this->toolStripLabel_temp->Enabled = true;
+            this->toolStripLabel_batt->Enabled = true;
+            this->toolStripBtn_batt->Enabled = true;
         }
 
         if (check_connection)
@@ -2252,7 +2254,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->textBox_chg_sn->Text = this->textBoxSN->Text;
         }
         else {
-            this->textBoxSN->Text = L"No S/N";
+            this->textBoxSN->Text = L"Not supported";
             this->textBox_chg_sn->Text = this->textBoxSN->Text;
         }
         unsigned char device_info[10];
@@ -2289,6 +2291,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             L"Are you sure you want to continue?",
             L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
         {
+            int error = 0;
             this->btn_writeColorsToSpi->Enabled = false;
 
             unsigned char body_color[0x3];
@@ -2304,15 +2307,21 @@ public ref class FormJoy : public System::Windows::Forms::Form
             button_color[1] = (u8)jcButtonsColor.G;
             button_color[2] = (u8)jcButtonsColor.B;
 
-            write_spi_data(0x6050, 0x3, body_color);
-            write_spi_data(0x6053, 0x3, button_color);
+            error = write_spi_data(0x6050, 0x3, body_color);
+            error = write_spi_data(0x6053, 0x3, button_color);
 
             send_rumble();
-            MessageBox::Show(L"The colors were written to the device!", L"Done!",
-                MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
 
-            //Check that the colors were written
-            update_colors_from_spi(false);
+            if (error == 0) {
+                MessageBox::Show(L"The colors were written to the device!", L"Done!",
+                    MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+                //Check that the colors were written
+                update_colors_from_spi(false);
+            }
+            else {
+                MessageBox::Show(L"Failed to write the colors to the device!", L"Failed!",
+                    MessageBoxButtons::OK, MessageBoxIcon::Stop);
+            }
 
             update_battery();
             update_temperature();
@@ -3094,6 +3103,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->menuStrip1->Enabled = false;
         this->toolStrip1->Enabled = false;
         set_led_busy();
+        int error = 0;
         if (this->comboBox_rstOption->SelectedIndex == 0) {
             if (MessageBox::Show(L"The device color will be restored with the backup values!\n\nAre you sure you want to continue?",
                 L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
@@ -3108,17 +3118,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     button_color[i] = this->backup_spi[0x6053 + i];
                 }
 
-                write_spi_data(0x6050, 0x3, body_color);
-                write_spi_data(0x6053, 0x3, button_color);
+                error = write_spi_data(0x6050, 0x3, body_color);
+                error = write_spi_data(0x6053, 0x3, button_color);
 
                 //Check that the colors were written
                 update_colors_from_spi(true);
-                update_battery();
-                update_temperature();
                 send_rumble();
-
-                MessageBox::Show(L"The colors were restored!", L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
-
+                if (error == 0)
+                    MessageBox::Show(L"The colors were restored!", L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
             }
 
         }
@@ -3134,23 +3141,21 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     sn[i] = this->backup_spi[0x6000 + i];
                 }
 
-                write_spi_data(0x6000, 0x10, sn);
-
-                String^ new_sn;
-                if (handle_ok != 3) {
-                    new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
-                    MessageBox::Show(L"The serial number was restored and changed to \"" + new_sn + L"\"!",
-                        L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
-                }
-                else {
-                    MessageBox::Show(L"The serial number was restored!", L"Restore Finished!",
-                        MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
-                }
-                update_battery();
-                update_temperature();
+                error = write_spi_data(0x6000, 0x10, sn);
                 send_rumble();
+                if (error == 0) {
+                    String^ new_sn;
+                    if (handle_ok != 3) {
+                        new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
+                        MessageBox::Show(L"The serial number was restored and changed to \"" + new_sn + L"\"!",
+                            L"Restore Finished!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+                    }
+                    else {
+                        MessageBox::Show(L"The serial number was restored!", L"Restore Finished!",
+                            MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+                    }
+                }
             }
-
         }
         else if (this->comboBox_rstOption->SelectedIndex == 2) {
             if (MessageBox::Show(L"The selected user calibration will be restored from the backup!\n\n" +
@@ -3174,17 +3179,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 }
 
                 if (handle_ok != 2 && this->checkBox_rst_L_StickCal->Checked == true)
-                    write_spi_data(0x8010, 0xB, l_stick);
-                if (handle_ok != 1 && this->checkBox_rst_R_StickCal->Checked == true)
-                    write_spi_data(0x801B, 0xB, r_stick);
-                if (this->checkBox_rst_accGyroCal->Checked == true)
-                    write_spi_data(0x8026, 0x1A, sensor);
-
-                update_battery();
-                update_temperature();
+                    error = write_spi_data(0x8010, 0xB, l_stick);
+                if (handle_ok != 1 && this->checkBox_rst_R_StickCal->Checked == true && error == 0)
+                    error = write_spi_data(0x801B, 0xB, r_stick);
+                if (this->checkBox_rst_accGyroCal->Checked == true && error == 0)
+                    error = write_spi_data(0x8026, 0x1A, sensor);
                 send_rumble();
-                MessageBox::Show(L"The user calibration was restored!", L"Calibration Restore Finished!",
-                    MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+
+                if (error == 0) {
+                    MessageBox::Show(L"The user calibration was restored!", L"Calibration Restore Finished!",
+                        MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+                }
             }
 
         }
@@ -3200,17 +3205,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 memset(sensor, 0xFF, 0x1A);
 
                 if (handle_ok != 2 && this->checkBox_rst_L_StickCal->Checked == true)
-                    write_spi_data(0x8010, 0xB, l_stick);
-                if (handle_ok != 1 && this->checkBox_rst_R_StickCal->Checked == true)
-                    write_spi_data(0x801B, 0xB, r_stick);
-                if (this->checkBox_rst_accGyroCal->Checked == true)
-                    write_spi_data(0x8026, 0x1A, sensor);
-
-                update_battery();
-                update_temperature();
+                    error = write_spi_data(0x8010, 0xB, l_stick);
+                if (handle_ok != 1 && this->checkBox_rst_R_StickCal->Checked == true && error == 0)
+                    error = write_spi_data(0x801B, 0xB, r_stick);
+                if (this->checkBox_rst_accGyroCal->Checked == true && error == 0)
+                    error = write_spi_data(0x8026, 0x1A, sensor);
                 send_rumble();
-                MessageBox::Show(L"The user calibration was factory resetted!", L"Calibration Reset Finished!",
-                    MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+
+                if (error == 0) {
+                    MessageBox::Show(L"The user calibration was factory resetted!", L"Calibration Reset Finished!",
+                        MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+                }
             }
 
         }
@@ -3233,7 +3238,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     memset(full_restore_data, 0, 0x10);
                     for (int j = 0; j < 0x10; j++)
                         full_restore_data[j] = this->backup_spi[0x6000 + i + j];
-                    write_spi_data(0x6000 + i, 0x10, full_restore_data);
+                    if (error == 0)
+                        error = write_spi_data(0x6000 + i, 0x10, full_restore_data);
 
                     std::stringstream offset_label;
                     offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << i / 1024.0f;
@@ -3246,7 +3252,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     memset(full_restore_data, 0, 0x10);
                     for (int j = 0; j < 0x10; j++)
                         full_restore_data[j] = this->backup_spi[0x8000 + i + j];
-                    write_spi_data(0x8000 + i, 0x10, full_restore_data);
+                    if (error == 0)
+                        error = write_spi_data(0x8000 + i, 0x10, full_restore_data);
 
                     std::stringstream offset_label;
                     offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << 4 + (i / 1024.0f);
@@ -3255,7 +3262,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     Application::DoEvents();
                 }
                 // Erase S/N backup storage
-                write_spi_data(0xF000, 0x10, sn_backup_erase);
+                if (error == 0)
+                    error = write_spi_data(0xF000, 0x10, sn_backup_erase);
 
                 std::stringstream offset_label;
                 offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << 0x2000 / 1024.0f;
@@ -3263,41 +3271,48 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
                 Application::DoEvents();
 
-                // Set shipment
-                unsigned char custom_cmd[7];
-                memset(custom_cmd, 0, 7);
-                custom_cmd[0] = 0x01;
-                custom_cmd[5] = 0x08;
-                custom_cmd[6] = 0x01;
-                send_custom_command(custom_cmd);
-                // Clear pairing info
-                memset(custom_cmd, 0, 7);
-                custom_cmd[0] = 0x01;
-                custom_cmd[5] = 0x07;
-                send_custom_command(custom_cmd);
-                // Reboot controller and go into pairing mode
-                memset(custom_cmd, 0, 7);
-                custom_cmd[0] = 0x01;
-                custom_cmd[5] = 0x06;
-                custom_cmd[6] = 0x02;
-                send_custom_command(custom_cmd);
+                if (error == 0) {
+                    // Set shipment
+                    unsigned char custom_cmd[7];
+                    memset(custom_cmd, 0, 7);
+                    custom_cmd[0] = 0x01;
+                    custom_cmd[5] = 0x08;
+                    custom_cmd[6] = 0x01;
+                    send_custom_command(custom_cmd);
+                    // Clear pairing info
+                    memset(custom_cmd, 0, 7);
+                    custom_cmd[0] = 0x01;
+                    custom_cmd[5] = 0x07;
+                    send_custom_command(custom_cmd);
+                    // Reboot controller and go into pairing mode
+                    memset(custom_cmd, 0, 7);
+                    custom_cmd[0] = 0x01;
+                    custom_cmd[5] = 0x06;
+                    custom_cmd[6] = 0x02;
+                    send_custom_command(custom_cmd);
 
-                update_battery();
-                update_temperature();
-                send_rumble();
+                    send_rumble();
 
-                MessageBox::Show(L"The full restore was completed!\nThe controller was rebooted and it is now in pairing mode!\n\n" +
-                    L"Exit Joy-Con Toolkit and pair with Switch or PC again.", L"Full Restore Finished!",
-                    MessageBoxButtons::OK, MessageBoxIcon::Warning);
+                    MessageBox::Show(L"The full restore was completed!\nThe controller was rebooted and it is now in pairing mode!\n\n" +
+                        L"Exit Joy-Con Toolkit and pair with Switch or PC again.", L"Full Restore Finished!",
+                        MessageBoxButtons::OK, MessageBoxIcon::Warning);
+                    handler_close = 0;
+                }
                 this->grpBox_Color->Visible = true;
                 this->btn_loadSPIBackup->Enabled = true;
                 this->btn_restore->Enabled = true;
-
-                update_colors_from_spi(true);
-
-                handler_close = 0;
             }
-
+        }
+        if (error != 0) {
+            MessageBox::Show(L"Failed to restore or restore incomplete!\n\nPlease try again..", L"Restore Failed!",
+                MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+        }
+        else {
+            //Avoid sending commands with disconnected controller
+            if (this->comboBox_rstOption->SelectedIndex != 4) {
+                update_battery();
+                update_temperature();
+            }
         }
         this->menuStrip1->Enabled = true;
         this->toolStrip1->Enabled = true;
@@ -3463,6 +3478,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 if (MessageBox::Show(L"Did you make a backup?", L"Warning!",
                     MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
                 {
+                    int error = 0;
                     int sn_ok = 1;
                     unsigned char sn_magic[0x3] = { 0x00, 0x00, 0x58 };
                     unsigned char spi_sn[0x10];
@@ -3481,7 +3497,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     //Check if already made
                     get_spi_data(0xF000, 0x1, sn_backup);
                     if (sn_ok && sn_backup[0] == 0xFF)
-                        write_spi_data(0xF000, 0x10, spi_sn);
+                        error = write_spi_data(0xF000, 0x10, spi_sn);
 
                     array<Char>^ mn_str_sn = this->textBox_chg_sn->Text->ToCharArray();
                     unsigned char sn[32];
@@ -3494,14 +3510,20 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     for (int i = 0; i < mn_str_sn->Length; i++) {
                         sn[length + i] = (unsigned char)(mn_str_sn[i] & 0xFF);
                     }
-
-                    write_spi_data(0x6000, 0x10, sn);
+                    if (error == 0)
+                        error = write_spi_data(0x6000, 0x10, sn);
                     update_battery();
                     update_temperature();
                     send_rumble();
-                    String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
-                    MessageBox::Show(L"The S/N was written to the device!\n\nThe new S/N is now \"" + new_sn +
-                        L"\"!\n\nIf you still ignored the warnings about creating a backup, the S/N in the left of the main window will not change. Copy it somewhere safe!\n\nLastly, a backup of your S/N was created inside the SPI.");
+                    if (error == 0) {
+                        String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
+                        MessageBox::Show(L"The S/N was written to the device!\n\nThe new S/N is now \"" + new_sn +
+                            L"\"!\n\nIf you still ignored the warnings about creating a backup, the S/N in the left of the main window will not change. " +
+                            "Copy it somewhere safe!\n\nLastly, a backup of your S/N was created inside the SPI.");
+                    }
+                    else {
+                        MessageBox::Show(L"Failed to write the S/N to the device!");
+                    }
                 }
             }
         }
@@ -3519,6 +3541,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             if (MessageBox::Show(L"Do you really want to restore it from the S/N backup inside your controller\'s SPI?\n\nYou can also choose to restore it from a SPI backup you previously made, through the main Restore option.",
                 L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes) {
                 int sn_ok = 1;
+                int error = 0;
                 unsigned char spi_sn[0x10];
                 memset(spi_sn, 0x11, sizeof(spi_sn));
 
@@ -3528,7 +3551,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                         sn_ok = 0;
                     }
                 if (sn_ok) {
-                    write_spi_data(0x6000, 0x10, spi_sn);
+                    error = write_spi_data(0x6000, 0x10, spi_sn);
                 }
                 else {
                     MessageBox::Show(L"No S/N backup found inside your controller\'s SPI.\n\nThis can happen if the first time you changed your S/N was with an older version of Joy-Con Toolkit.\nOtherwise, you never changed your S/N.",
@@ -3539,9 +3562,13 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 update_battery();
                 update_temperature();
                 send_rumble();
-                String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
-                MessageBox::Show(L"The S/N was restored to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!");
-            
+                if (error == 0) {
+                    String^ new_sn = gcnew String(get_sn(0x6001, 0xF).c_str());
+                    MessageBox::Show(L"The S/N was restored to the device!\n\nThe new S/N is now \"" + new_sn + L"\"!");
+                }
+                else {
+                    MessageBox::Show(L"Failed to restore the S/N!");
+                }
             }
         }
         else
@@ -3839,6 +3866,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
         send_custom_command(custom_cmd);
         this->toolStripBtn_Disconnect->Enabled = false;
         this->toolStripLabel_temp->Enabled = false;
+        this->toolStripLabel_batt->Enabled = false;
+        this->toolStripBtn_batt->Enabled = false;
     }
     private: System::Void toolStripBtn_refresh_Click(System::Object^  sender, System::EventArgs^  e) {
         full_refresh(true);
