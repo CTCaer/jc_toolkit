@@ -2294,21 +2294,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
             int error = 0;
             this->btn_writeColorsToSpi->Enabled = false;
 
-            unsigned char body_color[0x3];
-            memset(body_color, 0, 0x3);
-            unsigned char button_color[0x3];
-            memset(button_color, 0, 0x3);
+            unsigned char newColors[0x6];
+            memset(newColors, 0, 0x6);
 
-            body_color[0] = (u8)jcBodyColor.R;
-            body_color[1] = (u8)jcBodyColor.G;
-            body_color[2] = (u8)jcBodyColor.B;
+            newColors[0] = (u8)jcBodyColor.R;
+            newColors[1] = (u8)jcBodyColor.G;
+            newColors[2] = (u8)jcBodyColor.B;
+            newColors[3] = (u8)jcButtonsColor.R;
+            newColors[4] = (u8)jcButtonsColor.G;
+            newColors[5] = (u8)jcButtonsColor.B;
 
-            button_color[0] = (u8)jcButtonsColor.R;
-            button_color[1] = (u8)jcButtonsColor.G;
-            button_color[2] = (u8)jcButtonsColor.B;
-
-            error = write_spi_data(0x6050, 0x3, body_color);
-            error = write_spi_data(0x6053, 0x3, button_color);
+            error = write_spi_data(0x6050, 0x6, newColors);
 
             send_rumble();
 
@@ -2483,28 +2479,25 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void update_colors_from_spi(bool update_color_dialog) {
-        unsigned char body_color[0x3];
-        memset(body_color, 0, 0x3);
-        unsigned char button_color[0x3];
-        memset(button_color, 0, 0x3);
+        unsigned char spiColors[0x6];
+        memset(spiColors, 0, 0x6);
 
-        get_spi_data(0x6050, 0x3, body_color);
-        get_spi_data(0x6053, 0x3, button_color);
+        get_spi_data(0x6050, 0x6, spiColors);
 
-        update_joycon_color((u8)body_color[0], (u8)body_color[1], (u8)body_color[2],
-            (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
+        update_joycon_color((u8)spiColors[0], (u8)spiColors[1], (u8)spiColors[2],
+            (u8)spiColors[3], (u8)spiColors[4], (u8)spiColors[5]);
 
         if (update_color_dialog) {
-            this->jcBodyColor = Color::FromArgb(0xFF, (u8)body_color[0], (u8)body_color[1], (u8)body_color[2]);
+            this->jcBodyColor = Color::FromArgb(0xFF, (u8)spiColors[0], (u8)spiColors[1], (u8)spiColors[2]);
             this->lbl_Body_hex_txt->Text = L"Body: #" + String::Format("{0:X6}",
-                ((u8)body_color[0] << 16) + ((u8)body_color[1] << 8) + ((u8)body_color[2]));
+                ((u8)spiColors[0] << 16) + ((u8)spiColors[1] << 8) + ((u8)spiColors[2]));
             this->lbl_Body_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
             this->lbl_Body_hex_txt->Size = System::Drawing::Size(128, 24);
 
-            this->jcButtonsColor = Color::FromArgb(0xFF, (u8)button_color[0], (u8)button_color[1], (u8)button_color[2]);
+            this->jcButtonsColor = Color::FromArgb(0xFF, (u8)spiColors[3], (u8)spiColors[4], (u8)spiColors[5]);
             this->lbl_Buttons_hex_txt->Text = L"Buttons: #" + String::Format("{0:X6}",
-                ((u8)button_color[0] << 16) + ((u8)button_color[1] << 8) + ((u8)button_color[2]));
+                ((u8)spiColors[3] << 16) + ((u8)spiColors[4] << 8) + ((u8)spiColors[5]));
             this->lbl_Buttons_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
             this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(128, 24);
@@ -3108,18 +3101,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
             if (MessageBox::Show(L"The device color will be restored with the backup values!\n\nAre you sure you want to continue?",
                 L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
             {
-                unsigned char body_color[0x3];
-                memset(body_color, 0, 0x3);
-                unsigned char button_color[0x3];
-                memset(button_color, 0, 0x3);
+                unsigned char backupColor[0x6];
+                memset(backupColor, 0, 0x6);
 
-                for (int i = 0; i < 3; i++) {
-                    body_color[i] = this->backup_spi[0x6050 + i];
-                    button_color[i] = this->backup_spi[0x6053 + i];
+                for (int i = 0; i < 6; i++) {
+                    backupColor[i] = this->backup_spi[0x6050 + i];
                 }
 
-                error = write_spi_data(0x6050, 0x3, body_color);
-                error = write_spi_data(0x6053, 0x3, button_color);
+                error = write_spi_data(0x6050, 0x6, backupColor);
 
                 //Check that the colors were written
                 update_colors_from_spi(true);
@@ -3180,8 +3169,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
                 if (handle_ok != 2 && this->checkBox_rst_L_StickCal->Checked == true)
                     error = write_spi_data(0x8010, 0xB, l_stick);
+                Sleep(100);
                 if (handle_ok != 1 && this->checkBox_rst_R_StickCal->Checked == true && error == 0)
                     error = write_spi_data(0x801B, 0xB, r_stick);
+                Sleep(100);
                 if (this->checkBox_rst_accGyroCal->Checked == true && error == 0)
                     error = write_spi_data(0x8026, 0x1A, sensor);
                 send_rumble();
@@ -3206,8 +3197,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
                 if (handle_ok != 2 && this->checkBox_rst_L_StickCal->Checked == true)
                     error = write_spi_data(0x8010, 0xB, l_stick);
+                Sleep(100);
                 if (handle_ok != 1 && this->checkBox_rst_R_StickCal->Checked == true && error == 0)
                     error = write_spi_data(0x801B, 0xB, r_stick);
+                Sleep(100);
                 if (this->checkBox_rst_accGyroCal->Checked == true && error == 0)
                     error = write_spi_data(0x8026, 0x1A, sensor);
                 send_rumble();
@@ -3246,6 +3239,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     offset_label << "KB of 8KB";
                     FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
                     Application::DoEvents();
+                    Sleep(60);
                 }
                 // User Calibration Sector 0x8000
                 for (int i = 0x00; i < 0x1000; i = i + 0x10) {
@@ -3260,6 +3254,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     offset_label << "KB of 8KB";
                     FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
                     Application::DoEvents();
+                    Sleep(60);
                 }
                 // Erase S/N backup storage
                 if (error == 0)
@@ -3498,7 +3493,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     get_spi_data(0xF000, 0x1, sn_backup);
                     if (sn_ok && sn_backup[0] == 0xFF)
                         error = write_spi_data(0xF000, 0x10, spi_sn);
-
+                    Sleep(100);
                     array<Char>^ mn_str_sn = this->textBox_chg_sn->Text->ToCharArray();
                     unsigned char sn[32];
 
@@ -3547,6 +3542,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
                 //Check if there is an SN backup
                 get_spi_data(0xF000, 0x10, spi_sn);
+                Sleep(100);
                 if (spi_sn[0] != 0x00) {
                         sn_ok = 0;
                     }
