@@ -101,6 +101,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->grpBox_ChangeSN->Location = System::Drawing::Point(494, 36);
         this->grpBox_VibPlayer->Location = System::Drawing::Point(494, 36);
         this->grpBox_ButtonTest->Location = System::Drawing::Point(494, 36);
+        this->CenterToScreen();
         this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         reset_window_option(true);
 
@@ -122,7 +123,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
     
 
 #pragma region Class Variables
-
+    private: int handler_close;
+    private: int option_is_on;
+    private: bool allow_full_restore;
+    private: bool disable_expert_mode;
+    private: bool temp_celsius;
     private: array<byte>^ backup_spi;
     public:  array<byte>^ vib_loaded_file;
     public:  array<byte>^ vib_file_converted;
@@ -132,10 +137,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: u32 vib_loop_end;
     private: u32 vib_loop_wait;
     private: int vib_converted;
-    private: bool temp_celsius;
     //file type: 1 = Raw, 2 = bnvib (0x4), 3 = bnvib loop (0xC), 4 = bnvib loop (0x10)
     private: int vib_file_type;
-    private: bool disable_expert_mode;
     private: float lf_gain;
     private: float lf_pitch;
     private: float hf_gain;
@@ -854,7 +857,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
             this->textBoxDbg_SubcmdArg->Location = System::Drawing::Point(16, 141);
             this->textBoxDbg_SubcmdArg->Margin = System::Windows::Forms::Padding(0);
-            this->textBoxDbg_SubcmdArg->MaxLength = 50;
+            this->textBoxDbg_SubcmdArg->MaxLength = 76;
             this->textBoxDbg_SubcmdArg->Multiline = true;
             this->textBoxDbg_SubcmdArg->Name = L"textBoxDbg_SubcmdArg";
             this->textBoxDbg_SubcmdArg->Size = System::Drawing::Size(188, 44);
@@ -1810,7 +1813,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_runBtnTest->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->btn_runBtnTest->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
-            this->btn_runBtnTest->Location = System::Drawing::Point(77, 349);
+            this->btn_runBtnTest->Location = System::Drawing::Point(74, 349);
             this->btn_runBtnTest->Name = L"btn_runBtnTest";
             this->btn_runBtnTest->Size = System::Drawing::Size(75, 27);
             this->btn_runBtnTest->TabIndex = 36;
@@ -2757,7 +2760,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
 
         msclr::interop::marshal_context context;
-        unsigned char test[31];
+        unsigned char test[44];
         memset(test, 0, sizeof(test));
 
         std::stringstream ss_cmd;
@@ -3881,6 +3884,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         JCColorPicker->m_cmd_OK->Click += gcnew System::EventHandler(this, &FormJoy::Color_Picker_OK);
 
         if (option_is_on == 5) {
+            enable_button_test = false;
             this->Controls->Remove(this->grpBox_dev_param);
             this->Controls->Remove(this->grpBox_StickCal);
             this->Controls->Remove(this->grpBox_accGyroCal);
@@ -3926,6 +3930,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             this->textBox_btn_test_reply->Size = System::Drawing::Size(205, 172);
             this->textBox_btn_test_subreply->Size = System::Drawing::Size(205, 140);
+
+            this->btn_runBtnTest->Text = L"Turn on";
+            option_is_on = 5;
+            this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
         this->menuStrip1->Enabled = true;
         this->toolStrip1->Enabled = true;
@@ -3951,6 +3959,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             this->textBox_btn_test_reply->Size = System::Drawing::Size(205, 172);
             this->textBox_btn_test_subreply->Size = System::Drawing::Size(205, 140);
+
+            this->btn_runBtnTest->Text = L"Turn on";
+            option_is_on = 5;
+            this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
         this->jcBodyColor = JCColorPicker->PrimaryColor;
         this->jcButtonsColor = JCColorPicker->SecondaryColor;

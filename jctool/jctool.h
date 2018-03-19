@@ -37,10 +37,6 @@ int handle_ok;
 bool enable_button_test;
 bool allow_full_restore;
 bool cancel_spi_dump;
-hid_device *handle;
-hid_device *handle_l;
-int handler_close;
-int option_is_on;
 
 namespace CppWinFormJoy {
     class images

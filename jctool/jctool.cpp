@@ -31,7 +31,7 @@ struct brcm_cmd_01 {
         struct {
             u32 offset;
             u8 size;
-        } spi_read;
+        } spi_data;
         
         struct {
             u8 arg1;
@@ -40,6 +40,8 @@ struct brcm_cmd_01 {
     };
 };
 
+hid_device *handle;
+hid_device *handle_l;
 // Used to order the packets received in Joy-Con internally. Range 0x0-0xF.
 u8 timming_byte = 0x0;
 
@@ -54,8 +56,7 @@ s16 uint16_to_int16(u16 a) {
 
 // Credit to Hypersect (Ryan Juckett)
 // http://blog.hypersect.com/interpreting-analog-sticks/
-void AnalogStickCalc
-(
+void AnalogStickCalc(
     float *pOutX,       // out: resulting stick X value
     float *pOutY,       // out: resulting stick Y value
     u16 x,              // in: initial stick X value
@@ -100,9 +101,10 @@ void AnalogStickCalc
     }
 }
 
+
 int set_led_busy() {
     int res;
-    u8 buf[0x100];
+    u8 buf[49];
     memset(buf, 0, sizeof(buf));
     auto hdr = (brcm_hdr *)buf;
     auto pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -134,10 +136,11 @@ int set_led_busy() {
     return 0;
 }
 
+
 std::string get_sn(u32 offset, const u16 read_len) {
     int res;
-    u8 buf[0x100];
     int error_reading = 0;
+    u8 buf[49];
     std::string test = "";
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -147,8 +150,8 @@ std::string get_sn(u32 offset, const u16 read_len) {
         hdr->timer = timming_byte & 0xF;
         timming_byte++;
         pkt->subcmd = 0x10;
-        pkt->spi_read.offset = offset;
-        pkt->spi_read.size = read_len;
+        pkt->spi_data.offset = offset;
+        pkt->spi_data.size = read_len;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
         res = hid_read(handle, buf, sizeof(buf));
@@ -172,9 +175,10 @@ std::string get_sn(u32 offset, const u16 read_len) {
     return test;
 }
 
+
 int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
     int res;
-    u8 buf[0x100];
+    u8 buf[49];
     int error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -184,8 +188,8 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
         hdr->timer = timming_byte & 0xF;
         timming_byte++;
         pkt->subcmd = 0x10;
-        pkt->spi_read.offset = offset;
-        pkt->spi_read.size = read_len;
+        pkt->spi_data.offset = offset;
+        pkt->spi_data.size = read_len;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
         res = hid_read(handle, buf, sizeof(buf));
@@ -205,9 +209,10 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
     return 0;
 }
 
+
 int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
     int res;
-    u8 buf[0x100];
+    u8 buf[49];
     int error_writing = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -217,8 +222,8 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
         hdr->timer = timming_byte & 0xF;
         timming_byte++;
         pkt->subcmd = 0x11;
-        pkt->spi_read.offset = offset;
-        pkt->spi_read.size = write_len;
+        pkt->spi_data.offset = offset;
+        pkt->spi_data.size = write_len;
         for (int i = 0; i < write_len; i++)
             buf[0x10 + i] = test_buf[i];
 
@@ -235,9 +240,10 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
     return 0;
 }
 
+
 int get_device_info(u8* test_buf) {
     int res;
-    u8 buf[0x100];
+    u8 buf[49];
     int error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -263,9 +269,10 @@ int get_device_info(u8* test_buf) {
     return 0;
 }
 
+
 int get_battery(u8* test_buf) {
     int res;
-    u8 buf[0x100];
+    u8 buf[49];
     int error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -291,9 +298,10 @@ int get_battery(u8* test_buf) {
     return 0;
 }
 
+
 int get_temperature(u8* test_buf) {
     int res;
-    u8 buf[0x100];
+    u8 buf[49];
     int error_reading = 0;
     bool imu_changed = false;
 
@@ -374,6 +382,7 @@ int get_temperature(u8* test_buf) {
     return 0;
 }
 
+
 int dump_spi(const char *dev_name) {
     std::string file_dev_name = dev_name;
     int i=0;
@@ -391,7 +400,7 @@ int dump_spi(const char *dev_name) {
     }
 
     int res;
-    u8 buf[0x100];
+    u8 buf[49];
     
     u16 read_len = 0x1d;
     u32 offset = 0x0;
@@ -410,8 +419,8 @@ int dump_spi(const char *dev_name) {
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
             pkt->subcmd = 0x10;
-            pkt->spi_read.offset = offset;
-            pkt->spi_read.size = read_len;
+            pkt->spi_data.offset = offset;
+            pkt->spi_data.size = read_len;
             res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
             res = hid_read(handle, buf, sizeof(buf));
 
@@ -428,10 +437,11 @@ int dump_spi(const char *dev_name) {
     return 0;
 }
 
+
 int send_rumble() {
     int res;
-    u8 buf[0x100];
-    u8 buf2[0x100];
+    u8 buf[49];
+    u8 buf2[49];
     
     //Enable Vibration
     memset(buf, 0, sizeof(buf));
@@ -536,6 +546,7 @@ int send_rumble() {
     return 0;
 }
 
+
 int send_custom_command(u8* arg) {
     int res_write;
     int res;
@@ -543,24 +554,29 @@ int send_custom_command(u8* arg) {
     String^ input_report_cmd;
     String^ input_report_sys;
     String^ output_report_sys;
-    u8 buf_cmd[36];
+    u8 buf_cmd[49];
     u8 buf_reply[0x170];
     memset(buf_cmd, 0, sizeof(buf_cmd));
     memset(buf_reply, 0, sizeof(buf_reply));
 
-    buf_cmd[0] = arg[0];
+    buf_cmd[0] = arg[0]; // cmd
     buf_cmd[1] = timming_byte & 0xF;
     timming_byte++;
+    // Vibration pattern
     buf_cmd[2] = buf_cmd[6] = arg[1];
     buf_cmd[3] = buf_cmd[7] = arg[2];
     buf_cmd[4] = buf_cmd[8] = arg[3];
     buf_cmd[5] = buf_cmd[9] = arg[4];
 
-    buf_cmd[10] = arg[5];
+    buf_cmd[10] = arg[5]; // subcmd
+
+    // subcmd x21 crc byte
+    if (arg[5] == 0x21)
+        arg[43] = mcu_crc8_calc(arg + 7, 36);
 
     output_report_sys = String::Format(L"Cmd:  {0:X2}   Subcmd: {1:X2}\r\n", buf_cmd[0], buf_cmd[10]);
     if (buf_cmd[0] == 0x01 || buf_cmd[0] == 0x10 || buf_cmd[0] == 0x11) {
-        for (int i = 6; i < 31; i++) {
+        for (int i = 6; i < 44; i++) {
             buf_cmd[5 + i] = arg[i];
             output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
             if (byte_seperator == 4)
@@ -574,7 +590,7 @@ int send_custom_command(u8* arg) {
     }
     //Use subcmd after command
     else {
-        for (int i = 6; i < 31; i++) {
+        for (int i = 6; i < 44; i++) {
             buf_cmd[i - 5] = arg[i];
             output_report_sys += String::Format(L"{0:X2} ", buf_cmd[i - 5]);
             if (byte_seperator == 4)
@@ -593,9 +609,21 @@ int send_custom_command(u8* arg) {
 
     if (res_write < 0)
         input_report_sys += L"hid_write failed!\r\n\r\n";
+    int retries = 0;
+    while (1) {
+        res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 32);
 
-    res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+        if (res > 0) {
+            if (arg[0] == 0x01 && buf_reply[0] == 0x21)
+                break;
+            else if (arg[0] != 0x01)
+                break;
+        }
 
+        retries++;
+        if (retries == 20)
+            break;
+    }
     byte_seperator = 1;
     if (res > 12) {
         if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
@@ -625,6 +653,14 @@ int send_custom_command(u8* arg) {
                 }
                 byte_seperator++;
             }
+            int crc_check_ok = 0;
+            if (arg[5] == 0x21) {
+                crc_check_ok = (buf_reply[48] == mcu_crc8_calc(buf_reply + 0xF, 33));
+                if (crc_check_ok)
+                    input_report_sys += L"(CRC OK)";
+                else
+                    input_report_sys += L"(Wrong CRC)";
+            }
         }
         else {
             input_report_sys += String::Format(L"ID: {0:X2} Subcmd reply:\r\n", buf_reply[0]);
@@ -652,6 +688,7 @@ int send_custom_command(u8* arg) {
 
     return 0;
 }
+
 
 int button_test() {
     int res;
@@ -994,10 +1031,11 @@ int button_test() {
     return 0;
 }
 
+
 int play_tune(int tune_no) {
     int res;
-    u8 buf[0x100];
-    u8 buf2[0x100];
+    u8 buf[49];
+    u8 buf2[49];
 
     //Enable Vibration
     memset(buf, 0, sizeof(buf));
@@ -1075,10 +1113,11 @@ int play_tune(int tune_no) {
     return 0;
 }
 
+
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
     int res;
-    u8 buf[0x100];
-    u8 buf2[0x100];
+    u8 buf[49];
+    u8 buf2[49];
 
     //Enable Vibration
     memset(buf, 0, sizeof(buf));
