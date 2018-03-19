@@ -2396,7 +2396,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Void update_joycon_color(u8 r, u8 g, u8 b, u8 rb, u8 gb, u8 bb) {
         Bitmap^ MyImage;
         Bitmap^ MyImageLayer;
-        Color gotColor;
+        Bitmap^ MyImageLayer2;
 
         // Apply body color 
         switch (handle_ok) {
@@ -2408,21 +2408,105 @@ public ref class FormJoy : public System::Windows::Forms::Form
             break;
         case 3:
             MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
+            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_grips_l")));
+            MyImageLayer2 = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_grips_r")));
             break;
         default:
             MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
             break;
         }
-        for (int x = 0; x < MyImage->Width; x++)
-        {
-            for (int y = 0; y < MyImage->Height; y++)
-            {
-                gotColor = MyImage->GetPixel(x, y);
-                if (gotColor.R == 255){
-                    gotColor = Color::FromArgb(gotColor.A, r, g, b);
-                }
-                MyImage->SetPixel(x, y, gotColor);
+        // Skip slow SetPixel(). Reduce latency pixel set latency from 842us -> 260ns.
+        System::Drawing::Imaging::BitmapData^ bmd = MyImage->LockBits(System::Drawing::Rectangle(0, 0, MyImage->Width, MyImage->Height), System::Drawing::Imaging::ImageLockMode::ReadOnly, MyImage->PixelFormat);
+        int PixelSize = 4;
+        for (int y = 0; y < MyImage->Height; y++) {
+            byte* row = (byte *)bmd->Scan0.ToPointer() + (y * bmd->Stride);
+            for (int x = 0; x < MyImage->Width; x++) {
+                // Values are in BGRA in memory. Here in ARGB order.
+                //row[x * PixelSize + 3] = alpha;
+                row[x * PixelSize + 2] = r;
+                row[x * PixelSize + 1] = g;
+                row[x * PixelSize]     = b;
             }
+        }
+        MyImage->UnlockBits(bmd);
+        delete bmd;
+
+        // Apply grips color
+        if (handle_ok == 3) {
+            // Skip slow SetPixel(). Reduce latency pixel set latency from 842us -> 260ns.
+            bmd = MyImageLayer->LockBits(System::Drawing::Rectangle(0, 0, MyImageLayer->Width, MyImageLayer->Height), System::Drawing::Imaging::ImageLockMode::ReadOnly, MyImageLayer->PixelFormat);
+            System::Drawing::Imaging::BitmapData^ bmd2 = MyImageLayer2->LockBits(System::Drawing::Rectangle(0, 0, MyImageLayer2->Width, MyImageLayer2->Height), System::Drawing::Imaging::ImageLockMode::ReadOnly, MyImageLayer2->PixelFormat);
+            for (int y = 0; y < MyImageLayer->Height; y++) {
+            byte* row = (byte *)bmd->Scan0.ToPointer() + (y * bmd->Stride);
+            byte* row2 = (byte *)bmd2->Scan0.ToPointer() + (y * bmd2->Stride);
+            for (int x = 0; x < MyImageLayer->Width; x++) {
+                    // White Buttons
+                    if (Color::FromArgb(255, 255, 255) == Color::FromArgb(rb, gb, bb)) {
+                        // Normal Pro
+                        if (Color::FromArgb(0x32, 0x32, 0x32) == Color::FromArgb(r, g, b)) {
+                            row[x * PixelSize + 2] = 0x40;
+                            row[x * PixelSize + 1] = 0x40;
+                            row[x * PixelSize]     = 0x40;
+                            row2[x * PixelSize + 2] = 0x40;
+                            row2[x * PixelSize + 1] = 0x40;
+                            row2[x * PixelSize]     = 0x40;
+                        }
+                        // Xenoblade Pro
+                        else if (Color::FromArgb(0x32, 0x31, 0x32) == Color::FromArgb(r, g, b)) {
+                            row[x * PixelSize + 2] = 0xdd;
+                            row[x * PixelSize + 1] = 0x3b;
+                            row[x * PixelSize]     = 0x64;
+                            row2[x * PixelSize + 2] = 0xdd;
+                            row2[x * PixelSize + 1] = 0x3b;
+                            row2[x * PixelSize]     = 0x64;
+                        }
+                        // Splatoon Pro
+                        else if (Color::FromArgb(0x31, 0x32, 0x32) == Color::FromArgb(r, g, b)) {
+                            row[x * PixelSize + 2] = 0x1e;
+                            row[x * PixelSize + 1] = 0xdc;
+                            row[x * PixelSize]     = 0x00;
+                            row2[x * PixelSize + 2] = 0xff;
+                            row2[x * PixelSize + 1] = 0x32;
+                            row2[x * PixelSize]     = 0x78;
+                        }
+                        // Custom Pro
+                        else {
+                            row[x * PixelSize + 2] = 0xff;
+                            row[x * PixelSize + 1] = 0xff;
+                            row[x * PixelSize]     = 0xff;
+                            row2[x * PixelSize + 2] = 0xff;
+                            row2[x * PixelSize + 1] = 0xff;
+                            row2[x * PixelSize]     = 0xff;
+                        }
+                    }
+                    // Black Body and Buttons
+                    else if (Color::FromArgb(0, 0, 0) == Color::FromArgb(r, g, b)
+                        && Color::FromArgb(0, 0, 0) == Color::FromArgb(rb, gb, bb)) {
+                        // Black Grips (should be 0,0,0?)
+                        row[x * PixelSize + 2] = 0x00;
+                        row[x * PixelSize + 1] = 0x00;
+                        row[x * PixelSize]     = 0x00;
+                        row2[x * PixelSize + 2] = 0x00;
+                        row2[x * PixelSize + 1] = 0x00;
+                        row2[x * PixelSize]     = 0x00;
+                    }
+                    // Custom Buttons
+                    else {
+                        // White Grips
+                        row[x * PixelSize + 2] = 0xff;
+                        row[x * PixelSize + 1] = 0xff;
+                        row[x * PixelSize] = 0xff;
+                        row2[x * PixelSize + 2] = 0xff;
+                        row2[x * PixelSize + 1] = 0xff;
+                        row2[x * PixelSize] = 0xff;
+                    }
+                }
+            }
+            MyImageLayer->UnlockBits(bmd);
+            MyImageLayer2->UnlockBits(bmd2);
+            delete bmd;
+            delete bmd2;
+            MyImageLayer = drawLayeredImage(MyImageLayer, MyImageLayer2);
         }
 
         // Apply buttons color 
@@ -2434,21 +2518,25 @@ public ref class FormJoy : public System::Windows::Forms::Form
             MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_buttons")));
             break;
         case 3:
+            MyImage = drawLayeredImage(MyImage, MyImageLayer); // Apply grips layer
             MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
             break;
         default:
             MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
             break;
         }
-        for (int x = 0; x < MyImageLayer->Width; x++) {
-            for (int y = 0; y < MyImageLayer->Height; y++) {
-                gotColor = MyImageLayer->GetPixel(x, y);
-                if (gotColor.R == 100) {
-                    gotColor = Color::FromArgb(gotColor.A, rb, gb, bb);
-                }
-                MyImageLayer->SetPixel(x, y, gotColor);
+        // Skip slow SetPixel(). Reduce latency pixel set latency from 842us -> 260ns.
+        bmd = MyImageLayer->LockBits(System::Drawing::Rectangle(0, 0, MyImageLayer->Width, MyImageLayer->Height), System::Drawing::Imaging::ImageLockMode::ReadOnly, MyImageLayer->PixelFormat);
+        for (int y = 0; y < MyImageLayer->Height; y++) {
+            byte* row = (byte *)bmd->Scan0.ToPointer() + (y * bmd->Stride);
+            for (int x = 0; x < MyImageLayer->Width; x++) {
+                row[x * PixelSize + 2] = rb;
+                row[x * PixelSize + 1] = gb;
+                row[x * PixelSize]     = bb;
             }
         }
+        MyImageLayer->UnlockBits(bmd);
+        delete bmd;
         MyImage = drawLayeredImage(MyImage, MyImageLayer);
 
         // Apply outlines
