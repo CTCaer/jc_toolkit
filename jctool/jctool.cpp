@@ -9,8 +9,8 @@
 #include <Windows.h>
 
 #include "jctool.h"
-#include "FormJoy.h"
 #include "tune.h"
+#include "FormJoy.h"
 
 using namespace CppWinFormJoy;
 
@@ -114,7 +114,7 @@ int set_led_busy() {
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x81;
     res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-    res = hid_read(handle, buf, 0);
+    res = hid_read_timeout(handle, buf, 0, 64);
 
     //Set breathing HOME Led
     if (handle_ok != 1) {
@@ -130,7 +130,7 @@ int set_led_busy() {
         buf[13] = 0xF2;
         buf[14] = buf[15] = 0xF0;
         res = hid_write(handle, buf, 16);
-        res = hid_read(handle, buf, 0);
+        res = hid_read_timeout(handle, buf, 0, 64);
     }
 
     return 0;
@@ -154,15 +154,21 @@ std::string get_sn(u32 offset, const u16 read_len) {
         pkt->spi_data.size = read_len;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
-        res = hid_read(handle, buf, sizeof(buf));
-        if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
-            break;
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
+                goto check_result;
 
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
         error_reading++;
-        if (error_reading == 125)
+        if (error_reading > 20)
             return "Error!";
     }
-
+    check_result:
     if (res >= 0x14 + read_len) {
         for (int i = 0; i < read_len; i++) {
             if (buf[0x14 + i] != 0x000) {
@@ -171,7 +177,9 @@ std::string get_sn(u32 offset, const u16 read_len) {
                 test += "";
             }
     }
-
+    else {
+        return "Error!";
+    }
     return test;
 }
 
@@ -192,14 +200,21 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
         pkt->spi_data.size = read_len;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
 
-        res = hid_read(handle, buf, sizeof(buf));
-        if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
-            break;
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
+                goto check_result;
 
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
         error_reading++;
-        if (error_reading == 250)
+        if (error_reading > 20)
             return 1;
     }
+    check_result:
     if (res >= 0x14 + read_len) {
             for (int i = 0; i < read_len; i++) {
                 test_buf[i] = buf[0x14 + i];
@@ -228,15 +243,21 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
             buf[0x10 + i] = test_buf[i];
 
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt) + write_len);
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x1180)
+                goto check_result;
 
-        res = hid_read(handle, buf, sizeof(buf));
-        if (*(u16*)&buf[0xD] == 0x1180)
-            break;
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
         error_writing++;
-        if (error_writing == 125)
+        if (error_writing == 20)
             return 1;
     }
-
+    check_result:
     return 0;
 }
 
@@ -254,14 +275,21 @@ int get_device_info(u8* test_buf) {
         timming_byte++;
         pkt->subcmd = 0x02;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);        
+            if (*(u16*)&buf[0xD] == 0x0282)
+                goto check_result;
 
-        res = hid_read(handle, buf, sizeof(buf));        
-        if (*(u16*)&buf[0xD] == 0x0282)
-            break;
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
         error_reading++;
-        if (error_reading == 125)
+        if (error_reading > 20)
             break;
     }
+    check_result:
     for (int i = 0; i < 0xA; i++) {
         test_buf[i] = buf[0xF + i];
     }
@@ -283,14 +311,21 @@ int get_battery(u8* test_buf) {
         timming_byte++;
         pkt->subcmd = 0x50;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x50D0)
+                goto check_result;
 
-        res = hid_read(handle, buf, sizeof(buf));
-        if (*(u16*)&buf[0xD] == 0x50D0)
-            break;
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
         error_reading++;
-        if (error_reading == 125)
+        if (error_reading > 20)
             break;
     }
+    check_result:
     test_buf[0] = buf[0x2];
     test_buf[1] = buf[0xF];
     test_buf[2] = buf[0x10];
@@ -316,15 +351,21 @@ int get_temperature(u8* test_buf) {
         pkt->subcmd_arg.arg1 = 0x10;
         pkt->subcmd_arg.arg2 = 0x01;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x43C0)
+                goto check_result;
 
-        res = hid_read(handle, buf, sizeof(buf));
-        if (*(u16*)&buf[0xD] == 0x43C0)
-            break;
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
         error_reading++;
-        if (error_reading == 125)
+        if (error_reading > 20)
             break;
     }
-
+    check_result:
     if ((buf[0x11] >> 4) == 0x0) {
 
         memset(buf, 0, sizeof(buf));
@@ -336,14 +377,14 @@ int get_temperature(u8* test_buf) {
         pkt->subcmd = 0x40;
         pkt->subcmd_arg.arg1 = 0x01;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-        res = hid_read(handle, buf, 0);
+        res = hid_read_timeout(handle, buf, 0, 64);
 
         imu_changed = true;
 
         // Let temperature sensor stabilize for a little bit.
         Sleep(64);
     }
-
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -355,14 +396,21 @@ int get_temperature(u8* test_buf) {
         pkt->subcmd_arg.arg1 = 0x20;
         pkt->subcmd_arg.arg2 = 0x02;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x43C0)
+                goto check_result2;
 
-        res = hid_read(handle, buf, sizeof(buf));
-        if (*(u16*)&buf[0xD] == 0x43C0)
-            break;
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
         error_reading++;
-        if (error_reading == 125)
+        if (error_reading > 20)
             break;
     }
+    check_result2:
     test_buf[0] = buf[0x11];
     test_buf[1] = buf[0x12];
 
@@ -376,7 +424,7 @@ int get_temperature(u8* test_buf) {
         pkt->subcmd = 0x40;
         pkt->subcmd_arg.arg1 = 0x00;
         res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-        res = hid_read(handle, buf, 0);
+        res = hid_read_timeout(handle, buf, 0, 64);
     }
 
     return 0;
@@ -422,11 +470,19 @@ int dump_spi(const char *dev_name) {
             pkt->spi_data.offset = offset;
             pkt->spi_data.size = read_len;
             res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
-            res = hid_read(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
+                    goto check_result;
 
-            if ((*(u16*)&buf[0xD] == 0x1090) && (*(uint32_t*)&buf[0xF] == offset))
-                break;
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+            
         }
+        check_result:
         fwrite(buf + 0x14, read_len, 1, f);
         offset += read_len;
         if (offset == 0x7FFE6)
