@@ -7,7 +7,6 @@
 
 #include <msclr\marshal_cppstd.h>
 
-#include "jctool.h"
 #include "overrides.h"
 #include "luts.h"
 
@@ -39,6 +38,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         disable_expert_mode = true;
         temp_celsius = true;
 
+        silence_input_report();
         set_led_busy();
 
         InitializeComponent();
@@ -2386,6 +2386,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 send_rumble();
                 MessageBox::Show(L"Done dumping SPI!", L"SPI Dumping", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
             }
+            else if (error && !cancel_spi_dump)
+                MessageBox::Show(L"Failed to dump the SPI chip!", L"SPI Dumping Failed!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+
         }
         this->menuStrip1->Enabled = true;
         this->toolStrip1->Enabled = true;

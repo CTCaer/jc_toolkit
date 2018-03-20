@@ -18,6 +18,36 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
+hid_device *handle;
+hid_device *handle_l;
+u8 timming_byte;
+
+#pragma pack(push, 1)
+
+struct brcm_hdr {
+    u8 cmd;
+    u8 timer;
+    u8 rumble_l[4];
+    u8 rumble_r[4];
+};
+
+struct brcm_cmd_01 {
+    u8 subcmd;
+    union {
+        struct {
+            u32 offset;
+            u8 size;
+        } spi_data;
+
+        struct {
+            u8 arg1;
+            u8 arg2;
+        } subcmd_arg;
+    };
+};
+
+#pragma pack(pop)
+
 extern std::string get_sn(u32 offset, const u16 read_len);
 extern s16 uint16_to_int16(u16 a);
 extern int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf);

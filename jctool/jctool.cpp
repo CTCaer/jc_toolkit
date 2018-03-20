@@ -16,37 +16,6 @@ using namespace CppWinFormJoy;
 
 #pragma comment(lib, "SetupAPI")
 
-#pragma pack(push, 1)
-
-struct brcm_hdr {
-    u8 cmd;
-    u8 timer;
-    u8 rumble_l[4];
-    u8 rumble_r[4];
-};
-
-struct brcm_cmd_01 {
-    u8 subcmd;
-    union {
-        struct {
-            u32 offset;
-            u8 size;
-        } spi_data;
-        
-        struct {
-            u8 arg1;
-            u8 arg2;
-        } subcmd_arg;
-    };
-};
-
-hid_device *handle;
-hid_device *handle_l;
-// Used to order the packets received in Joy-Con internally. Range 0x0-0xF.
-u8 timming_byte = 0x0;
-
-#pragma pack(pop)
-
 s16 uint16_to_int16(u16 a) {
     s16 b;
     char* aPointer = (char*)&a, *bPointer = (char*)&b;
@@ -433,7 +402,7 @@ int get_temperature(u8* test_buf) {
 
 int dump_spi(const char *dev_name) {
     std::string file_dev_name = dev_name;
-    int i=0;
+    int error_reading = 0;
 
     String^ filename_sys = gcnew String(file_dev_name.c_str());
     file_dev_name = "./" + file_dev_name;
@@ -453,6 +422,7 @@ int dump_spi(const char *dev_name) {
     u16 read_len = 0x1d;
     u32 offset = 0x0;
     while (offset < 0x80000 && !cancel_spi_dump) {
+        error_reading = 0;
         std::stringstream offset_label;
         offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << offset/1024.0f;
         offset_label << "KB of 512KB";
@@ -480,7 +450,12 @@ int dump_spi(const char *dev_name) {
                 if (retries > 8 || res == 0)
                     break;
             }
-            
+            if (retries > 8)
+                error_reading++;
+            if (error_reading > 10) {
+                fclose(f);
+                return 1;
+            }     
         }
         check_result:
         fwrite(buf + 0x14, read_len, 1, f);
@@ -667,7 +642,7 @@ int send_custom_command(u8* arg) {
         input_report_sys += L"hid_write failed!\r\n\r\n";
     int retries = 0;
     while (1) {
-        res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 32);
+        res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 64);
 
         if (res > 0) {
             if (arg[0] == 0x01 && buf_reply[0] == 0x21)
@@ -1340,6 +1315,42 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     return 0;
 }
 
+
+int silence_input_report() {
+    int res;
+    u8 buf[0x170];
+    int error_reading = 0;
+
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 1;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x03;
+        pkt->subcmd_arg.arg1 = 0x3f;
+        res = hid_write(handle, buf, 49);
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x0380)
+                goto stepf;
+
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+        error_reading++;
+        if (error_reading > 4)
+            break;
+    }
+
+stepf:
+    return 0;
+}
+
+
 /*
 //usb test
 int usb_init(hid_device *handle) {
@@ -1515,6 +1526,7 @@ int Main(array<String^>^ args) {
             MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
             return 1;
     }
+    timming_byte = 0x0;
 
     //test_chamber();
 
