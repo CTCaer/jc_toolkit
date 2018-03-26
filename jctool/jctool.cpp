@@ -23,6 +23,17 @@ s16 uint16_to_int16(u16 a) {
     return b;
 }
 
+
+u8 mcu_crc8_calc(u8 *buf, u8 size) {
+    u8 crc8 = 0x0;
+
+    for (int i = 0; i < size; ++i) {
+        crc8 = mcu_crc8_table[(u8)(crc8 ^ buf[i])];
+    }
+    return crc8;
+}
+
+
 // Credit to Hypersect (Ryan Juckett)
 // http://blog.hypersect.com/interpreting-analog-sticks/
 void AnalogStickCalc(
@@ -59,14 +70,14 @@ void AnalogStickCalc(
         float legalRange = 1.0f - deadZoneOuter - deadZoneCenter;
         float normalizedMag = min(1.0f, (mag - deadZoneCenter) / legalRange);
         float scale = normalizedMag / mag;
-        pOutX[1] = x_f * scale;
-        pOutY[1] = y_f * scale;
+        pOutX[0] = x_f * scale;
+        pOutY[0] = y_f * scale;
     }
     else
     {
         // stick is in the inner dead zone
-        pOutX[1] = 0.0f;
-        pOutY[1] = 0.0f;
+        pOutX[0] = 0.0f;
+        pOutY[0] = 0.0f;
     }
 }
 
@@ -82,7 +93,7 @@ int set_led_busy() {
     timming_byte++;
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x81;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read_timeout(handle, buf, 0, 64);
 
     //Set breathing HOME Led
@@ -98,7 +109,7 @@ int set_led_busy() {
         pkt->subcmd_arg.arg2 = 0x20;
         buf[13] = 0xF2;
         buf[14] = buf[15] = 0xF0;
-        res = hid_write(handle, buf, 16);
+        res = hid_write(handle, buf, sizeof(buf));
         res = hid_read_timeout(handle, buf, 0, 64);
     }
 
@@ -121,7 +132,7 @@ std::string get_sn(u32 offset, const u16 read_len) {
         pkt->subcmd = 0x10;
         pkt->spi_data.offset = offset;
         pkt->spi_data.size = read_len;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
 
         int retries = 0;
         while (1) {
@@ -167,7 +178,7 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
         pkt->subcmd = 0x10;
         pkt->spi_data.offset = offset;
         pkt->spi_data.size = read_len;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
 
         int retries = 0;
         while (1) {
@@ -211,7 +222,7 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
         for (int i = 0; i < write_len; i++)
             buf[0x10 + i] = test_buf[i];
 
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt) + write_len);
+        res = hid_write(handle, buf, sizeof(buf));
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -243,7 +254,7 @@ int get_device_info(u8* test_buf) {
         hdr->timer = timming_byte & 0xF;
         timming_byte++;
         pkt->subcmd = 0x02;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);        
@@ -279,7 +290,7 @@ int get_battery(u8* test_buf) {
         hdr->timer = timming_byte & 0xF;
         timming_byte++;
         pkt->subcmd = 0x50;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -319,7 +330,7 @@ int get_temperature(u8* test_buf) {
         pkt->subcmd = 0x43;
         pkt->subcmd_arg.arg1 = 0x10;
         pkt->subcmd_arg.arg2 = 0x01;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -345,7 +356,7 @@ int get_temperature(u8* test_buf) {
         timming_byte++;
         pkt->subcmd = 0x40;
         pkt->subcmd_arg.arg1 = 0x01;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
         res = hid_read_timeout(handle, buf, 0, 64);
 
         imu_changed = true;
@@ -364,7 +375,7 @@ int get_temperature(u8* test_buf) {
         pkt->subcmd = 0x43;
         pkt->subcmd_arg.arg1 = 0x20;
         pkt->subcmd_arg.arg2 = 0x02;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -392,7 +403,7 @@ int get_temperature(u8* test_buf) {
         timming_byte++;
         pkt->subcmd = 0x40;
         pkt->subcmd_arg.arg1 = 0x00;
-        res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+        res = hid_write(handle, buf, sizeof(buf));
         res = hid_read_timeout(handle, buf, 0, 64);
     }
 
@@ -439,7 +450,7 @@ int dump_spi(const char *dev_name) {
             pkt->subcmd = 0x10;
             pkt->spi_data.offset = offset;
             pkt->spi_data.size = read_len;
-            res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+            res = hid_write(handle, buf, sizeof(buf));
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -483,7 +494,7 @@ int send_rumble() {
     timming_byte++;
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf2, 0);
 
     //New vibration like switch
@@ -498,7 +509,7 @@ int send_rumble() {
     hdr->rumble_l[2] = 0x03;
     hdr->rumble_l[3] = 0x72;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf2, 0);
 
     Sleep(81);
@@ -510,7 +521,7 @@ int send_rumble() {
     hdr->rumble_l[2] = 0x40;
     hdr->rumble_l[3] = 0x40;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf2, 0);
 
     Sleep(5);
@@ -522,7 +533,7 @@ int send_rumble() {
     hdr->rumble_l[2] = 0x60;
     hdr->rumble_l[3] = 0x64;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf2, 0);
 
     Sleep(5);
@@ -541,7 +552,7 @@ int send_rumble() {
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x00;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf, 0);
 
     memset(buf, 0, sizeof(buf));
@@ -552,7 +563,7 @@ int send_rumble() {
     timming_byte++;
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf, 0);
 
     // Set HOME Led
@@ -570,7 +581,7 @@ int send_rumble() {
         buf[13] = buf[14] = buf[15] = buf[16] = buf[17] = buf[18] = 0xF0;
         buf[19] = buf[22] = buf[25] = buf[28] = buf[31] = 0x00;
         buf[20] = buf[21] = buf[23] = buf[24] = buf[26] = buf[27] = buf[29] = buf[30] = buf[32] = buf[33] = 0xFF;
-        res = hid_write(handle, buf, 34);
+        res = hid_write(handle, buf, sizeof(buf));
         res = hid_read(handle, buf, 0);
     }
 
@@ -726,7 +737,7 @@ int button_test() {
     int limit_output = 0;
     String^ input_report_cmd;
     String^ input_report_sys;
-    u8 buf_cmd[36];
+    u8 buf_cmd[49];
     u8 buf_reply[0x170];
     float acc_cal_coeff[3];
     float gyro_cal_coeff[3];
@@ -737,12 +748,12 @@ int button_test() {
     bool has_user_cal_stick_r = false;
     bool has_user_cal_sensor = false;
 
-    unsigned char factory_stick_cal[0x12];
-    unsigned char user_stick_cal[0x16];
-    unsigned char sensor_model[0x6];
-    unsigned char stick_model[0x24];
-    unsigned char factory_sensor_cal[0x18];
-    unsigned char user_sensor_cal[0x1A];
+    u8 factory_stick_cal[0x12];
+    u8 user_stick_cal[0x16];
+    u8 sensor_model[0x6];
+    u8 stick_model[0x24];
+    u8 factory_sensor_cal[0x18];
+    u8 user_sensor_cal[0x1A];
     u16 factory_sensor_cal_calm[0xC];
     u16 user_sensor_cal_calm[0xC];
     s16 sensor_cal[0x2][0x3];
@@ -915,8 +926,8 @@ int button_test() {
     timming_byte++;
     pkt->subcmd = 0x03;
     pkt->subcmd_arg.arg1 = 0x30;
-    res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-    res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+    res = hid_read(handle, buf_cmd, 0);
 
     // Enable IMU
     memset(buf_cmd, 0, sizeof(buf_cmd));
@@ -927,8 +938,8 @@ int button_test() {
     timming_byte++;
     pkt->subcmd = 0x40;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-    res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+    res = hid_read(handle, buf_cmd, 0);
 
     // Use SPI calibration and convert them to SI acc unit
     acc_cal_coeff[0] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][0]))) * 4.0f  * 9.8f;
@@ -942,7 +953,6 @@ int button_test() {
 
     // Input report loop
     while (enable_button_test) {
-        memset(buf_cmd, 0, sizeof(buf_cmd));
         res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
         if (res > 12) {
@@ -979,7 +989,7 @@ int button_test() {
                         stick_cal_y_l);
 
                     input_report_cmd += String::Format(L"X: {0,5:f2}   Y: {1,5:f2}\r\n",
-                        cal_x[1], cal_y[1]);
+                        cal_x[0], cal_y[0]);
                 }
                 if (handle_ok != 1) {
                     input_report_cmd += String::Format(L"\r\n\r\nR Stick (Raw/Cal):\r\nX:   {0:X3}   Y:   {1:X3}\r\n",
@@ -994,12 +1004,8 @@ int button_test() {
                         stick_cal_y_r);
 
                     input_report_cmd += String::Format(L"X: {0,5:f2}   Y: {1,5:f2}\r\n",
-                        cal_x[1], cal_y[1]);
-
+                        cal_x[0], cal_y[0]);
                 }
-                int len = 49;
-                if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
-                    len = 362;
 
                 input_report_sys = String::Format(L"Acc/meter (Raw/Cal):\r\n");
                 //The controller sends the sensor data 3 times with a little bit different values. Skip them
@@ -1034,9 +1040,9 @@ int button_test() {
             }
             limit_output++;
         }
-
         Application::DoEvents();
     }
+
     memset(buf_cmd, 0, sizeof(buf_cmd));
     hdr = (brcm_hdr *)buf_cmd;
     pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -1045,8 +1051,8 @@ int button_test() {
     timming_byte++;
     pkt->subcmd = 0x03;
     pkt->subcmd_arg.arg1 = 0x3F;
-    res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-    res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+    res = hid_read(handle, buf_cmd, 0);
 
     memset(buf_cmd, 0, sizeof(buf_cmd));
     hdr = (brcm_hdr *)buf_cmd;
@@ -1056,8 +1062,8 @@ int button_test() {
     timming_byte++;
     pkt->subcmd = 0x40;
     pkt->subcmd_arg.arg1 = 0x00;
-    res = hid_write(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
-    res = hid_read(handle, buf_cmd, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
+    res = hid_read(handle, buf_cmd, 0);
 
     return 0;
 }
@@ -1077,11 +1083,12 @@ int play_tune(int tune_no) {
     timming_byte++;
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf2, 0);
     // This needs to be changed for new bigger tunes.
-    u32 tune[6000];
-    int tune_size;
+    u32 *tune = new u32[6000];
+    memset(tune, 0, sizeof(tune));
+    int tune_size = 0;
     switch (tune_no) {
         case 0:
             memcpy(&tune, &tune_SMB, sizeof(tune_SMB));
@@ -1106,7 +1113,7 @@ int play_tune(int tune_no) {
         hdr->rumble_l[2] = (tune[i] >> 8) & 0xFF;
         hdr->rumble_l[3] = tune[i] & 0xFF;
         memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-        res = hid_write(handle, buf, sizeof(*hdr));
+        res = hid_write(handle, buf, sizeof(buf));
         // Joy-con does not reply when Output Report is 0x10
 
         Application::DoEvents();
@@ -1127,7 +1134,7 @@ int play_tune(int tune_no) {
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x00;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf, 0);
 
     memset(buf, 0, sizeof(buf));
@@ -1138,8 +1145,10 @@ int play_tune(int tune_no) {
     timming_byte++;
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf, 0);
+
+    delete[] tune;
 
     return 0;
 }
@@ -1159,7 +1168,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     timming_byte++;
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf2, 0);
 
     if (file_type == 1 || file_type == 2) {
@@ -1247,7 +1256,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
             hdr->rumble_l[2] = 0x40;
             hdr->rumble_l[3] = 0x40;
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-            res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+            res = hid_write(handle, buf, sizeof(*hdr));
             Sleep(loop_wait * sample_rate);
         }
         for (int i = loop_end * 4; i < samples * 4; i = i + 4) {
@@ -1283,7 +1292,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     hdr->rumble_l[2] = 0x40;
     hdr->rumble_l[3] = 0x40;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
 
     Sleep(sample_rate + 120);
     memset(buf, 0, sizeof(buf));
@@ -1298,7 +1307,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     hdr->rumble_l[3] = 0x40;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     pkt->subcmd = 0x48;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf, 0);
 
     memset(buf, 0, sizeof(buf));
@@ -1309,7 +1318,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     timming_byte++;
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(*hdr) + sizeof(*pkt));
+    res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf, 0);
 
     return 0;
@@ -1318,7 +1327,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 
 int silence_input_report() {
     int res;
-    u8 buf[0x170];
+    u8 buf[49];
     int error_reading = 0;
 
     while (1) {
@@ -1330,7 +1339,7 @@ int silence_input_report() {
         timming_byte++;
         pkt->subcmd = 0x03;
         pkt->subcmd_arg.arg1 = 0x3f;
-        res = hid_write(handle, buf, 49);
+        res = hid_write(handle, buf, sizeof(buf));
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1517,11 +1526,11 @@ int device_connection(){
 int Main(array<String^>^ args) {
     while (!device_connection()) {
         if (MessageBox::Show(L"The device is not paired or the device was disconnected!\n\n" +
-            "To pair:\n1. Press and hold the sync button until the leds are on\n" +
-            "2. Pair the Bluetooth controller in Windows\n\n To connect again:\n" +
-            "1. Press a button on the controller\n(If this doesn\'t work, re-pair.)\n\n" +
-            "To re-pair:\n1. Go to 'Settings -> Devices' or Devices and Printers'\n" +
-            "2. Remove the controller\n3. Follow the pair instructions",
+            "To pair:\n  1. Press and hold the sync button until the leds are on\n" +
+            "  2. Pair the Bluetooth controller in Windows\n\nTo connect again:\n" +
+            "  1. Press a button on the controller\n  (If this doesn\'t work, re-pair.)\n\n" +
+            "To re-pair:\n  1. Go to 'Settings -> Devices' or Devices and Printers'\n" +
+            "  2. Remove the controller\n  3. Follow the pair instructions",
             L"CTCaer's Joy-Con Toolkit - Connection Error!",
             MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
             return 1;

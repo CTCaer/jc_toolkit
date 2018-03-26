@@ -18,10 +18,6 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
-hid_device *handle;
-hid_device *handle_l;
-u8 timming_byte;
-
 #pragma pack(push, 1)
 
 struct brcm_hdr {
@@ -63,10 +59,14 @@ extern int send_custom_command(u8* arg);
 extern int device_connection();
 extern int set_led_busy();
 extern int button_test();
+extern int silence_input_report();
 int handle_ok;
 bool enable_button_test;
-bool allow_full_restore;
 bool cancel_spi_dump;
+
+hid_device *handle;
+hid_device *handle_l;
+u8 timming_byte;
 
 namespace CppWinFormJoy {
     class images

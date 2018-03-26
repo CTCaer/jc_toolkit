@@ -46,6 +46,16 @@ public ref class FormJoy : public System::Windows::Forms::Form
         // Set static form, to allow calling functions from unmanaged code.
         myform1 = this;
 
+        //Initialise locations on start for easy designing
+        this->grpBox_DebugCmd->Location = System::Drawing::Point(494, 36);
+        this->grpBox_Restore->Location = System::Drawing::Point(494, 36);
+        this->grpBox_ChangeSN->Location = System::Drawing::Point(494, 36);
+        this->grpBox_VibPlayer->Location = System::Drawing::Point(494, 36);
+        this->grpBox_ButtonTest->Location = System::Drawing::Point(494, 36);
+        this->grpBox_IR->Location = System::Drawing::Point(494, 36);
+        this->grpBox_editUserStickCal->Location = System::Drawing::Point(724, 36);
+
+        // Pull controller info
         full_refresh(false);
 
         /*
@@ -64,7 +74,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->comboBox_rstOption->Items->Add("Factory Reset User Calibration");
         this->comboBox_rstOption->Items->Add("Full Restore");
         this->comboBox_rstOption->DrawItem +=
-            gcnew System::Windows::Forms::DrawItemEventHandler(this, &FormJoy::comboBox_rstOption_DrawItem);
+            gcnew System::Windows::Forms::DrawItemEventHandler(this, &FormJoy::comboBox_darkTheme_DrawItem);
             
         this->menuStrip1->Renderer =
             gcnew System::Windows::Forms::ToolStripProfessionalRenderer(gcnew Overrides::TestColorTable());
@@ -95,12 +105,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->toolTip1->SetToolTip(this->label_loop_times,
             L"Set how many additional times the loop will be played.\n\nChoose a number from 0 to 999");
             
-        //Initialise locations on start for easy designing
-        this->grpBox_DebugCmd->Location = System::Drawing::Point(494, 36);
-        this->grpBox_Restore->Location = System::Drawing::Point(494, 36);
-        this->grpBox_ChangeSN->Location = System::Drawing::Point(494, 36);
-        this->grpBox_VibPlayer->Location = System::Drawing::Point(494, 36);
-        this->grpBox_ButtonTest->Location = System::Drawing::Point(494, 36);
+        // Final form window adjustments
         this->CenterToScreen();
         this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         reset_window_option(true);
@@ -804,7 +809,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->buttonTestToolStripMenuItem->Name = L"buttonTestToolStripMenuItem";
             this->buttonTestToolStripMenuItem->Size = System::Drawing::Size(138, 22);
-            this->buttonTestToolStripMenuItem->Text = L"Button test";
+            this->buttonTestToolStripMenuItem->Text = L"Playground testing";
             this->buttonTestToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::buttonTestToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
@@ -915,7 +920,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(85)));
             this->textBoxDbg_cmd->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
             this->textBoxDbg_cmd->CharacterCasing = System::Windows::Forms::CharacterCasing::Upper;
-            this->textBoxDbg_cmd->ForeColor = System::Drawing::Color::White;
+            this->textBoxDbg_cmd->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
+                static_cast<System::Int32>(static_cast<System::Byte>(0)));
             this->textBoxDbg_cmd->Location = System::Drawing::Point(64, 92);
             this->textBoxDbg_cmd->MaxLength = 2;
             this->textBoxDbg_cmd->Name = L"textBoxDbg_cmd";
@@ -1203,9 +1209,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             // comboBox_rstOption
             // 
-            this->comboBox_rstOption->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
-                static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->comboBox_rstOption->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
             this->comboBox_rstOption->DrawMode = System::Windows::Forms::DrawMode::OwnerDrawFixed;
+            this->comboBox_rstOption->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
             this->comboBox_rstOption->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->comboBox_rstOption->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
                 static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
@@ -1292,9 +1299,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_restore->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
             this->btn_restore->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->btn_restore->Location = System::Drawing::Point(136, 359);
+            this->btn_restore->Location = System::Drawing::Point(124, 359);
             this->btn_restore->Name = L"btn_restore";
-            this->btn_restore->Size = System::Drawing::Size(75, 30);
+            this->btn_restore->Size = System::Drawing::Size(87, 30);
             this->btn_restore->TabIndex = 6;
             this->btn_restore->Text = L"Restore";
             this->btn_restore->UseVisualStyleBackColor = false;
@@ -1398,7 +1405,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
             this->btn_restoreSN->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->btn_restoreSN->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
-            this->btn_restoreSN->Location = System::Drawing::Point(17, 359);
+            this->btn_restoreSN->Location = System::Drawing::Point(17, 355);
             this->btn_restoreSN->Name = L"btn_restoreSN";
             this->btn_restoreSN->Size = System::Drawing::Size(87, 30);
             this->btn_restoreSN->TabIndex = 34;
@@ -1441,7 +1448,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_changeSN->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
             this->btn_changeSN->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->btn_changeSN->Location = System::Drawing::Point(116, 359);
+            this->btn_changeSN->Location = System::Drawing::Point(116, 355);
             this->btn_changeSN->Name = L"btn_changeSN";
             this->btn_changeSN->Size = System::Drawing::Size(87, 30);
             this->btn_changeSN->TabIndex = 1;
@@ -1811,11 +1818,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_runBtnTest->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
                 static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
             this->btn_runBtnTest->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-            this->btn_runBtnTest->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->btn_runBtnTest->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
-            this->btn_runBtnTest->Location = System::Drawing::Point(74, 349);
+            this->btn_runBtnTest->Location = System::Drawing::Point(66, 359);
             this->btn_runBtnTest->Name = L"btn_runBtnTest";
-            this->btn_runBtnTest->Size = System::Drawing::Size(75, 27);
+            this->btn_runBtnTest->Size = System::Drawing::Size(88, 30);
             this->btn_runBtnTest->TabIndex = 36;
             this->btn_runBtnTest->Text = L"Turn on";
             this->btn_runBtnTest->UseVisualStyleBackColor = false;
@@ -2024,10 +2031,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 this->toolStripBtn_batt,
                     this->toolStripLabel_batt, this->toolStripLabel_temp, this->toolStripBtn_refresh, this->toolStripBtn_Disconnect
             });
-            this->toolStrip1->Location = System::Drawing::Point(0, 669);
+            this->toolStrip1->Location = System::Drawing::Point(0, 880);
             this->toolStrip1->Name = L"toolStrip1";
             this->toolStrip1->Padding = System::Windows::Forms::Padding(6, 1, 6, 3);
-            this->toolStrip1->Size = System::Drawing::Size(1646, 25);
+            this->toolStrip1->Size = System::Drawing::Size(2112, 25);
             this->toolStrip1->Stretch = true;
             this->toolStrip1->TabIndex = 44;
             this->toolStrip1->Text = L"toolStrip1";
@@ -2150,7 +2157,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
             this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
-            this->ClientSize = System::Drawing::Size(1646, 694);
+            this->ClientSize = System::Drawing::Size(2112, 905);
             this->Controls->Add(this->menuStrip1);
             this->Controls->Add(this->toolStrip1);
             this->Controls->Add(this->panel_filler);
@@ -2236,7 +2243,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         if (check_connection) {
             if (!device_connection()) {
                 MessageBox::Show(L"The device was disconnected!\n\n" +
-                    L"Press a button on the controller to connect\nand try to write the colors again!",
+                    L"Press a button on the controller to connect\nand try again!",
                     L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
                 return;
             }
@@ -2245,9 +2252,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStripLabel_batt->Enabled = true;
             this->toolStripBtn_batt->Enabled = true;
         }
-
-        if (check_connection)
-            set_led_busy();
 
         this->btn_runBtnTest->Text = L"Turn on";
         enable_button_test = false;
@@ -3095,9 +3099,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
     }
 
-    protected: System::Void comboBox_rstOption_DrawItem(System::Object^ sender, DrawItemEventArgs^ e)
+    protected: System::Void comboBox_darkTheme_DrawItem(System::Object^ sender, DrawItemEventArgs^ e)
     {
-        Brush^ brush = gcnew System::Drawing::SolidBrush(Color::FromArgb(9, 255, 206));;
+        Brush^ brush = gcnew System::Drawing::SolidBrush(Color::FromArgb(251, 251, 251));;
 
         if (e->Index < 0)
             return;
@@ -3108,7 +3112,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         else
             e->Graphics->FillRectangle(gcnew SolidBrush(combo->BackColor), e->Bounds);
 
-        e->Graphics->DrawString(this->comboBox_rstOption->Items[e->Index]->ToString(), e->Font, brush,
+        e->Graphics->DrawString(combo->Items[e->Index]->ToString(), e->Font, brush,
             e->Bounds, StringFormat::GenericDefault);
 
         e->DrawFocusRectangle();
@@ -3393,7 +3397,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             }
         }
         if (error != 0) {
-            MessageBox::Show(L"Failed to restore or restore incomplete!\n\nPlease try again..", L"Restore Failed!",
+            MessageBox::Show(L"Failed to restore or restore incomplete!\n\nPlease try again..", L"CTCaer's Joy-Con Toolkit - Restore Failed!",
                 MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
         }
         else {
