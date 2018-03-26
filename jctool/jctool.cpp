@@ -1326,6 +1326,673 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 }
 
 
+int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
+    std::stringstream ir_status;
+
+    int elapsed_time = 0;
+    int elapsed_time2 = 0;
+    System::Diagnostics::Stopwatch^ sw = System::Diagnostics::Stopwatch::StartNew();
+
+    u8 buf[49];
+    u8 buf_reply[0x170];
+    u8 *buf_image = new u8[76800]; // 8bpp greyscale image.
+	uint16_t bad_signal = 0;
+    int error_reading = 0;
+    float noise_level = 0.0f;
+    int avg_intensity_percent = 0.0f;
+    int previous_frag_no = 0;
+    int got_frag_no = 0;
+    int missed_packet_no = 0;
+    bool missed_packet = false;
+    int initialization = 2;
+    int max_pixels = ((max_frag_no < 218 ? max_frag_no : 217) + 1) * 300;
+    int white_pixels_percent = 0;
+
+    memset(buf_image, 0, sizeof(buf_image));
+
+    memset(buf, 0, sizeof(buf));
+    memset(buf_reply, 0, sizeof(buf_reply));
+    auto hdr = (brcm_hdr *)buf;
+    auto pkt = (brcm_cmd_01 *)(hdr + 1);
+    hdr->cmd = 0x11;
+    pkt->subcmd = 0x03;
+    buf[48] = 0xFF;
+
+    // First ack
+    hdr->timer = timming_byte & 0xF;
+    timming_byte++;
+    buf[14] = 0x0;
+    buf[47] = mcu_crc8_calc(buf + 11, 36);
+    hid_write(handle, buf, sizeof(buf));
+
+    // IR Read/ACK loop for fragmented data packets. 
+    // It also avoids requesting missed data fragments, we just skip it to not complicate things.
+    while (enable_IRVideoPhoto || initialization) {
+        memset(buf_reply, 0, sizeof(buf_reply));
+        hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+        //Check if new packet
+        if (buf_reply[0] == 0x31 && buf_reply[49] == 0x03) {
+            got_frag_no = buf_reply[52];
+            if (got_frag_no == (previous_frag_no + 1) % (max_frag_no + 1)) {
+                
+                previous_frag_no = got_frag_no;
+
+                // ACK for fragment
+                hdr->timer = timming_byte & 0xF;
+                timming_byte++;
+                buf[14] = previous_frag_no;
+                buf[47] = mcu_crc8_calc(buf + 11, 36);
+                hid_write(handle, buf, sizeof(buf));
+
+                memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+
+                // Status percentage
+                ir_status.str("");
+                ir_status.clear();
+                if (initialization < 2) {
+                    if (show_status == 2)
+                        ir_status << "Status: Streaming.. ";
+                    else
+                        ir_status << "Status: Receiving.. ";
+                }
+                else
+                    ir_status << "Status: Initializing.. ";
+                ir_status << std::setfill(' ') << std::setw(3);
+                ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(max_frag_no + 1) * 100.0f;
+                ir_status << "% - ";
+
+                //debug
+               // printf("%02X Frag: Copy\n", got_frag_no);
+
+                FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
+                elapsed_time = sw->ElapsedMilliseconds;
+
+                // Check if final fragment. Draw the frame.
+                if (got_frag_no == max_frag_no) {
+                    // Update Viewport
+                    elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
+                    FormJoy::myform1->setIRPictureWindow(buf_image, true);
+
+                    //debug
+                    //printf("%02X Frag: Draw -------\n", got_frag_no);
+
+                    // Stats/IR header parsing
+                    // buf_reply[53]: Average Intensity. 0-255 scale.
+                    // buf_reply[54]: Unknown. Shows up only when EXFilter is enabled.
+                    // *(u16*)&buf_reply[55]: White pixels (pixels with 255 value). Max 65535. Uint16 constraints, even though max is 76800.
+                    // *(u16*)&buf_reply[57]: Pixels with ambient noise from external light sources (sun, lighter, IR remotes, etc). Cleaned by External Light Filter.
+                    noise_level = (float)(*(u16*)&buf_reply[57]) / ((float)(*(u16*)&buf_reply[55]) + 1.0f);
+                    white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
+                    avg_intensity_percent = (int)((buf_reply[53] * 100) / 255);
+                    FormJoy::myform1->lbl_IRHelp->Text = String::Format("Amb Noise: {0:f2},  Int: {1:D}%,  FPS: {2:D} ({3:D}ms)\nEXFilter: {4:D},  White Px: {5:D}%,  ??: {6:D}",
+                        noise_level, avg_intensity_percent, (int)(1000 / elapsed_time2), elapsed_time2, *(u16*)&buf_reply[57], white_pixels_percent, buf_reply[54]);
+
+                    elapsed_time2 = sw->ElapsedMilliseconds;
+
+                    if (initialization)
+                        initialization--;
+                }
+                Application::DoEvents();
+            }
+            // Repeat/Missed fragment
+            else if (got_frag_no  || previous_frag_no) {
+                // Check if repeat ACK should be send. Avoid writing to image buffer.
+                if (got_frag_no == previous_frag_no) {
+                    //debug
+                    //printf("%02X Frag: Repeat\n", got_frag_no);
+
+                    // ACK for fragment
+                    hdr->timer = timming_byte & 0xF;
+                    timming_byte++;
+                    buf[14] = got_frag_no;
+                    buf[47] = mcu_crc8_calc(buf + 11, 36);
+                    hid_write(handle, buf, sizeof(buf));
+
+                    missed_packet = false;
+                }
+                // Check if missed fragment and request it.
+                else if(missed_packet_no != got_frag_no && !missed_packet) {
+                    if (max_frag_no != 0x03) {
+                        //debug
+                        //printf("%02X Frag: Missed %02X, Prev: %02X, PrevM: %02X\n", got_frag_no, previous_frag_no + 1, previous_frag_no, missed_packet_no);
+
+                        // Missed packet
+                        hdr->timer = timming_byte & 0xF;
+                        timming_byte++;
+                        //Request for missed packet. You send what the next fragment number will be, instead of the actual missed packet.
+                        buf[12] = 0x1;
+                        buf[13] = previous_frag_no + 1;
+                        buf[14] = 0;
+                        buf[47] = mcu_crc8_calc(buf + 11, 36);
+                        hid_write(handle, buf, sizeof(buf));
+
+                        buf[12] = 0x00;
+                        buf[13] = 0x00;
+
+                        memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+
+                        previous_frag_no = got_frag_no;
+                        missed_packet_no = got_frag_no - 1;
+                        missed_packet = true;
+                    }
+                    // Check if missed fragment and res is 30x40. Don't request it.
+                    else {
+                        //debug
+                        //printf("%02X Frag: Missed but res is 30x40\n", got_frag_no);
+
+                        // ACK for fragment
+                        hdr->timer = timming_byte & 0xF;
+                        timming_byte++;
+                        buf[14] = got_frag_no;
+                        buf[47] = mcu_crc8_calc(buf + 11, 36);
+                        hid_write(handle, buf, sizeof(buf));
+
+                        memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+
+                        previous_frag_no = got_frag_no;
+                    }
+                }
+                // Got the requested missed fragments.
+                else if (missed_packet_no == got_frag_no){
+                    //debug
+                    //printf("%02X Frag: Got missed %02X\n", got_frag_no, missed_packet_no);
+
+                    // ACK for fragment
+                    hdr->timer = timming_byte & 0xF;
+                    timming_byte++;
+                    buf[14] = got_frag_no;
+                    buf[47] = mcu_crc8_calc(buf + 11, 36);
+                    hid_write(handle, buf, sizeof(buf));
+
+                    memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+
+                    previous_frag_no = got_frag_no;
+                    missed_packet = false;
+                }
+                // Repeat of fragment that is not max fragment.
+                else {
+                    //debug
+                    //printf("%02X Frag: RepeatWoot M:%02X\n", got_frag_no, missed_packet_no);
+
+                    // ACK for fragment
+                    hdr->timer = timming_byte & 0xF;
+                    timming_byte++;
+                    buf[14] = got_frag_no;
+                    buf[47] = mcu_crc8_calc(buf + 11, 36);
+                    hid_write(handle, buf, sizeof(buf));
+                }
+                
+                // Status percentage
+                ir_status.str("");
+                ir_status.clear();
+                if (initialization < 2) {
+                    if (show_status == 2)
+                        ir_status << "Status: Streaming.. ";
+                    else
+                        ir_status << "Status: Receiving.. ";
+                }
+                else
+                    ir_status << "Status: Initializing.. ";
+                ir_status << std::setfill(' ') << std::setw(3);
+                ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(max_frag_no + 1) * 100.0f;
+                ir_status << "% - ";
+
+                FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
+                elapsed_time = sw->ElapsedMilliseconds;
+                Application::DoEvents();
+            }
+            
+            // Streaming start
+            else {
+                // ACK for fragment
+                hdr->timer = timming_byte & 0xF;
+                timming_byte++;
+                buf[14] = got_frag_no;
+                buf[47] = mcu_crc8_calc(buf + 11, 36);
+                hid_write(handle, buf, sizeof(buf));
+
+                memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+
+                //debug
+                //printf("%02X Frag: 0 %02X\n", buf_reply[52], previous_frag_no);
+
+                FormJoy::myform1->lbl_IRStatus->Text = (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
+                elapsed_time = sw->ElapsedMilliseconds;
+                Application::DoEvents();
+
+                previous_frag_no = 0;
+            }
+
+        }
+        // Empty IR report. Send Ack again. Otherwise, it fallbacks to high latency mode (30ms per data fragment)
+        else if (buf_reply[0] == 0x31) {
+            // ACK for fragment
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+
+            // Send ACK again or request missed frag
+            if (buf_reply[49] == 0xFF) {
+                buf[14] = previous_frag_no;
+            }
+            else if (buf_reply[49] == 0x00) {
+                buf[12] = 0x1;
+                buf[13] = previous_frag_no + 1;
+                buf[14] = 0;
+               // printf("%02X Mode: Missed next packet %02X\n", buf_reply[49], previous_frag_no + 1);
+            }
+
+            buf[47] = mcu_crc8_calc(buf + 11, 36);
+            hid_write(handle, buf, sizeof(buf));
+
+            buf[12] = 0x00;
+            buf[13] = 0x00;
+        }
+    }
+    
+    delete[] buf_image;
+
+    return 0;
+}
+
+
+int ir_sensor(u8* buf_image, u8 ir_res_reg, u8 ir_res_no_of_packets,
+    u16 ir_exposure, u8 ir_leds, u8 ir_digital_gain, u8 ir_ex_light_filter) {
+    int res;
+    u8 buf[0x170];
+    int error_reading = 0;
+    // Set input report to x31
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 1;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x03;
+        pkt->subcmd_arg.arg1 = 0x31;
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x0380)
+                goto step1;
+
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step1:
+    // Enable MCU
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 1;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x22;
+        pkt->subcmd_arg.arg1 = 0x1;
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x2280)
+                goto step2;
+
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step2:
+    // Request MCU status
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 0x11;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x01;
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[0] == 0x31) {
+                //if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x06120004) // Initializing
+                // MCU state: Standby
+                if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x01120004) // Mode is Standby
+                    goto step3;
+            }
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step3:
+    // Set MCU mode
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 0x01;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x21;
+        
+        pkt->subcmd_21_21.mcu_cmd = 0x21; // Set MCU mode cmd
+        pkt->subcmd_21_21.mcu_subcmd = 0x00; // Set MCU mode cmd
+        pkt->subcmd_21_21.mcu_mode = 0x05; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
+
+        buf[48] = mcu_crc8_calc(buf + 12, 36);
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[0] == 0x21) {
+                // MCU state: Standby
+                if (buf[15] == 0x01 && *(u32*)&buf[19] == 0x01120004) // Mode is Standby
+                    goto step4;
+            }
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step4:
+    // Request MCU status
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 0x11;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x01;
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[0] == 0x31) {
+                // MCU state: IR mode
+                if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x05120004) // Mode set to IR
+                    goto step5;
+            }
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step5:
+    // Set IR mode and number of packets for each data blob. Blob size is packets * 300 bytes.
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 0x01;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+
+        pkt->subcmd = 0x21;
+        pkt->subcmd_21_23_01.mcu_cmd     = 0x23;
+        pkt->subcmd_21_23_01.mcu_subcmd  = 0x01; // Set IR mode cmd
+        pkt->subcmd_21_23_01.mcu_ir_mode = 0x07; // IR mode - 2: No mode/Disable?, 3: Moment, 4: Dpd, 6: Clustering,
+                                                 // 7: Image transfer, 8-10: Hand analysis (Silhouette, Image, Silhouette/Image), 0,1/5/10+: Unknown
+        pkt->subcmd_21_23_01.no_of_frags = ir_res_no_of_packets; // Set number of packets to output per buffer
+        pkt->subcmd_21_23_01.mcu_major_v = 0x0300; // Set required IR MCU FW v3.09. Major 0x0003.
+        pkt->subcmd_21_23_01.mcu_minor_v = 0x0900; // Set required IR MCU FW v3.09. Minor 0x0009.
+
+        buf[48] = mcu_crc8_calc(buf + 12, 36);
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[0] == 0x21) {
+                // Mode set Ack
+                if (buf[15] == 0x0b)
+                    goto step6;
+            }
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step6:
+    // Request IR mode status
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 0x11;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+
+        pkt->subcmd = 0x03;
+        pkt->subcmd_arg.arg1 = 0x02;
+
+        buf[47] = mcu_crc8_calc(buf + 11, 36);
+        buf[48] = 0xFF;
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[0] == 0x31) {
+                // mode set to 7: Image transfer
+                if (buf[49] == 0x13 && *(u16*)&buf[50] == 0x0700)
+                    goto step7;
+            }
+            retries++;
+            if (retries > 4 || res == 0)
+                break;
+        }
+    }
+
+step7:
+    // Write to registers for the selected IR mode
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 0x01;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x21;
+
+        pkt->subcmd_21_23_04.mcu_cmd    = 0x23; // Write register cmd
+        pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
+        pkt->subcmd_21_23_04.no_of_reg  = 0x09; // Number of registers to write. Max 9.      
+
+        pkt->subcmd_21_23_04.reg1_addr  = 0x2e00; // R: 0x002e - Set Resolution based on sensor binning and skipping
+        pkt->subcmd_21_23_04.reg1_val   = ir_res_reg;
+        pkt->subcmd_21_23_04.reg2_addr  = 0x3001; // R: 0x0130 - Set Exposure time LSByte - (31200 * us /1000) & 0xFF - Max: 600us, Max encoded: 0x4920.
+        pkt->subcmd_21_23_04.reg2_val   = ir_exposure & 0xFF;
+        pkt->subcmd_21_23_04.reg3_addr  = 0x3101; // R: 0x0131 - Set Exposure time MSByte - ((31200 * us /1000) & 0xFF00) >> 8
+        pkt->subcmd_21_23_04.reg3_val   = (ir_exposure & 0xFF00) >> 8;
+        pkt->subcmd_21_23_04.reg4_addr  = 0x3201; // R: 0x0132 - Enable Max exposure Time - 0: Manual exposure, 1: Max exposure
+        pkt->subcmd_21_23_04.reg4_val   = 0x00;
+        pkt->subcmd_21_23_04.reg5_addr  = 0x1000; // R: 0x0010 - Set IR Leds groups state - Only 3 LSB usable
+        pkt->subcmd_21_23_04.reg5_val   = ir_leds;
+        pkt->subcmd_21_23_04.reg6_addr  = 0x2e01; // R: 0x012e - Set digital gain LSB 4 bits of the value
+        pkt->subcmd_21_23_04.reg6_val   = (ir_digital_gain & 0xF) << 4;
+        pkt->subcmd_21_23_04.reg7_addr  = 0x2f01; // R: 0x012f - Set digital gain MSB 4 bits of the value
+        pkt->subcmd_21_23_04.reg7_val   = (ir_digital_gain & 0xF0) >> 4;
+        pkt->subcmd_21_23_04.reg8_addr  = 0x0e00; // R: 0x00e0 - External light filter - LS o bit0: Off/On, bit1: 0x/1x, bit2: ??, bit4,5: ??.
+        pkt->subcmd_21_23_04.reg8_val   = ir_ex_light_filter; // Valid values: 0, 3, 7, 51, 55.
+        pkt->subcmd_21_23_04.reg9_addr  = 0x4301; // R: 0x0143 - Unknown - 200: Default
+        pkt->subcmd_21_23_04.reg9_val   = 0xc8;
+
+        buf[48] = mcu_crc8_calc(buf + 12, 36);
+        res = hid_write(handle, buf, sizeof(buf));
+
+        // Request IR mode status, before waiting for the x21 ack
+        memset(buf, 0, sizeof(buf));
+        hdr->cmd = 0x11;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x03;
+        pkt->subcmd_arg.arg1 = 0x02;
+        buf[47] = mcu_crc8_calc(buf + 11, 36);
+        buf[48] = 0xFF;
+        res = hid_write(handle, buf, sizeof(buf));
+
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[0] == 0x21) {
+                // Registers for mode 7: Image transfer set
+                if (buf[15] == 0x13 && *(u16*)&buf[16] == 0x0700)
+                    goto step8;
+            }
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step8:
+    // Write to registers for the selected IR mode
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 0x01;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x21;
+
+        pkt->subcmd_21_23_04.mcu_cmd    = 0x23; // Write register cmd
+        pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
+        pkt->subcmd_21_23_04.no_of_reg  = 0x01; // Number of registers to write. Max 9.      
+
+        pkt->subcmd_21_23_04.reg1_addr  = 0x0700; // R: 0x0007 - Finalize config - Without this, the register changes do not have any effect.
+        pkt->subcmd_21_23_04.reg1_val   = 0x01;
+
+        buf[48] = mcu_crc8_calc(buf + 12, 36);
+        res = hid_write(handle, buf, sizeof(buf));
+
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[0] == 0x21) {
+                // Registers for mode 7: Image transfer set
+                if (buf[15] == 0x13 && *(u16*)&buf[16] == 0x0700)
+                    goto step9;
+            }
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+step9:
+    // Get the IR registers
+    int pos_ir_registers = 0;
+    while (0) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            memset(buf, 0, sizeof(buf));
+            hdr->cmd = 0x11;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+            pkt->subcmd = 0x03;
+            pkt->subcmd_arg.arg1 = 0x03;
+
+            buf[12] = 0x01; // seems to be always 0x01
+
+            buf[13] = ir_registers[pos_ir_registers];     //0-4
+            buf[14] = ir_registers[pos_ir_registers + 1]; //offset
+            buf[15] = ir_registers[pos_ir_registers + 2]; // CRC? Pass?
+
+            buf[48] = mcu_crc8_calc(buf + 11, 37);
+
+            res = hid_write(handle, buf, sizeof(buf));
+            Sleep(15);
+            res = hid_write(handle, buf, sizeof(buf));
+            int tries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (buf[49] == 0x1b && buf[52] == ir_registers[pos_ir_registers + 1] && buf[53] == ir_registers[pos_ir_registers + 2]) {
+                    printf("%02X, %02X, %02X - SUCCESS:\n", buf[51], buf[52], buf[53]);
+                    for (int i = 0; i < buf[52] + buf[53]; i++)
+                        printf("%02X", buf[54 + i]);
+                    printf("\n");
+                    //buf[50] 0: success, out of range
+                    break;
+                }
+                tries++;
+                if (tries > 8) {
+                    printf("%02X, %02X, %02X - FAILED\n", ir_registers[pos_ir_registers], ir_registers[pos_ir_registers + 1], ir_registers[pos_ir_registers + 2]);
+                    break;
+                }
+                   
+            }
+            pos_ir_registers += 3;
+            if (pos_ir_registers > 30) {
+                printf("\n");
+                printf("\n");
+                break;
+            }
+    }
+
+    // Stream or Capture images from NIR Camera
+    int res_get = 0;
+    if (enable_IRVideoPhoto)
+        res_get = get_raw_ir_image(ir_res_no_of_packets, 2);
+    else
+        res_get = get_raw_ir_image(ir_res_no_of_packets, 1);
+
+    //////
+    // TODO: Should we send subcmd x21 with 'x230102' to disable IR mode before disabling MCU?
+
+    // Disable MCU
+    memset(buf, 0, sizeof(buf));
+    auto hdr = (brcm_hdr *)buf;
+    auto pkt = (brcm_cmd_01 *)(hdr + 1);
+    hdr->cmd = 1;
+    hdr->timer = timming_byte & 0xF;
+    timming_byte++;
+    pkt->subcmd = 0x22;
+    pkt->subcmd_arg.arg1 = 0x00;
+    res = hid_write(handle, buf, sizeof(buf));
+    res = hid_read_timeout(handle, buf, sizeof(buf), 64);  
+
+
+    // Set input report back to x3f
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 1;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x03;
+        pkt->subcmd_arg.arg1 = 0x3f;
+        res = hid_write(handle, buf, sizeof(buf));
+        int retries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (*(u16*)&buf[0xD] == 0x0380)
+                goto stepf;
+
+            retries++;
+            if (retries > 8 || res == 0)
+                break;
+        }
+    }
+
+stepf:
+    return res_get;
+}
+
+
 int nfc_tag_info() {
     /////////////////////////////////////////////////////
     // Kudos to Eric Betts (https://github.com/bettse) //
