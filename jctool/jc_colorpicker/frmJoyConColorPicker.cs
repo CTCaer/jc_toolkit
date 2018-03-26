@@ -8,7 +8,7 @@
 /*****                        - scrabcakes@gmail.com          *****/
 /*****     Updates:	                                          *****/
 /*****      3/28/2005 - Initial Version : Danny Blanchard     *****/
-/*****       Feb 2018 - JoyCon Version  : CTCaer              *****/
+/*****       Mar 2018 - JoyCon Version  : CTCaer              *****/
 /*****                                                        *****/
 /******************************************************************/
 
@@ -38,6 +38,8 @@ namespace jcColor {
         private AdobeColors.HSL m_hsl;
         private Color m_rgb;
         private bool errorCreatingPresets = false;
+        private bool gripsColor;
+        private bool showGripsPanel = false;
 
         public enum eDrawStyle {
             Hue,
@@ -158,6 +160,24 @@ namespace jcColor {
         private Panel panel_UserColors;
         private Panel panel_RetailUserColors;
         private Panel panel_RetailColors;
+        private Panel panel_RetailGripColors;
+        private Buttons.RoundButton rbtn_RetailGripColors04;
+        private Buttons.RoundButton rbtn_RetailGripColors01;
+        private Buttons.RoundButton rbtn_RetailGripColors02;
+        private Buttons.RoundButton rbtn_RetailGripColors03;
+        private Buttons.RoundButton rbtn_RetailGripColors16;
+        private Buttons.RoundButton rbtn_RetailGripColors05;
+        private Buttons.RoundButton rbtn_RetailGripColors15;
+        private Buttons.RoundButton rbtn_RetailGripColors06;
+        private Buttons.RoundButton rbtn_RetailGripColors14;
+        private Buttons.RoundButton rbtn_RetailGripColors07;
+        private Buttons.RoundButton rbtn_RetailGripColors13;
+        private Buttons.RoundButton rbtn_RetailGripColors08;
+        private Buttons.RoundButton rbtn_RetailGripColors12;
+        private Buttons.RoundButton rbtn_RetailGripColors09;
+        private Buttons.RoundButton rbtn_RetailGripColors11;
+        private Buttons.RoundButton rbtn_RetailGripColors10;
+        private Button btn_switchGripsPanel;
         private IContainer components;
 
         #endregion
@@ -169,8 +189,11 @@ namespace jcColor {
         /// </summary>
         /// <param name="starting_color">Primary color</param>
         /// <param name="starting_color2">Secondary color</param>
-        public JoyConColorPicker(Color starting_color, Color starting_color2) {
+        /// <param name="gripColorOptionsOn">Grips mode</param>
+        public JoyConColorPicker(Color starting_color, Color starting_color2, bool gripColorOptionsOn) {
             InitializeComponent();
+
+            gripsColor = gripColorOptionsOn;
 
             m_rgb = starting_color;
             m_hsl = AdobeColors.RGB_to_HSL(m_rgb);
@@ -251,21 +274,10 @@ namespace jcColor {
             this.m_lbl_Saturation_Symbol = new System.Windows.Forms.Label();
             this.m_lbl_Black_Symbol = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.m_lbl_Screen_Picker = new System.Windows.Forms.Label();
-            this.m_lbl_Old_ButtonColor_btn = new System.Windows.Forms.Label();
-            this.m_lbl_New_ButtonColor = new System.Windows.Forms.Label();
-            this.m_radio_btn_Body = new System.Windows.Forms.RadioButton();
-            this.m_radio_btn_Buttons = new System.Windows.Forms.RadioButton();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.panel_RetailColors = new System.Windows.Forms.Panel();
-            this.panel_RetailUserColors = new System.Windows.Forms.Panel();
-            this.panel_UserColors = new System.Windows.Forms.Panel();
-            this.m_lbl_UserColors = new System.Windows.Forms.Label();
-            this.m_lbl_RetailColors = new System.Windows.Forms.Label();
-            this.btn_Update = new System.Windows.Forms.Button();
-            this.m_lbl_SelectPreset = new System.Windows.Forms.Label();
-            this.btn_Clear = new System.Windows.Forms.Button();
+            this.rbtn_RetailGripColors04 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors01 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors02 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors03 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors04 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors01 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors02 = new jcColor.Buttons.RoundButton();
@@ -282,6 +294,29 @@ namespace jcColor {
             this.rbtn_RetailColors09 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors11 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors10 = new jcColor.Buttons.RoundButton();
+            this.m_eyedropColorPicker = new jcColor.EyedropColorPicker();
+            this.m_lbl_Screen_Picker = new System.Windows.Forms.Label();
+            this.m_lbl_Old_ButtonColor_btn = new System.Windows.Forms.Label();
+            this.m_lbl_New_ButtonColor = new System.Windows.Forms.Label();
+            this.m_radio_btn_Body = new System.Windows.Forms.RadioButton();
+            this.m_radio_btn_Buttons = new System.Windows.Forms.RadioButton();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.panel_RetailGripColors = new System.Windows.Forms.Panel();
+            this.rbtn_RetailGripColors16 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors05 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors15 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors06 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors14 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors07 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors13 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors08 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors12 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors09 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors11 = new jcColor.Buttons.RoundButton();
+            this.rbtn_RetailGripColors10 = new jcColor.Buttons.RoundButton();
+            this.panel_RetailColors = new System.Windows.Forms.Panel();
+            this.panel_RetailUserColors = new System.Windows.Forms.Panel();
             this.rbtn_RetailColors17 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors18 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors19 = new jcColor.Buttons.RoundButton();
@@ -298,6 +333,8 @@ namespace jcColor {
             this.rbtn_RetailColors30 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors31 = new jcColor.Buttons.RoundButton();
             this.rbtn_RetailColors32 = new jcColor.Buttons.RoundButton();
+            this.panel_UserColors = new System.Windows.Forms.Panel();
+            this.m_lbl_UserColors = new System.Windows.Forms.Label();
             this.rbtn_UserColors01 = new jcColor.Buttons.RoundButton();
             this.rbtn_UserColors02 = new jcColor.Buttons.RoundButton();
             this.rbtn_UserColors03 = new jcColor.Buttons.RoundButton();
@@ -330,11 +367,16 @@ namespace jcColor {
             this.rbtn_UserColors30 = new jcColor.Buttons.RoundButton();
             this.rbtn_UserColors31 = new jcColor.Buttons.RoundButton();
             this.rbtn_UserColors32 = new jcColor.Buttons.RoundButton();
+            this.m_lbl_RetailColors = new System.Windows.Forms.Label();
+            this.btn_Update = new System.Windows.Forms.Button();
+            this.m_lbl_SelectPreset = new System.Windows.Forms.Label();
+            this.btn_Clear = new System.Windows.Forms.Button();
             this.m_ctrl_BigBox = new jcColor.ctrl2DColorBox();
             this.m_ctrl_ThinBox = new jcColor.ctrlVerticalColorSlider();
-            this.m_eyedropColorPicker = new jcColor.EyedropColorPicker();
+            this.btn_switchGripsPanel = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
+            this.panel_RetailGripColors.SuspendLayout();
             this.panel_RetailColors.SuspendLayout();
             this.panel_RetailUserColors.SuspendLayout();
             this.panel_UserColors.SuspendLayout();
@@ -669,237 +711,58 @@ namespace jcColor {
             this.m_lbl_Black_Symbol.TabIndex = 42;
             this.m_lbl_Black_Symbol.Text = "%";
             // 
-            // m_lbl_Screen_Picker
+            // rbtn_RetailGripColors04
             // 
-            this.m_lbl_Screen_Picker.AutoSize = true;
-            this.m_lbl_Screen_Picker.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_lbl_Screen_Picker.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
-            this.m_lbl_Screen_Picker.Location = new System.Drawing.Point(313, 302);
-            this.m_lbl_Screen_Picker.Name = "m_lbl_Screen_Picker";
-            this.m_lbl_Screen_Picker.Size = new System.Drawing.Size(80, 17);
-            this.m_lbl_Screen_Picker.TabIndex = 48;
-            this.m_lbl_Screen_Picker.Text = "Eyedropper:";
+            this.rbtn_RetailGripColors04.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(50)))), ((int)(((byte)(120)))));
+            this.rbtn_RetailGripColors04.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors04.Location = new System.Drawing.Point(118, 7);
+            this.rbtn_RetailGripColors04.Name = "rbtn_RetailGripColors04";
+            this.rbtn_RetailGripColors04.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors04.TabIndex = 3;
+            this.rbtn_RetailGripColors04.Text = "roundButton4";
+            this.toolTip1.SetToolTip(this.rbtn_RetailGripColors04, "Splatoon Right Grip");
+            this.rbtn_RetailGripColors04.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors04.Click += new System.EventHandler(this.m_lbl_Preset_Click);
             // 
-            // m_lbl_Old_ButtonColor_btn
+            // rbtn_RetailGripColors01
             // 
-            this.m_lbl_Old_ButtonColor_btn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(120)))), ((int)(((byte)(120)))));
-            this.m_lbl_Old_ButtonColor_btn.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_lbl_Old_ButtonColor_btn.Location = new System.Drawing.Point(109, 75);
-            this.m_lbl_Old_ButtonColor_btn.Margin = new System.Windows.Forms.Padding(0);
-            this.m_lbl_Old_ButtonColor_btn.Name = "m_lbl_Old_ButtonColor_btn";
-            this.m_lbl_Old_ButtonColor_btn.Size = new System.Drawing.Size(68, 42);
-            this.m_lbl_Old_ButtonColor_btn.TabIndex = 51;
-            this.m_lbl_Old_ButtonColor_btn.Click += new System.EventHandler(this.m_lbl_OldBtnColor_Click);
+            this.rbtn_RetailGripColors01.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.rbtn_RetailGripColors01.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors01.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.rbtn_RetailGripColors01.Location = new System.Drawing.Point(4, 7);
+            this.rbtn_RetailGripColors01.Name = "rbtn_RetailGripColors01";
+            this.rbtn_RetailGripColors01.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors01.TabIndex = 0;
+            this.rbtn_RetailGripColors01.Text = "roundButton1";
+            this.toolTip1.SetToolTip(this.rbtn_RetailGripColors01, "Normal Grips");
+            this.rbtn_RetailGripColors01.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors01.Click += new System.EventHandler(this.m_lbl_Preset_Click);
             // 
-            // m_lbl_New_ButtonColor
+            // rbtn_RetailGripColors02
             // 
-            this.m_lbl_New_ButtonColor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(120)))), ((int)(((byte)(120)))));
-            this.m_lbl_New_ButtonColor.CausesValidation = false;
-            this.m_lbl_New_ButtonColor.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_lbl_New_ButtonColor.Location = new System.Drawing.Point(109, 33);
-            this.m_lbl_New_ButtonColor.Margin = new System.Windows.Forms.Padding(0);
-            this.m_lbl_New_ButtonColor.Name = "m_lbl_New_ButtonColor";
-            this.m_lbl_New_ButtonColor.Size = new System.Drawing.Size(68, 42);
-            this.m_lbl_New_ButtonColor.TabIndex = 50;
-            this.m_lbl_New_ButtonColor.Click += new System.EventHandler(this.m_lbl_NewBtnColor_Click);
+            this.rbtn_RetailGripColors02.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(221)))), ((int)(((byte)(59)))), ((int)(((byte)(100)))));
+            this.rbtn_RetailGripColors02.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors02.Location = new System.Drawing.Point(42, 7);
+            this.rbtn_RetailGripColors02.Name = "rbtn_RetailGripColors02";
+            this.rbtn_RetailGripColors02.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors02.TabIndex = 1;
+            this.rbtn_RetailGripColors02.Text = "roundButton2";
+            this.toolTip1.SetToolTip(this.rbtn_RetailGripColors02, "Xenoblade Grips");
+            this.rbtn_RetailGripColors02.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors02.Click += new System.EventHandler(this.m_lbl_Preset_Click);
             // 
-            // m_radio_btn_Body
+            // rbtn_RetailGripColors03
             // 
-            this.m_radio_btn_Body.AutoSize = true;
-            this.m_radio_btn_Body.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_radio_btn_Body.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(188)))), ((int)(((byte)(0)))));
-            this.m_radio_btn_Body.Location = new System.Drawing.Point(27, 8);
-            this.m_radio_btn_Body.Margin = new System.Windows.Forms.Padding(0);
-            this.m_radio_btn_Body.Name = "m_radio_btn_Body";
-            this.m_radio_btn_Body.Size = new System.Drawing.Size(55, 21);
-            this.m_radio_btn_Body.TabIndex = 52;
-            this.m_radio_btn_Body.TabStop = true;
-            this.m_radio_btn_Body.Text = "Body";
-            this.m_radio_btn_Body.UseVisualStyleBackColor = true;
-            this.m_radio_btn_Body.CheckedChanged += new System.EventHandler(this.m_radio_btn_ColorsTypeChanged);
-            // 
-            // m_radio_btn_Buttons
-            // 
-            this.m_radio_btn_Buttons.AutoSize = true;
-            this.m_radio_btn_Buttons.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_radio_btn_Buttons.Location = new System.Drawing.Point(110, 8);
-            this.m_radio_btn_Buttons.Margin = new System.Windows.Forms.Padding(0);
-            this.m_radio_btn_Buttons.Name = "m_radio_btn_Buttons";
-            this.m_radio_btn_Buttons.Size = new System.Drawing.Size(69, 21);
-            this.m_radio_btn_Buttons.TabIndex = 53;
-            this.m_radio_btn_Buttons.Text = "Buttons";
-            this.m_radio_btn_Buttons.UseVisualStyleBackColor = true;
-            this.m_radio_btn_Buttons.CheckedChanged += new System.EventHandler(this.m_radio_btn_ColorsTypeChanged);
-            // 
-            // panel1
-            // 
-            this.panel1.Controls.Add(this.m_lbl_New_Color);
-            this.panel1.Controls.Add(this.m_lbl_Old_ButtonColor_btn);
-            this.panel1.Controls.Add(this.m_lbl_Old_Color);
-            this.panel1.Controls.Add(this.m_lbl_New_ButtonColor);
-            this.panel1.Controls.Add(this.m_radio_btn_Buttons);
-            this.panel1.Controls.Add(this.m_radio_btn_Body);
-            this.panel1.Location = new System.Drawing.Point(107, 292);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(204, 128);
-            this.panel1.TabIndex = 55;
-            // 
-            // panel2
-            // 
-            this.panel2.Controls.Add(this.panel_RetailColors);
-            this.panel2.Controls.Add(this.panel_RetailUserColors);
-            this.panel2.Controls.Add(this.panel_UserColors);
-            this.panel2.Controls.Add(this.m_lbl_RetailColors);
-            this.panel2.Location = new System.Drawing.Point(414, 33);
-            this.panel2.Margin = new System.Windows.Forms.Padding(0);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(313, 383);
-            this.panel2.TabIndex = 56;
-            // 
-            // panel_RetailColors
-            // 
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors04);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors01);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors02);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors03);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors16);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors05);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors15);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors06);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors14);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors07);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors13);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors08);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors12);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors09);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors11);
-            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors10);
-            this.panel_RetailColors.Location = new System.Drawing.Point(3, 22);
-            this.panel_RetailColors.Name = "panel_RetailColors";
-            this.panel_RetailColors.Size = new System.Drawing.Size(307, 82);
-            this.panel_RetailColors.TabIndex = 68;
-            // 
-            // panel_RetailUserColors
-            // 
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors17);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors18);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors19);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors20);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors21);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors22);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors23);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors24);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors25);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors26);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors27);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors28);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors29);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors30);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors31);
-            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors32);
-            this.panel_RetailUserColors.Location = new System.Drawing.Point(3, 105);
-            this.panel_RetailUserColors.Name = "panel_RetailUserColors";
-            this.panel_RetailUserColors.Size = new System.Drawing.Size(307, 87);
-            this.panel_RetailUserColors.TabIndex = 67;
-            // 
-            // panel_UserColors
-            // 
-            this.panel_UserColors.Controls.Add(this.m_lbl_UserColors);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors01);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors02);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors03);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors04);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors05);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors06);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors07);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors08);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors09);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors10);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors11);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors12);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors13);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors14);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors15);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors16);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors17);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors18);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors19);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors20);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors21);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors22);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors23);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors24);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors25);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors26);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors27);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors28);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors29);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors30);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors31);
-            this.panel_UserColors.Controls.Add(this.rbtn_UserColors32);
-            this.panel_UserColors.Location = new System.Drawing.Point(3, 195);
-            this.panel_UserColors.Name = "panel_UserColors";
-            this.panel_UserColors.Size = new System.Drawing.Size(307, 188);
-            this.panel_UserColors.TabIndex = 66;
-            // 
-            // m_lbl_UserColors
-            // 
-            this.m_lbl_UserColors.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_lbl_UserColors.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
-            this.m_lbl_UserColors.Location = new System.Drawing.Point(5, 4);
-            this.m_lbl_UserColors.Name = "m_lbl_UserColors";
-            this.m_lbl_UserColors.Size = new System.Drawing.Size(260, 20);
-            this.m_lbl_UserColors.TabIndex = 65;
-            this.m_lbl_UserColors.Text = "Custom Color Sets:";
-            // 
-            // m_lbl_RetailColors
-            // 
-            this.m_lbl_RetailColors.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_lbl_RetailColors.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
-            this.m_lbl_RetailColors.Location = new System.Drawing.Point(8, 4);
-            this.m_lbl_RetailColors.Name = "m_lbl_RetailColors";
-            this.m_lbl_RetailColors.Size = new System.Drawing.Size(260, 20);
-            this.m_lbl_RetailColors.TabIndex = 59;
-            this.m_lbl_RetailColors.Text = "Retail Color Sets:";
-            // 
-            // btn_Update
-            // 
-            this.btn_Update.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
-            this.btn_Update.FlatAppearance.BorderSize = 0;
-            this.btn_Update.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_Update.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.btn_Update.Location = new System.Drawing.Point(664, 19);
-            this.btn_Update.Name = "btn_Update";
-            this.btn_Update.Size = new System.Drawing.Size(55, 26);
-            this.btn_Update.TabIndex = 57;
-            this.btn_Update.Text = "Update";
-            this.btn_Update.UseVisualStyleBackColor = false;
-            this.btn_Update.Click += new System.EventHandler(this.SetPresetColorName);
-            // 
-            // m_lbl_SelectPreset
-            // 
-            this.m_lbl_SelectPreset.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.m_lbl_SelectPreset.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
-            this.m_lbl_SelectPreset.Location = new System.Drawing.Point(411, 6);
-            this.m_lbl_SelectPreset.Name = "m_lbl_SelectPreset";
-            this.m_lbl_SelectPreset.Size = new System.Drawing.Size(101, 20);
-            this.m_lbl_SelectPreset.TabIndex = 58;
-            this.m_lbl_SelectPreset.Text = "Select Preset:";
-            // 
-            // btn_Clear
-            // 
-            this.btn_Clear.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
-            this.btn_Clear.FlatAppearance.BorderSize = 0;
-            this.btn_Clear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn_Clear.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
-            this.btn_Clear.ForeColor = System.Drawing.Color.OrangeRed;
-            this.btn_Clear.Location = new System.Drawing.Point(598, 19);
-            this.btn_Clear.Name = "btn_Clear";
-            this.btn_Clear.Size = new System.Drawing.Size(55, 26);
-            this.btn_Clear.TabIndex = 60;
-            this.btn_Clear.Text = "Clear";
-            this.btn_Clear.UseVisualStyleBackColor = false;
-            this.btn_Clear.Click += new System.EventHandler(this.ClearPreset);
+            this.rbtn_RetailGripColors03.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(220)))), ((int)(((byte)(0)))));
+            this.rbtn_RetailGripColors03.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors03.Location = new System.Drawing.Point(80, 7);
+            this.rbtn_RetailGripColors03.Name = "rbtn_RetailGripColors03";
+            this.rbtn_RetailGripColors03.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors03.TabIndex = 2;
+            this.rbtn_RetailGripColors03.Text = "roundButton3";
+            this.toolTip1.SetToolTip(this.rbtn_RetailGripColors03, "Splatoon Left Grip");
+            this.rbtn_RetailGripColors03.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors03.Click += new System.EventHandler(this.m_lbl_Preset_Click);
             // 
             // rbtn_RetailColors04
             // 
@@ -1110,6 +973,320 @@ namespace jcColor {
             this.rbtn_RetailColors10.UseVisualStyleBackColor = false;
             this.rbtn_RetailColors10.Click += new System.EventHandler(this.m_lbl_Preset_Click);
             // 
+            // m_eyedropColorPicker
+            // 
+            this.m_eyedropColorPicker.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.m_eyedropColorPicker.Location = new System.Drawing.Point(317, 324);
+            this.m_eyedropColorPicker.Name = "m_eyedropColorPicker";
+            this.m_eyedropColorPicker.SelectedColor = System.Drawing.Color.Empty;
+            this.m_eyedropColorPicker.Size = new System.Drawing.Size(85, 85);
+            this.m_eyedropColorPicker.TabIndex = 2;
+            this.m_eyedropColorPicker.TabStop = false;
+            this.toolTip1.SetToolTip(this.m_eyedropColorPicker, "Color Selector. Click and Drag to pick a color from the screen");
+            this.m_eyedropColorPicker.Zoom = 4;
+            // 
+            // m_lbl_Screen_Picker
+            // 
+            this.m_lbl_Screen_Picker.AutoSize = true;
+            this.m_lbl_Screen_Picker.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_lbl_Screen_Picker.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
+            this.m_lbl_Screen_Picker.Location = new System.Drawing.Point(313, 302);
+            this.m_lbl_Screen_Picker.Name = "m_lbl_Screen_Picker";
+            this.m_lbl_Screen_Picker.Size = new System.Drawing.Size(80, 17);
+            this.m_lbl_Screen_Picker.TabIndex = 48;
+            this.m_lbl_Screen_Picker.Text = "Eyedropper:";
+            // 
+            // m_lbl_Old_ButtonColor_btn
+            // 
+            this.m_lbl_Old_ButtonColor_btn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(120)))), ((int)(((byte)(120)))));
+            this.m_lbl_Old_ButtonColor_btn.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_lbl_Old_ButtonColor_btn.Location = new System.Drawing.Point(109, 75);
+            this.m_lbl_Old_ButtonColor_btn.Margin = new System.Windows.Forms.Padding(0);
+            this.m_lbl_Old_ButtonColor_btn.Name = "m_lbl_Old_ButtonColor_btn";
+            this.m_lbl_Old_ButtonColor_btn.Size = new System.Drawing.Size(68, 42);
+            this.m_lbl_Old_ButtonColor_btn.TabIndex = 51;
+            this.m_lbl_Old_ButtonColor_btn.Click += new System.EventHandler(this.m_lbl_OldBtnColor_Click);
+            // 
+            // m_lbl_New_ButtonColor
+            // 
+            this.m_lbl_New_ButtonColor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(120)))), ((int)(((byte)(120)))));
+            this.m_lbl_New_ButtonColor.CausesValidation = false;
+            this.m_lbl_New_ButtonColor.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_lbl_New_ButtonColor.Location = new System.Drawing.Point(109, 33);
+            this.m_lbl_New_ButtonColor.Margin = new System.Windows.Forms.Padding(0);
+            this.m_lbl_New_ButtonColor.Name = "m_lbl_New_ButtonColor";
+            this.m_lbl_New_ButtonColor.Size = new System.Drawing.Size(68, 42);
+            this.m_lbl_New_ButtonColor.TabIndex = 50;
+            this.m_lbl_New_ButtonColor.Click += new System.EventHandler(this.m_lbl_NewBtnColor_Click);
+            // 
+            // m_radio_btn_Body
+            // 
+            this.m_radio_btn_Body.AutoSize = true;
+            this.m_radio_btn_Body.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_radio_btn_Body.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(188)))), ((int)(((byte)(0)))));
+            this.m_radio_btn_Body.Location = new System.Drawing.Point(27, 8);
+            this.m_radio_btn_Body.Margin = new System.Windows.Forms.Padding(0);
+            this.m_radio_btn_Body.Name = "m_radio_btn_Body";
+            this.m_radio_btn_Body.Size = new System.Drawing.Size(55, 21);
+            this.m_radio_btn_Body.TabIndex = 52;
+            this.m_radio_btn_Body.TabStop = true;
+            this.m_radio_btn_Body.Text = "Body";
+            this.m_radio_btn_Body.UseVisualStyleBackColor = true;
+            this.m_radio_btn_Body.CheckedChanged += new System.EventHandler(this.m_radio_btn_ColorsTypeChanged);
+            // 
+            // m_radio_btn_Buttons
+            // 
+            this.m_radio_btn_Buttons.AutoSize = true;
+            this.m_radio_btn_Buttons.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_radio_btn_Buttons.Location = new System.Drawing.Point(110, 8);
+            this.m_radio_btn_Buttons.Margin = new System.Windows.Forms.Padding(0);
+            this.m_radio_btn_Buttons.Name = "m_radio_btn_Buttons";
+            this.m_radio_btn_Buttons.Size = new System.Drawing.Size(69, 21);
+            this.m_radio_btn_Buttons.TabIndex = 53;
+            this.m_radio_btn_Buttons.Text = "Buttons";
+            this.m_radio_btn_Buttons.UseVisualStyleBackColor = true;
+            this.m_radio_btn_Buttons.CheckedChanged += new System.EventHandler(this.m_radio_btn_ColorsTypeChanged);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.m_lbl_New_Color);
+            this.panel1.Controls.Add(this.m_lbl_Old_ButtonColor_btn);
+            this.panel1.Controls.Add(this.m_lbl_Old_Color);
+            this.panel1.Controls.Add(this.m_lbl_New_ButtonColor);
+            this.panel1.Controls.Add(this.m_radio_btn_Buttons);
+            this.panel1.Controls.Add(this.m_radio_btn_Body);
+            this.panel1.Location = new System.Drawing.Point(107, 292);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(204, 128);
+            this.panel1.TabIndex = 55;
+            // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.panel_RetailGripColors);
+            this.panel2.Controls.Add(this.panel_RetailColors);
+            this.panel2.Controls.Add(this.panel_RetailUserColors);
+            this.panel2.Controls.Add(this.panel_UserColors);
+            this.panel2.Controls.Add(this.m_lbl_RetailColors);
+            this.panel2.Location = new System.Drawing.Point(414, 33);
+            this.panel2.Margin = new System.Windows.Forms.Padding(0);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(313, 383);
+            this.panel2.TabIndex = 56;
+            // 
+            // panel_RetailGripColors
+            // 
+            this.panel_RetailGripColors.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors04);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors01);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors02);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors03);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors16);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors05);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors15);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors06);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors14);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors07);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors13);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors08);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors12);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors09);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors11);
+            this.panel_RetailGripColors.Controls.Add(this.rbtn_RetailGripColors10);
+            this.panel_RetailGripColors.Location = new System.Drawing.Point(3, 105);
+            this.panel_RetailGripColors.Name = "panel_RetailGripColors";
+            this.panel_RetailGripColors.Size = new System.Drawing.Size(307, 82);
+            this.panel_RetailGripColors.TabIndex = 69;
+            // 
+            // rbtn_RetailGripColors16
+            // 
+            this.rbtn_RetailGripColors16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors16.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors16.Location = new System.Drawing.Point(270, 43);
+            this.rbtn_RetailGripColors16.Name = "rbtn_RetailGripColors16";
+            this.rbtn_RetailGripColors16.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors16.TabIndex = 15;
+            this.rbtn_RetailGripColors16.Text = "roundButton9";
+            this.rbtn_RetailGripColors16.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors16.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors05
+            // 
+            this.rbtn_RetailGripColors05.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors05.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors05.Location = new System.Drawing.Point(156, 7);
+            this.rbtn_RetailGripColors05.Name = "rbtn_RetailGripColors05";
+            this.rbtn_RetailGripColors05.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors05.TabIndex = 4;
+            this.rbtn_RetailGripColors05.Text = "roundButton5";
+            this.rbtn_RetailGripColors05.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors05.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors15
+            // 
+            this.rbtn_RetailGripColors15.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors15.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors15.Location = new System.Drawing.Point(232, 43);
+            this.rbtn_RetailGripColors15.Name = "rbtn_RetailGripColors15";
+            this.rbtn_RetailGripColors15.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors15.TabIndex = 14;
+            this.rbtn_RetailGripColors15.Text = "roundButton10";
+            this.rbtn_RetailGripColors15.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors15.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors06
+            // 
+            this.rbtn_RetailGripColors06.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors06.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors06.Location = new System.Drawing.Point(194, 7);
+            this.rbtn_RetailGripColors06.Name = "rbtn_RetailGripColors06";
+            this.rbtn_RetailGripColors06.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors06.TabIndex = 5;
+            this.rbtn_RetailGripColors06.Text = "roundButton6";
+            this.rbtn_RetailGripColors06.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors06.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors14
+            // 
+            this.rbtn_RetailGripColors14.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors14.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors14.Location = new System.Drawing.Point(194, 43);
+            this.rbtn_RetailGripColors14.Name = "rbtn_RetailGripColors14";
+            this.rbtn_RetailGripColors14.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors14.TabIndex = 13;
+            this.rbtn_RetailGripColors14.Text = "roundButton11";
+            this.rbtn_RetailGripColors14.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors14.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors07
+            // 
+            this.rbtn_RetailGripColors07.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors07.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors07.Location = new System.Drawing.Point(232, 7);
+            this.rbtn_RetailGripColors07.Name = "rbtn_RetailGripColors07";
+            this.rbtn_RetailGripColors07.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors07.TabIndex = 6;
+            this.rbtn_RetailGripColors07.Text = "roundButton7";
+            this.rbtn_RetailGripColors07.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors07.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors13
+            // 
+            this.rbtn_RetailGripColors13.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors13.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors13.Location = new System.Drawing.Point(156, 43);
+            this.rbtn_RetailGripColors13.Name = "rbtn_RetailGripColors13";
+            this.rbtn_RetailGripColors13.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors13.TabIndex = 12;
+            this.rbtn_RetailGripColors13.Text = "roundButton12";
+            this.rbtn_RetailGripColors13.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors13.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors08
+            // 
+            this.rbtn_RetailGripColors08.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors08.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors08.Location = new System.Drawing.Point(270, 7);
+            this.rbtn_RetailGripColors08.Name = "rbtn_RetailGripColors08";
+            this.rbtn_RetailGripColors08.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors08.TabIndex = 7;
+            this.rbtn_RetailGripColors08.Text = "roundButton8";
+            this.rbtn_RetailGripColors08.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors08.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors12
+            // 
+            this.rbtn_RetailGripColors12.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors12.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors12.Location = new System.Drawing.Point(118, 43);
+            this.rbtn_RetailGripColors12.Name = "rbtn_RetailGripColors12";
+            this.rbtn_RetailGripColors12.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors12.TabIndex = 11;
+            this.rbtn_RetailGripColors12.Text = "roundButton13";
+            this.rbtn_RetailGripColors12.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors12.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors09
+            // 
+            this.rbtn_RetailGripColors09.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors09.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors09.Location = new System.Drawing.Point(4, 43);
+            this.rbtn_RetailGripColors09.Name = "rbtn_RetailGripColors09";
+            this.rbtn_RetailGripColors09.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors09.TabIndex = 8;
+            this.rbtn_RetailGripColors09.Text = "roundButton16";
+            this.rbtn_RetailGripColors09.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors09.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors11
+            // 
+            this.rbtn_RetailGripColors11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors11.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors11.Location = new System.Drawing.Point(80, 43);
+            this.rbtn_RetailGripColors11.Name = "rbtn_RetailGripColors11";
+            this.rbtn_RetailGripColors11.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors11.TabIndex = 10;
+            this.rbtn_RetailGripColors11.Text = "roundButton14";
+            this.rbtn_RetailGripColors11.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors11.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // rbtn_RetailGripColors10
+            // 
+            this.rbtn_RetailGripColors10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
+            this.rbtn_RetailGripColors10.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.rbtn_RetailGripColors10.Location = new System.Drawing.Point(42, 43);
+            this.rbtn_RetailGripColors10.Name = "rbtn_RetailGripColors10";
+            this.rbtn_RetailGripColors10.Size = new System.Drawing.Size(32, 32);
+            this.rbtn_RetailGripColors10.TabIndex = 9;
+            this.rbtn_RetailGripColors10.Text = "roundButton15";
+            this.rbtn_RetailGripColors10.UseVisualStyleBackColor = false;
+            this.rbtn_RetailGripColors10.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // panel_RetailColors
+            // 
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors04);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors01);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors02);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors03);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors16);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors05);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors15);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors06);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors14);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors07);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors13);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors08);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors12);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors09);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors11);
+            this.panel_RetailColors.Controls.Add(this.rbtn_RetailColors10);
+            this.panel_RetailColors.Location = new System.Drawing.Point(3, 22);
+            this.panel_RetailColors.Name = "panel_RetailColors";
+            this.panel_RetailColors.Size = new System.Drawing.Size(307, 82);
+            this.panel_RetailColors.TabIndex = 68;
+            // 
+            // panel_RetailUserColors
+            // 
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors17);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors18);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors19);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors20);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors21);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors22);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors23);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors24);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors25);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors26);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors27);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors28);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors29);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors30);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors31);
+            this.panel_RetailUserColors.Controls.Add(this.rbtn_RetailColors32);
+            this.panel_RetailUserColors.Location = new System.Drawing.Point(3, 105);
+            this.panel_RetailUserColors.Name = "panel_RetailUserColors";
+            this.panel_RetailUserColors.Size = new System.Drawing.Size(307, 87);
+            this.panel_RetailUserColors.TabIndex = 67;
+            // 
             // rbtn_RetailColors17
             // 
             this.rbtn_RetailColors17.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
@@ -1193,7 +1370,7 @@ namespace jcColor {
             this.rbtn_RetailColors23.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
             this.rbtn_RetailColors23.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.rbtn_RetailColors23.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
-            this.rbtn_RetailColors23.Location = new System.Drawing.Point(233, 7);
+            this.rbtn_RetailColors23.Location = new System.Drawing.Point(232, 7);
             this.rbtn_RetailColors23.Name = "rbtn_RetailColors23";
             this.rbtn_RetailColors23.Size = new System.Drawing.Size(32, 32);
             this.rbtn_RetailColors23.TabIndex = 22;
@@ -1290,7 +1467,7 @@ namespace jcColor {
             // 
             this.rbtn_RetailColors31.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
             this.rbtn_RetailColors31.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.rbtn_RetailColors31.Location = new System.Drawing.Point(233, 43);
+            this.rbtn_RetailColors31.Location = new System.Drawing.Point(232, 43);
             this.rbtn_RetailColors31.Name = "rbtn_RetailColors31";
             this.rbtn_RetailColors31.Size = new System.Drawing.Size(32, 32);
             this.rbtn_RetailColors31.TabIndex = 30;
@@ -1309,6 +1486,56 @@ namespace jcColor {
             this.rbtn_RetailColors32.Text = "roundButton16";
             this.rbtn_RetailColors32.UseVisualStyleBackColor = false;
             this.rbtn_RetailColors32.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // panel_UserColors
+            // 
+            this.panel_UserColors.Controls.Add(this.m_lbl_UserColors);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors01);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors02);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors03);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors04);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors05);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors06);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors07);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors08);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors09);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors10);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors11);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors12);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors13);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors14);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors15);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors16);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors17);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors18);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors19);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors20);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors21);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors22);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors23);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors24);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors25);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors26);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors27);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors28);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors29);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors30);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors31);
+            this.panel_UserColors.Controls.Add(this.rbtn_UserColors32);
+            this.panel_UserColors.Location = new System.Drawing.Point(3, 195);
+            this.panel_UserColors.Name = "panel_UserColors";
+            this.panel_UserColors.Size = new System.Drawing.Size(307, 188);
+            this.panel_UserColors.TabIndex = 66;
+            // 
+            // m_lbl_UserColors
+            // 
+            this.m_lbl_UserColors.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_lbl_UserColors.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
+            this.m_lbl_UserColors.Location = new System.Drawing.Point(5, 4);
+            this.m_lbl_UserColors.Name = "m_lbl_UserColors";
+            this.m_lbl_UserColors.Size = new System.Drawing.Size(260, 20);
+            this.m_lbl_UserColors.TabIndex = 65;
+            this.m_lbl_UserColors.Text = "Custom Color Sets:";
             // 
             // rbtn_UserColors01
             // 
@@ -1386,7 +1613,7 @@ namespace jcColor {
             // 
             this.rbtn_UserColors07.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
             this.rbtn_UserColors07.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.rbtn_UserColors07.Location = new System.Drawing.Point(233, 29);
+            this.rbtn_UserColors07.Location = new System.Drawing.Point(232, 29);
             this.rbtn_UserColors07.Name = "rbtn_UserColors07";
             this.rbtn_UserColors07.Size = new System.Drawing.Size(32, 32);
             this.rbtn_UserColors07.TabIndex = 38;
@@ -1482,7 +1709,7 @@ namespace jcColor {
             // 
             this.rbtn_UserColors15.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
             this.rbtn_UserColors15.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.rbtn_UserColors15.Location = new System.Drawing.Point(233, 112);
+            this.rbtn_UserColors15.Location = new System.Drawing.Point(232, 112);
             this.rbtn_UserColors15.Name = "rbtn_UserColors15";
             this.rbtn_UserColors15.Size = new System.Drawing.Size(32, 32);
             this.rbtn_UserColors15.TabIndex = 54;
@@ -1578,7 +1805,7 @@ namespace jcColor {
             // 
             this.rbtn_UserColors23.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
             this.rbtn_UserColors23.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.rbtn_UserColors23.Location = new System.Drawing.Point(233, 65);
+            this.rbtn_UserColors23.Location = new System.Drawing.Point(232, 65);
             this.rbtn_UserColors23.Name = "rbtn_UserColors23";
             this.rbtn_UserColors23.Size = new System.Drawing.Size(32, 32);
             this.rbtn_UserColors23.TabIndex = 46;
@@ -1674,7 +1901,7 @@ namespace jcColor {
             // 
             this.rbtn_UserColors31.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(80)))), ((int)(((byte)(80)))));
             this.rbtn_UserColors31.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.rbtn_UserColors31.Location = new System.Drawing.Point(232, 148);
+            this.rbtn_UserColors31.Location = new System.Drawing.Point(231, 148);
             this.rbtn_UserColors31.Name = "rbtn_UserColors31";
             this.rbtn_UserColors31.Size = new System.Drawing.Size(32, 32);
             this.rbtn_UserColors31.TabIndex = 62;
@@ -1693,6 +1920,55 @@ namespace jcColor {
             this.rbtn_UserColors32.Text = "roundButton16";
             this.rbtn_UserColors32.UseVisualStyleBackColor = false;
             this.rbtn_UserColors32.Click += new System.EventHandler(this.m_lbl_Preset_Click);
+            // 
+            // m_lbl_RetailColors
+            // 
+            this.m_lbl_RetailColors.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_lbl_RetailColors.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
+            this.m_lbl_RetailColors.Location = new System.Drawing.Point(8, 4);
+            this.m_lbl_RetailColors.Name = "m_lbl_RetailColors";
+            this.m_lbl_RetailColors.Size = new System.Drawing.Size(260, 20);
+            this.m_lbl_RetailColors.TabIndex = 59;
+            this.m_lbl_RetailColors.Text = "Retail Color Sets:";
+            // 
+            // btn_Update
+            // 
+            this.btn_Update.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.btn_Update.FlatAppearance.BorderSize = 0;
+            this.btn_Update.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_Update.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.btn_Update.Location = new System.Drawing.Point(664, 19);
+            this.btn_Update.Name = "btn_Update";
+            this.btn_Update.Size = new System.Drawing.Size(55, 26);
+            this.btn_Update.TabIndex = 57;
+            this.btn_Update.Text = "Update";
+            this.btn_Update.UseVisualStyleBackColor = false;
+            this.btn_Update.Click += new System.EventHandler(this.SetPresetColorName);
+            // 
+            // m_lbl_SelectPreset
+            // 
+            this.m_lbl_SelectPreset.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.m_lbl_SelectPreset.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(251)))), ((int)(((byte)(251)))), ((int)(((byte)(251)))));
+            this.m_lbl_SelectPreset.Location = new System.Drawing.Point(411, 6);
+            this.m_lbl_SelectPreset.Name = "m_lbl_SelectPreset";
+            this.m_lbl_SelectPreset.Size = new System.Drawing.Size(101, 20);
+            this.m_lbl_SelectPreset.TabIndex = 58;
+            this.m_lbl_SelectPreset.Text = "Select Preset:";
+            // 
+            // btn_Clear
+            // 
+            this.btn_Clear.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.btn_Clear.FlatAppearance.BorderSize = 0;
+            this.btn_Clear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_Clear.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.btn_Clear.ForeColor = System.Drawing.Color.OrangeRed;
+            this.btn_Clear.Location = new System.Drawing.Point(603, 19);
+            this.btn_Clear.Name = "btn_Clear";
+            this.btn_Clear.Size = new System.Drawing.Size(55, 26);
+            this.btn_Clear.TabIndex = 60;
+            this.btn_Clear.Text = "Clear";
+            this.btn_Clear.UseVisualStyleBackColor = false;
+            this.btn_Clear.Click += new System.EventHandler(this.ClearPreset);
             // 
             // m_ctrl_BigBox
             // 
@@ -1729,23 +2005,28 @@ namespace jcColor {
             this.m_ctrl_ThinBox.TabIndex = 38;
             this.m_ctrl_ThinBox.Scroll += new jcColor.EventHandler(this.m_ctrl_ThinBox_Scroll);
             // 
-            // m_eyedropColorPicker
+            // btn_switchGripsPanel
             // 
-            this.m_eyedropColorPicker.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
-            this.m_eyedropColorPicker.Location = new System.Drawing.Point(317, 324);
-            this.m_eyedropColorPicker.Name = "m_eyedropColorPicker";
-            this.m_eyedropColorPicker.SelectedColor = System.Drawing.Color.Empty;
-            this.m_eyedropColorPicker.Size = new System.Drawing.Size(85, 85);
-            this.m_eyedropColorPicker.TabIndex = 2;
-            this.m_eyedropColorPicker.TabStop = false;
-            this.toolTip1.SetToolTip(this.m_eyedropColorPicker, "Color Selector. Click and Drag to pick a color from the screen");
-            this.m_eyedropColorPicker.Zoom = 4;
+            this.btn_switchGripsPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(85)))), ((int)(((byte)(85)))), ((int)(((byte)(85)))));
+            this.btn_switchGripsPanel.FlatAppearance.BorderSize = 0;
+            this.btn_switchGripsPanel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn_switchGripsPanel.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(161)));
+            this.btn_switchGripsPanel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(188)))), ((int)(((byte)(0)))));
+            this.btn_switchGripsPanel.Location = new System.Drawing.Point(542, 19);
+            this.btn_switchGripsPanel.Name = "btn_switchGripsPanel";
+            this.btn_switchGripsPanel.Size = new System.Drawing.Size(55, 26);
+            this.btn_switchGripsPanel.TabIndex = 61;
+            this.btn_switchGripsPanel.Text = "Grips";
+            this.btn_switchGripsPanel.UseVisualStyleBackColor = false;
+            this.btn_switchGripsPanel.Click += new System.EventHandler(this.btn_switchGripsPanel_Click);
             // 
             // JoyConColorPicker
             // 
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
             this.ClientSize = new System.Drawing.Size(727, 424);
             this.ControlBox = false;
+            this.Controls.Add(this.btn_switchGripsPanel);
             this.Controls.Add(this.btn_Clear);
             this.Controls.Add(this.m_lbl_SelectPreset);
             this.Controls.Add(this.btn_Update);
@@ -1790,6 +2071,7 @@ namespace jcColor {
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.panel2.ResumeLayout(false);
+            this.panel_RetailGripColors.ResumeLayout(false);
             this.panel_RetailColors.ResumeLayout(false);
             this.panel_RetailUserColors.ResumeLayout(false);
             this.panel_UserColors.ResumeLayout(false);
@@ -1822,6 +2104,20 @@ namespace jcColor {
             getCustomColorFromConfig();
             convertOldFormatCustomConfig();
             saveCustomColorToConfig();
+        }
+
+
+        public void loadGripsPanel() {
+            if (gripsColor) {
+                this.m_radio_btn_Body.Text = "Grip (L)";
+                this.m_radio_btn_Buttons.Text = "Grip (R)";
+                showGripsPanel = true;
+                this.btn_switchGripsPanel.Text = "Retail";
+            }
+            else {
+                this.panel2.Controls.Remove(this.panel_RetailGripColors);
+                showGripsPanel = false;
+            }
         }
 
 
@@ -2319,6 +2615,23 @@ namespace jcColor {
         }
 
 
+        private void btn_switchGripsPanel_Click(object sender, EventArgs e) {
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96, 96);
+            if (showGripsPanel) {
+                showGripsPanel = false;
+                this.btn_switchGripsPanel.Text = "Grips";
+                this.panel2.Controls.Remove(this.panel_RetailGripColors);
+            }
+            else {
+                showGripsPanel = true;
+                this.AutoScaleDimensions = new System.Drawing.SizeF(96, 96);
+                this.btn_switchGripsPanel.Text = "Retail";
+                this.panel2.Controls.Add(this.panel_RetailGripColors);
+                this.panel_RetailGripColors.BringToFront();
+            }
+        }
+
+
         private Color ParseHexData(string hex_data) {
             if (hex_data.Length > 6 || hex_data.Length < 0)
                 return Color.Black;
@@ -2726,6 +3039,16 @@ namespace jcColor {
                 m_lbl_New_ButtonColor.BackColor = m_rgb;
 
                 this.WriteHexData(value);
+            }
+        }
+
+        public bool GripsColorValue {
+            get {
+                return gripsColor;
+            }
+            set {
+                gripsColor = value;
+
             }
         }
 

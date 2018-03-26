@@ -150,6 +150,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: float hf_pitch;
     private: Color jcBodyColor;
     private: Color jcButtonsColor;
+    private: Color jcGripLeftColor;
+    private: Color jcGripRightColor;
     private: System::Windows::Forms::GroupBox^  grpBox_Color;
     private: System::Windows::Forms::Button^ btn_writeColorsToSpi;
     private: System::Windows::Forms::TextBox^ textBoxSN;
@@ -260,6 +262,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Label^  lbl_Buttons_hex_txt;
     private: System::Windows::Forms::Label^  lbl_Body_hex_txt;
     private: System::Windows::Forms::GroupBox^  grpBox_accGyroCal;
+    private: System::Windows::Forms::Button^  btn_changeGripsColor;
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 #pragma endregion
@@ -281,6 +284,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(FormJoy::typeid));
             this->btn_writeColorsToSpi = (gcnew System::Windows::Forms::Button());
             this->grpBox_Color = (gcnew System::Windows::Forms::GroupBox());
+            this->btn_changeGripsColor = (gcnew System::Windows::Forms::Button());
             this->lbl_Buttons_hex_txt = (gcnew System::Windows::Forms::Label());
             this->lbl_Body_hex_txt = (gcnew System::Windows::Forms::Label());
             this->btn_RestoreEnable = (gcnew System::Windows::Forms::Button());
@@ -436,6 +440,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             this->grpBox_Color->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->grpBox_Color->Controls->Add(this->btn_changeGripsColor);
             this->grpBox_Color->Controls->Add(this->lbl_Buttons_hex_txt);
             this->grpBox_Color->Controls->Add(this->lbl_Body_hex_txt);
             this->grpBox_Color->Controls->Add(this->btn_RestoreEnable);
@@ -457,6 +462,23 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_Color->TabStop = false;
             this->grpBox_Color->Text = L"Device colors";
             // 
+            // btn_changeGripsColor
+            // 
+            this->btn_changeGripsColor->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_changeGripsColor->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(80)),
+                static_cast<System::Int32>(static_cast<System::Byte>(80)), static_cast<System::Int32>(static_cast<System::Byte>(80)));
+            this->btn_changeGripsColor->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->btn_changeGripsColor->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F));
+            this->btn_changeGripsColor->Location = System::Drawing::Point(316, 114);
+            this->btn_changeGripsColor->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
+            this->btn_changeGripsColor->Name = L"btn_changeGripsColor";
+            this->btn_changeGripsColor->Size = System::Drawing::Size(128, 48);
+            this->btn_changeGripsColor->TabIndex = 22;
+            this->btn_changeGripsColor->Text = L"Grips Color";
+            this->btn_changeGripsColor->UseVisualStyleBackColor = false;
+            this->btn_changeGripsColor->Click += gcnew System::EventHandler(this, &FormJoy::btn_changeGripsColor_Click);
+            // 
             // lbl_Buttons_hex_txt
             // 
             this->lbl_Buttons_hex_txt->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
@@ -465,7 +487,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->lbl_Buttons_hex_txt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(150)),
                 static_cast<System::Int32>(static_cast<System::Byte>(150)), static_cast<System::Int32>(static_cast<System::Byte>(150)));
-            this->lbl_Buttons_hex_txt->Location = System::Drawing::Point(316, 183);
+            this->lbl_Buttons_hex_txt->Location = System::Drawing::Point(316, 208);
             this->lbl_Buttons_hex_txt->Margin = System::Windows::Forms::Padding(0);
             this->lbl_Buttons_hex_txt->Name = L"lbl_Buttons_hex_txt";
             this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(128, 24);
@@ -481,7 +503,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->lbl_Body_hex_txt->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(150)),
                 static_cast<System::Int32>(static_cast<System::Byte>(150)), static_cast<System::Int32>(static_cast<System::Byte>(150)));
-            this->lbl_Body_hex_txt->Location = System::Drawing::Point(316, 159);
+            this->lbl_Body_hex_txt->Location = System::Drawing::Point(316, 184);
             this->lbl_Body_hex_txt->Margin = System::Windows::Forms::Padding(0);
             this->lbl_Body_hex_txt->Name = L"lbl_Body_hex_txt";
             this->lbl_Body_hex_txt->Size = System::Drawing::Size(128, 24);
@@ -527,8 +549,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             this->btn_changeColor->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
                 static_cast<System::Int32>(static_cast<System::Byte>(85)));
-            this->btn_changeColor->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_changeColor->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(80)),
+                static_cast<System::Int32>(static_cast<System::Byte>(80)), static_cast<System::Int32>(static_cast<System::Byte>(80)));
             this->btn_changeColor->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->btn_changeColor->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 9.75F));
             this->btn_changeColor->Location = System::Drawing::Point(316, 66);
@@ -536,9 +558,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_changeColor->Name = L"btn_changeColor";
             this->btn_changeColor->Size = System::Drawing::Size(128, 48);
             this->btn_changeColor->TabIndex = 19;
-            this->btn_changeColor->Text = L"Change Color";
+            this->btn_changeColor->Text = L"Body && Buttons Color";
             this->btn_changeColor->UseVisualStyleBackColor = false;
-            this->btn_changeColor->Click += gcnew System::EventHandler(this, &FormJoy::btn_changeColor_Click);
+            this->btn_changeColor->Click += gcnew System::EventHandler(this, &FormJoy::btn_changeNormalColor_Click);
             // 
             // btn_makeSPIBackup
             // 
@@ -771,7 +793,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             });
             this->menuStrip1->Location = System::Drawing::Point(0, 0);
             this->menuStrip1->Name = L"menuStrip1";
-            this->menuStrip1->Size = System::Drawing::Size(1646, 25);
+            this->menuStrip1->Size = System::Drawing::Size(2112, 25);
             this->menuStrip1->TabIndex = 0;
             this->menuStrip1->Text = L"menuStrip1";
             // 
@@ -2259,10 +2281,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
         if (handle_ok != 3) {
             this->textBoxSN->Text = gcnew String(get_sn(0x6001, 0xF).c_str());
             this->textBox_chg_sn->Text = this->textBoxSN->Text;
+
+            this->btn_changeGripsColor->Enabled = false;
         }
         else {
             this->textBoxSN->Text = L"Not supported";
             this->textBox_chg_sn->Text = this->textBoxSN->Text;
+
+            this->btn_changeGripsColor->Enabled = true;
         }
         unsigned char device_info[10];
         memset(device_info, 0, sizeof(device_info));
@@ -2301,17 +2327,26 @@ public ref class FormJoy : public System::Windows::Forms::Form
             int error = 0;
             this->btn_writeColorsToSpi->Enabled = false;
 
-            unsigned char newColors[0x6];
-            memset(newColors, 0, 0x6);
+            unsigned char newColors[12];
+            memset(newColors, 0, 12);
 
-            newColors[0] = (u8)jcBodyColor.R;
-            newColors[1] = (u8)jcBodyColor.G;
-            newColors[2] = (u8)jcBodyColor.B;
-            newColors[3] = (u8)jcButtonsColor.R;
-            newColors[4] = (u8)jcButtonsColor.G;
-            newColors[5] = (u8)jcButtonsColor.B;
+            newColors[0]  = (u8)jcBodyColor.R;
+            newColors[1]  = (u8)jcBodyColor.G;
+            newColors[2]  = (u8)jcBodyColor.B;
+            newColors[3]  = (u8)jcButtonsColor.R;
+            newColors[4]  = (u8)jcButtonsColor.G;
+            newColors[5]  = (u8)jcButtonsColor.B;
+            newColors[6]  = (u8)jcGripLeftColor.R;
+            newColors[7]  = (u8)jcGripLeftColor.G;
+            newColors[8]  = (u8)jcGripLeftColor.B;
+            newColors[9]  = (u8)jcGripRightColor.R;
+            newColors[10] = (u8)jcGripRightColor.G;
+            newColors[11] = (u8)jcGripRightColor.B;
 
-            error = write_spi_data(0x6050, 0x6, newColors);
+            if (handle_ok != 3)
+                error = write_spi_data(0x6050, 6, newColors);
+            else
+                error = write_spi_data(0x6050, 12, newColors);
 
             send_rumble();
 
@@ -2400,7 +2435,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         update_temperature();
     }
 
-    private: System::Void update_joycon_color(u8 r, u8 g, u8 b, u8 rb, u8 gb, u8 bb) {
+    private: System::Void update_joycon_color(u8 r, u8 g, u8 b, u8 rb, u8 gb, u8 bb, u8 rgl, u8 ggl, u8 bgl, u8 rgr, u8 ggr, u8 bgr) {
         Bitmap^ MyImage;
         Bitmap^ MyImageLayer;
         Bitmap^ MyImageLayer2;
@@ -2451,12 +2486,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
                     if (Color::FromArgb(255, 255, 255) == Color::FromArgb(rb, gb, bb)) {
                         // Normal Pro
                         if (Color::FromArgb(0x32, 0x32, 0x32) == Color::FromArgb(r, g, b)) {
-                            row[x * PixelSize + 2] = 0x40;
-                            row[x * PixelSize + 1] = 0x40;
-                            row[x * PixelSize]     = 0x40;
-                            row2[x * PixelSize + 2] = 0x40;
-                            row2[x * PixelSize + 1] = 0x40;
-                            row2[x * PixelSize]     = 0x40;
+                            row[x * PixelSize + 2] = 0x46;
+                            row[x * PixelSize + 1] = 0x46;
+                            row[x * PixelSize]     = 0x46;
+                            row2[x * PixelSize + 2] = 0x46;
+                            row2[x * PixelSize + 1] = 0x46;
+                            row2[x * PixelSize]     = 0x46;
                         }
                         // Xenoblade Pro
                         else if (Color::FromArgb(0x32, 0x31, 0x32) == Color::FromArgb(r, g, b)) {
@@ -2476,36 +2511,24 @@ public ref class FormJoy : public System::Windows::Forms::Form
                             row2[x * PixelSize + 1] = 0x32;
                             row2[x * PixelSize]     = 0x78;
                         }
-                        // Custom Pro
+                        // Custom Pro. Body is not one of the 3 retail colors. Apply the Left Grip/Right Grip Colors from SPI.
                         else {
-                            row[x * PixelSize + 2] = 0xff;
-                            row[x * PixelSize + 1] = 0xff;
-                            row[x * PixelSize]     = 0xff;
-                            row2[x * PixelSize + 2] = 0xff;
-                            row2[x * PixelSize + 1] = 0xff;
-                            row2[x * PixelSize]     = 0xff;
+                            row[x * PixelSize + 2] = rgl;
+                            row[x * PixelSize + 1] = ggl;
+                            row[x * PixelSize]     = bgl;
+                            row2[x * PixelSize + 2] = rgr;
+                            row2[x * PixelSize + 1] = ggr;
+                            row2[x * PixelSize]     = bgr;
                         }
                     }
-                    // Black Body and Buttons
-                    else if (Color::FromArgb(0, 0, 0) == Color::FromArgb(r, g, b)
-                        && Color::FromArgb(0, 0, 0) == Color::FromArgb(rb, gb, bb)) {
-                        // Black Grips (should be 0,0,0?)
-                        row[x * PixelSize + 2] = 0x00;
-                        row[x * PixelSize + 1] = 0x00;
-                        row[x * PixelSize]     = 0x00;
-                        row2[x * PixelSize + 2] = 0x00;
-                        row2[x * PixelSize + 1] = 0x00;
-                        row2[x * PixelSize]     = 0x00;
-                    }
-                    // Custom Buttons
+                    // Custom Grips. Buttons are not white. Apply the Left Grip/Right Grip Colors from SPI.
                     else {
-                        // White Grips
-                        row[x * PixelSize + 2] = 0xff;
-                        row[x * PixelSize + 1] = 0xff;
-                        row[x * PixelSize] = 0xff;
-                        row2[x * PixelSize + 2] = 0xff;
-                        row2[x * PixelSize + 1] = 0xff;
-                        row2[x * PixelSize] = 0xff;
+                        row[x * PixelSize + 2] = rgl;
+                        row[x * PixelSize + 1] = ggl;
+                        row[x * PixelSize] = bgl;
+                        row2[x * PixelSize + 2] = rgr;
+                        row2[x * PixelSize + 1] = ggr;
+                        row2[x * PixelSize] = bgr;
                     }
                 }
             }
@@ -2577,13 +2600,16 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void update_colors_from_spi(bool update_color_dialog) {
-        unsigned char spiColors[0x6];
-        memset(spiColors, 0, 0x6);
+        unsigned char spiColors[12];
+        memset(spiColors, 0, 12);
 
-        get_spi_data(0x6050, 0x6, spiColors);
+        get_spi_data(0x6050, 12, spiColors);
 
-        update_joycon_color((u8)spiColors[0], (u8)spiColors[1], (u8)spiColors[2],
-            (u8)spiColors[3], (u8)spiColors[4], (u8)spiColors[5]);
+        update_joycon_color(
+            (u8)spiColors[0], (u8)spiColors[1], (u8)spiColors[2], // Body Colors
+            (u8)spiColors[3], (u8)spiColors[4], (u8)spiColors[5], // Button Colors
+            (u8)spiColors[6],(u8)spiColors[7], (u8)spiColors[8], // Left Grip Colors (Pro Controller, Switch Update 5.0.0+)
+            (u8)spiColors[9], (u8)spiColors[10], (u8)spiColors[11]); // Right Grip Colors (Pro Controller, Switch Update 5.0.0+)
 
         if (update_color_dialog) {
             this->jcBodyColor = Color::FromArgb(0xFF, (u8)spiColors[0], (u8)spiColors[1], (u8)spiColors[2]);
@@ -2599,6 +2625,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->lbl_Buttons_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
             this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(128, 24);
+
+            this->jcGripLeftColor = Color::FromArgb(0xFF, (u8)spiColors[6], (u8)spiColors[7], (u8)spiColors[8]);
+            this->jcGripRightColor = Color::FromArgb(0xFF, (u8)spiColors[9], (u8)spiColors[10], (u8)spiColors[11]);
         }
 
     }
@@ -2606,6 +2635,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Void update_battery() {
         unsigned char batt_info[3];
         memset(batt_info, 0, sizeof(batt_info));
+
         get_battery(batt_info);
 
         int batt_percent = 0;
@@ -3199,14 +3229,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
             if (MessageBox::Show(L"The device color will be restored with the backup values!\n\nAre you sure you want to continue?",
                 L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
             {
-                unsigned char backupColor[0x6];
-                memset(backupColor, 0, 0x6);
+                unsigned char backupColor[12];
+                memset(backupColor, 0, 12);
 
-                for (int i = 0; i < 6; i++) {
+                for (int i = 0; i < 12; i++) {
                     backupColor[i] = this->backup_spi[0x6050 + i];
                 }
 
-                error = write_spi_data(0x6050, 0x6, backupColor);
+                error = write_spi_data(0x6050, 12, backupColor);
 
                 //Check that the colors were written
                 update_colors_from_spi(true);
@@ -3963,13 +3993,29 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->toolStripLabel_batt->Enabled = false;
         this->toolStripBtn_batt->Enabled = false;
     }
+
+
     private: System::Void toolStripBtn_refresh_Click(System::Object^  sender, System::EventArgs^  e) {
         full_refresh(true);
     }
+ 
 
-    private: System::Void btn_changeColor_Click(System::Object^  sender, System::EventArgs^  e) {
-        Color testcolor;
-        JCColorPicker = gcnew jcColor::JoyConColorPicker(this->jcBodyColor, this->jcButtonsColor);
+    private: System::Void btn_changeNormalColor_Click(System::Object^  sender, System::EventArgs^  e) {
+        changeColorDialog(false);
+    }
+
+
+    private: System::Void btn_changeGripsColor_Click(System::Object^  sender, System::EventArgs^  e) {
+        changeColorDialog(true);
+    }
+
+
+    private: System::Void changeColorDialog(bool gripsDialog) {
+        if (gripsDialog)
+            JCColorPicker = gcnew jcColor::JoyConColorPicker(this->jcGripLeftColor, this->jcGripRightColor, gripsDialog);
+        else
+            JCColorPicker = gcnew jcColor::JoyConColorPicker(this->jcBodyColor, this->jcButtonsColor, gripsDialog);
+
         System::Drawing::Rectangle screenRectangle = RectangleToScreen(this->ClientRectangle);
         int titleHeight = screenRectangle.Top - this->Top;
 
@@ -4004,7 +4050,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->toolStrip1->Enabled = false;
         this->menuStrip1->Refresh();
         this->toolStrip1->Refresh();
-        
+
+        // Load grips color panel outside, so High DPI scaling can work
+        JCColorPicker->loadGripsPanel();
     }
 
     private: System::Void Color_Picker_Cancel(System::Object^  sender, System::EventArgs^  e) {
@@ -4059,22 +4107,31 @@ public ref class FormJoy : public System::Windows::Forms::Form
             option_is_on = 5;
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
-        this->jcBodyColor = JCColorPicker->PrimaryColor;
-        this->jcButtonsColor = JCColorPicker->SecondaryColor;
-        this->lbl_Body_hex_txt->Text = L"Body: #" + String::Format("{0:X6}",
-            (jcBodyColor.R << 16) + (jcBodyColor.G << 8) + (jcBodyColor.B));
-        this->lbl_Body_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-            static_cast<System::Byte>(161)));
-        this->lbl_Body_hex_txt->Size = System::Drawing::Size(128, 24);
+        if (!JCColorPicker->GripsColorValue) {
+            this->jcBodyColor = JCColorPicker->PrimaryColor;
+            this->jcButtonsColor = JCColorPicker->SecondaryColor;
+            this->lbl_Body_hex_txt->Text = L"Body: #" + String::Format("{0:X6}",
+                (jcBodyColor.R << 16) + (jcBodyColor.G << 8) + (jcBodyColor.B));
+            this->lbl_Body_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_Body_hex_txt->Size = System::Drawing::Size(128, 24);
 
-        this->lbl_Buttons_hex_txt->Text = L"Buttons: #" + String::Format("{0:X6}",
-            (jcButtonsColor.R << 16) + (jcButtonsColor.G << 8) + (jcButtonsColor.B));
-        this->lbl_Buttons_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-            static_cast<System::Byte>(161)));
-        this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(128, 24);
-
-        update_joycon_color(jcBodyColor.R, jcBodyColor.G, jcBodyColor.B,
-            jcButtonsColor.R, jcButtonsColor.G, jcButtonsColor.B);
+            this->lbl_Buttons_hex_txt->Text = L"Buttons: #" + String::Format("{0:X6}",
+                (jcButtonsColor.R << 16) + (jcButtonsColor.G << 8) + (jcButtonsColor.B));
+            this->lbl_Buttons_hex_txt->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_Buttons_hex_txt->Size = System::Drawing::Size(128, 24);
+        }
+        else {
+            this->jcGripLeftColor = JCColorPicker->PrimaryColor;
+            this->jcGripRightColor = JCColorPicker->SecondaryColor;
+        }
+        update_joycon_color(
+            jcBodyColor.R, jcBodyColor.G, jcBodyColor.B,
+            jcButtonsColor.R, jcButtonsColor.G, jcButtonsColor.B,
+            jcGripLeftColor.R, jcGripLeftColor.G, jcGripLeftColor.B,
+            jcGripRightColor.R, jcGripRightColor.G, jcGripRightColor.B
+        );
 
         this->btn_writeColorsToSpi->Enabled = true;
 

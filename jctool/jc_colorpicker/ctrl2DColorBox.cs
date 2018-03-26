@@ -102,6 +102,7 @@ namespace jcColor {
             // 
             // ctrl2DColorBox
             // 
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
             this.ForeColor = System.Drawing.Color.DeepSkyBlue;
             this.Name = "ctrl2DColorBox";
