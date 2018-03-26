@@ -44,6 +44,9 @@
     <ClInclude Include="luts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ir_sensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FormJoy.resx">

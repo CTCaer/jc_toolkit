@@ -9,6 +9,7 @@
 #include <Windows.h>
 
 #include "jctool.h"
+#include "ir_sensor.h"
 #include "tune.h"
 #include "FormJoy.h"
 
@@ -1320,6 +1321,333 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
     res = hid_read(handle, buf, 0);
+
+    return 0;
+}
+
+
+int nfc_tag_info() {
+    /////////////////////////////////////////////////////
+    // Kudos to Eric Betts (https://github.com/bettse) //
+    // for nfc comm starters                           //
+    /////////////////////////////////////////////////////
+    while (enable_NFCScanning) {
+        int res;
+        u8 buf[0x170];
+        u8 buf2[0x170];
+        int error_reading = 0;
+        // Set input report to x31
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 1;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+            pkt->subcmd = 0x03;
+            pkt->subcmd_arg.arg1 = 0x31;
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (*(u16*)&buf[0xD] == 0x0380)
+                    goto step1;
+
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+        }
+
+    step1:
+        // Enable MCU
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 1;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+            pkt->subcmd = 0x22;
+            pkt->subcmd_arg.arg1 = 0x1;
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (*(u16*)&buf[0xD] == 0x2280)
+                    goto step2;
+
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+        }
+
+    step2:
+        // Request MCU status
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 0x11;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+            pkt->subcmd = 0x01;
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (buf[0] == 0x31) {
+                    //if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x06120004) // Initializing
+                    // MCU state: Standby
+                    if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x01120004) // Mode is Standby
+                        goto step3;
+                }
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+        }
+
+    step3:
+        // Set MCU mode
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 0x01;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+            pkt->subcmd = 0x21;
+
+            pkt->subcmd_21_21.mcu_cmd = 0x21; // Set MCU mode cmd
+            pkt->subcmd_21_21.mcu_subcmd = 0x00; // Set MCU mode cmd
+            pkt->subcmd_21_21.mcu_mode = 0x04; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
+
+            buf[48] = mcu_crc8_calc(buf + 12, 36);
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (buf[0] == 0x21) {
+                    // MCU state: Standby
+                    if (buf[15] == 0x01 && *(u32*)&buf[19] == 0x01120004) // Mode still on standby
+                        goto step4;
+                }
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+        }
+
+    step4:
+        // Request MCU status
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 0x11;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+            pkt->subcmd = 0x01;
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (buf[0] == 0x31) {
+                    // MCU state: IR mode
+                    if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x04120004) // Mode set to NFC
+                        goto step5;
+                }
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+        }
+
+    step5:
+        // Request NFC mode status
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 0x11;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+
+            pkt->subcmd = 0x02;
+            pkt->subcmd_arg.arg1 = 0x04; // 0: Cancel all, 4: StartWaitingReceive
+            pkt->subcmd_arg.arg2 = 0x00; // Count of the currecnt packet if the cmd is a series of packets.
+            buf[13] = 0x00;
+            buf[14] = 0x08; // 8: Last cmd packet, 0: More cmd packet should be  expected
+            buf[15] = 0x00; // Length of data after cmd header
+
+            buf[47] = mcu_crc8_calc(buf + 11, 36); //Without the last byte
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (buf[0] == 0x31) {
+                    //if (buf[49] == 0x2a && *(u16*)&buf[50] == 0x0500 && buf[55] == 0x31 && buf[56] == 0x0b)// buf[56] == 0x0b: Initializing/Busy
+                    if (buf[49] == 0x2a && *(u16*)&buf[50] == 0x0500 && buf[55] == 0x31 && buf[56] == 0x00) // buf[56] == 0x00: Awaiting cmd
+                        goto step6;
+                }
+                retries++;
+                if (retries > 4 || res == 0)
+                    break;
+            }
+        }
+
+    step6:
+        // Request NFC mode status
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 0x11;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+
+            pkt->subcmd = 0x02;
+            pkt->subcmd_arg.arg1 = 0x01; // 1: Start polling, 2: Stop polling, 
+            pkt->subcmd_arg.arg2 = 0x00; // Count of the currecnt packet if the cmd is a series of packets.
+            buf[13] = 0x00;
+            buf[14] = 0x08; // 8: Last cmd packet, 0: More cmd packet should be expected
+            buf[15] = 0x05; // Length of data after cmd header
+            buf[16] = 0x01; // Enable Mifare support
+            //buf[17] = 0x00;
+            //buf[18] = 0x00;
+            buf[19] = 0x2c; // Some values work (0x07) other don't.
+            //buf[20] = 0x01;
+
+            buf[47] = mcu_crc8_calc(buf + 11, 36); //Without the last byte
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                if (!enable_NFCScanning)
+                    goto step7;
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (buf[0] == 0x31) {
+                    // buf[49] == 0x2a: NFC MCU input report
+                    // buf[50] shows when there's error?
+                    // buf[51] == 0x05: NFC
+                    // buf[54] always 9?
+                    // buf[55] always x31?
+                    // buf[56]: MCU/NFC state
+                    // buf[62]: nfc tag type
+                    // buf[64]: size of following data and it's the last NFC header byte
+                    if (buf[49] == 0x2a && *(u16*)&buf[50] == 0x0500 && buf[56] == 0x09) { // buf[56] == 0x09: Tag detected
+                        //for (int i = 0; i < 8; i++) {
+                        //    printf("%02X ", buf[57 + i]);
+                        //}
+                        //printf(" | ");
+                        //FormJoy::myform1->txtBox_nfcUid->Text = String::Format("{0:d},{1:d},{2:d},{3:d},{4:d}, Type: {5:d}, {6:d}\r\nUID: ", buf[57], buf[58], buf[59], buf[60], buf[61], buf[62], buf[63]);
+                        FormJoy::myform1->txtBox_nfcUid->Text = String::Format("Type: {0:s}\r\nUID:  ", buf[62] == 0x2 ? "NTAG" : "MIFARE");
+                        for (int i = 0; i < buf[64]; i++) {
+                            if (i < buf[64] - 1) {
+                                //printf("%02X:", buf[65 + i]);
+                                FormJoy::myform1->txtBox_nfcUid->Text += String::Format("{0:X2}:", buf[65 + i]);
+                            }
+                            else {
+                                //printf("%02X", buf[65 + i]);
+                                FormJoy::myform1->txtBox_nfcUid->Text += String::Format("{0:X2}", buf[65 + i]);
+                            }
+                        }
+                        //printf("\n");
+                        Application::DoEvents();
+                        goto step7;
+                    }
+                }
+                retries++;
+                if (retries > 4 || res == 0) {
+                    Application::DoEvents();
+                    break;
+                }
+            }
+        }
+
+    step7:
+        // Read NTAG contents
+        // TODO:
+        while (0) {
+            memset(buf2, 0, sizeof(buf2));
+            auto hdr = (brcm_hdr *)buf2;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 0x11;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+
+            pkt->subcmd = 0x02;
+            pkt->subcmd_arg.arg1 = 0x06; // 6: Read Ntag data, 0xf: Read mifare data
+            pkt->subcmd_arg.arg2 = 0x00;
+            buf2[13] = 0x00;
+            buf2[14] = 0x08;
+            buf2[15] = 0x0D; // Length of data after cmd header
+            buf2[16] = 0xd0;
+            buf2[17] = 0x07;
+            for (int i = 0; i < 7; i++)
+                buf2[18 + i] = buf[65 + i];
+            buf2[25] = 0x00; //val != 0
+            buf2[26] = 0x01; //block count
+            buf2[27] = 0x05; //block
+            buf2[28] = 0x13; //?
+
+            buf2[47] = mcu_crc8_calc(buf2 + 11, 36);
+            buf2[48] = 0xFF;
+            res = hid_write(handle, buf2, sizeof(buf2));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf2, sizeof(buf2), 64);
+                if (buf2[0] == 0x31) {
+                    // mode set to 7: Image transfer
+                    if (buf2[49] == 0x2a && buf2[51] == 0x05 && buf[56] == 0x00)
+                        goto step9;////////////////////////
+                }
+                retries++;
+                if (retries > 4 || res == 0)
+                    break;
+            }
+        }
+
+    step9:
+        // Disable MCU
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        hdr->cmd = 1;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x22;
+        pkt->subcmd_arg.arg1 = 0x00;
+        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+
+
+        // Set input report to x3f
+        while (1) {
+            memset(buf, 0, sizeof(buf));
+            auto hdr = (brcm_hdr *)buf;
+            auto pkt = (brcm_cmd_01 *)(hdr + 1);
+            hdr->cmd = 1;
+            hdr->timer = timming_byte & 0xF;
+            timming_byte++;
+            pkt->subcmd = 0x03;
+            pkt->subcmd_arg.arg1 = 0x3f;
+            res = hid_write(handle, buf, sizeof(buf));
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+                if (*(u16*)&buf[0xD] == 0x0380)
+                    goto stepf;
+
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+        }
+    stepf:
+        Sleep(30);
+    }
 
     return 0;
 }

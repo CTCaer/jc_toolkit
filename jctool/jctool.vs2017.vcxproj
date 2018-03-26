@@ -81,6 +81,7 @@
     <ClCompile Include="hid.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ir_sensor.h" />
     <ClInclude Include="jctool.h" />
     <ClInclude Include="FormJoy.h">
       <FileType>CppForm</FileType>

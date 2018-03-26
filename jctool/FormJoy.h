@@ -262,6 +262,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Label^  lbl_Buttons_hex_txt;
     private: System::Windows::Forms::Label^  lbl_Body_hex_txt;
     private: System::Windows::Forms::GroupBox^  grpBox_accGyroCal;
+    private: System::Windows::Forms::GroupBox^  grpBox_nfc;
+    private: System::Windows::Forms::Button^  btn_NFC;
+    private: System::Windows::Forms::Label^  lbl_nfcHelp;
+    public:  System::Windows::Forms::TextBox^  txtBox_nfcUid;
     private: System::Windows::Forms::Button^  btn_changeGripsColor;
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
@@ -391,6 +395,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStripBtn_Disconnect = (gcnew System::Windows::Forms::ToolStripButton());
             this->panel_filler = (gcnew System::Windows::Forms::Panel());
             this->grpBox_accGyroCal = (gcnew System::Windows::Forms::GroupBox());
+            this->grpBox_nfc = (gcnew System::Windows::Forms::GroupBox());
+            this->txtBox_nfcUid = (gcnew System::Windows::Forms::TextBox());
+            this->btn_NFC = (gcnew System::Windows::Forms::Button());
+            this->lbl_nfcHelp = (gcnew System::Windows::Forms::Label());
             this->grpBox_Color->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
             this->grpBox_SPI->SuspendLayout();
@@ -413,6 +421,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_dev_param->SuspendLayout();
             this->toolStrip1->SuspendLayout();
             this->grpBox_accGyroCal->SuspendLayout();
+            this->grpBox_nfc->SuspendLayout();
             this->SuspendLayout();
             // 
             // btn_writeColorsToSpi
@@ -2171,6 +2180,71 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_accGyroCal->TabStop = false;
             this->grpBox_accGyroCal->Text = L"Acc/Gyro Calibration";
             // 
+            // 
+            // grpBox_nfc
+            // 
+            this->grpBox_nfc->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+                static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->grpBox_nfc->Controls->Add(this->txtBox_nfcUid);
+            this->grpBox_nfc->Controls->Add(this->btn_NFC);
+            this->grpBox_nfc->Controls->Add(this->lbl_nfcHelp);
+            this->grpBox_nfc->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_nfc->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->grpBox_nfc->Location = System::Drawing::Point(724, 445);
+            this->grpBox_nfc->Margin = System::Windows::Forms::Padding(0);
+            this->grpBox_nfc->Name = L"grpBox_nfc";
+            this->grpBox_nfc->Size = System::Drawing::Size(220, 215);
+            this->grpBox_nfc->TabIndex = 35;
+            this->grpBox_nfc->TabStop = false;
+            this->grpBox_nfc->Text = L"NFC Simple Tag Info";
+            // 
+            // txtBox_nfcUid
+            // 
+            this->txtBox_nfcUid->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+                static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->txtBox_nfcUid->BorderStyle = System::Windows::Forms::BorderStyle::None;
+            this->txtBox_nfcUid->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->txtBox_nfcUid->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->txtBox_nfcUid->Location = System::Drawing::Point(8, 110);
+            this->txtBox_nfcUid->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
+            this->txtBox_nfcUid->Multiline = true;
+            this->txtBox_nfcUid->Name = L"txtBox_nfcUid";
+            this->txtBox_nfcUid->ReadOnly = true;
+            this->txtBox_nfcUid->Size = System::Drawing::Size(203, 37);
+            this->txtBox_nfcUid->TabIndex = 36;
+            this->txtBox_nfcUid->TabStop = false;
+            this->txtBox_nfcUid->Text = L"Type:\r\nUID:";
+            // 
+            // btn_NFC
+            // 
+            this->btn_NFC->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_NFC->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_NFC->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->btn_NFC->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
+            this->btn_NFC->Location = System::Drawing::Point(65, 166);
+            this->btn_NFC->Name = L"btn_NFC";
+            this->btn_NFC->Size = System::Drawing::Size(87, 30);
+            this->btn_NFC->TabIndex = 34;
+            this->btn_NFC->Text = L"Scan";
+            this->btn_NFC->UseVisualStyleBackColor = false;
+            this->btn_NFC->Click += gcnew System::EventHandler(this, &FormJoy::btn_NFC_Click);
+            // 
+            // lbl_nfcHelp
+            // 
+            this->lbl_nfcHelp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_nfcHelp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
+                static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->lbl_nfcHelp->Location = System::Drawing::Point(8, 21);
+            this->lbl_nfcHelp->Name = L"lbl_nfcHelp";
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->lbl_nfcHelp->TabIndex = 32;
+            this->lbl_nfcHelp->Text = L"Press Scan and try to touch some tags over the Joy-Con (R)\'s analog stick.\r\nWhen "
+                L"done, press stop.";
             // FormJoy
             // 
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
@@ -2180,6 +2254,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->ClientSize = System::Drawing::Size(2112, 905);
+            this->Controls->Add(this->grpBox_nfc);
             this->Controls->Add(this->menuStrip1);
             this->Controls->Add(this->toolStrip1);
             this->Controls->Add(this->panel_filler);
@@ -2251,6 +2326,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStrip1->PerformLayout();
             this->grpBox_accGyroCal->ResumeLayout(false);
             this->grpBox_accGyroCal->PerformLayout();
+            this->grpBox_nfc->ResumeLayout(false);
+            this->grpBox_nfc->PerformLayout();
             this->ResumeLayout(false);
             this->PerformLayout();
 
@@ -2290,6 +2367,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             this->btn_changeGripsColor->Enabled = true;
         }
+
+        if (handle_ok == 2) {
+            this->grpBox_nfc->Enabled = true;
+        }
+        else {
+            this->grpBox_nfc->Enabled = false;
+        }
+
         unsigned char device_info[10];
         memset(device_info, 0, sizeof(device_info));
 
@@ -2829,7 +2914,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
+            this->Controls->Add(this->grpBox_nfc);
             // Recalculate buggy textboxes for high DPI
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
             this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
             this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 44);
@@ -2853,12 +2941,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     private: System::Void reset_window_option(bool reset_all) {
         enable_button_test = false;
+        enable_NFCScanning = false;
         this->Controls->Remove(this->grpBox_DebugCmd);
         this->Controls->Remove(this->grpBox_Restore);
         this->Controls->Remove(this->grpBox_ChangeSN);
         this->Controls->Remove(this->grpBox_VibPlayer);
         this->Controls->Remove(this->grpBox_ButtonTest);
 
+        this->Controls->Remove(this->grpBox_nfc);
         this->Controls->Remove(this->btn_enableExpertMode);
         this->Controls->Remove(this->grpBox_StickCal);
         this->Controls->Remove(this->grpBox_dev_param);
@@ -4026,9 +4116,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         if (option_is_on == 5) {
             enable_button_test = false;
+            enable_NFCScanning = false;
             this->Controls->Remove(this->grpBox_dev_param);
             this->Controls->Remove(this->grpBox_StickCal);
             this->Controls->Remove(this->grpBox_accGyroCal);
+            this->Controls->Remove(this->grpBox_nfc);
         }
 
         JCColorPicker->Show();
@@ -4062,6 +4154,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
+            this->Controls->Add(this->grpBox_nfc);
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
             this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
             this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 44);
@@ -4091,6 +4186,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
+            this->Controls->Add(this->grpBox_nfc);
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
             this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
             this->textBox_rstick_fcal->Size = System::Drawing::Size(207, 44);
@@ -4149,6 +4247,27 @@ public ref class FormJoy : public System::Windows::Forms::Form
         
         this->grpBox_Color->Margin = System::Windows::Forms::Padding(0, 0, 14, titleHeight);
         this->grpBox_StickCal->Margin = System::Windows::Forms::Padding(0, 0, 0, titleHeight);
+    }
+
+
+    private: System::Void btn_NFC_Click(System::Object^  sender, System::EventArgs^  e) {
+        if (!device_connection()) {
+            MessageBox::Show(L"The device was disconnected!\n\n" +
+                L"Press a button on the controller to connect\nand try again!",
+                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+            return;
+        }
+
+        if (enable_NFCScanning) {
+            this->btn_NFC->Text = "Scan";
+            enable_NFCScanning = false;
+        }
+        else {
+            this->btn_NFC->Text = "Stop";
+            enable_NFCScanning = true;
+            Application::DoEvents();
+            nfc_tag_info();
+        }
     }
 };
 }

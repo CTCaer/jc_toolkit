@@ -39,6 +39,45 @@ struct brcm_cmd_01 {
             u8 arg1;
             u8 arg2;
         } subcmd_arg;
+
+        struct {
+            u8  mcu_cmd;
+            u8  mcu_subcmd;
+            u8  mcu_mode;
+        } subcmd_21_21;
+
+        struct {
+            u8  mcu_cmd;
+            u8  mcu_subcmd;
+            u8  no_of_reg;
+            u16 reg1_addr;
+            u8  reg1_val;
+            u16 reg2_addr;
+            u8  reg2_val;
+            u16 reg3_addr;
+            u8  reg3_val;
+            u16 reg4_addr;
+            u8  reg4_val;
+            u16 reg5_addr;
+            u8  reg5_val;
+            u16 reg6_addr;
+            u8  reg6_val;
+            u16 reg7_addr;
+            u8  reg7_val;
+            u16 reg8_addr;
+            u8  reg8_val;
+            u16 reg9_addr;
+            u8  reg9_val;
+        } subcmd_21_23_04;
+
+        struct {
+            u8  mcu_cmd;
+            u8  mcu_subcmd;
+            u8  mcu_ir_mode;
+            u8  no_of_frags;
+            u16 mcu_major_v;
+            u16 mcu_minor_v;
+        } subcmd_21_23_01;
     };
 };
 
@@ -59,9 +98,11 @@ extern int send_custom_command(u8* arg);
 extern int device_connection();
 extern int set_led_busy();
 extern int button_test();
+extern int nfc_tag_info();
 extern int silence_input_report();
 int handle_ok;
 bool enable_button_test;
+bool enable_NFCScanning;
 bool cancel_spi_dump;
 
 hid_device *handle;
