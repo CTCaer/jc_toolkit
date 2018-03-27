@@ -1092,11 +1092,11 @@ int play_tune(int tune_no) {
     int tune_size = 0;
     switch (tune_no) {
         case 0:
-            memcpy(&tune, &tune_SMB, sizeof(tune_SMB));
+            memcpy(tune, &tune_SMB, sizeof(tune_SMB));
             tune_size = sizeof(tune_SMB) / sizeof(u32);
             break;
         case 1:
-            memcpy(&tune, &tune_SMO_OK, sizeof(tune_SMO_OK));
+            memcpy(tune, &tune_SMO_OK, sizeof(tune_SMO_OK));
             tune_size = sizeof(tune_SMO_OK) / sizeof(u32);
             break;
     }
