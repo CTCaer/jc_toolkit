@@ -982,7 +982,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->buttonTestToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->buttonTestToolStripMenuItem->Name = L"buttonTestToolStripMenuItem";
-            this->buttonTestToolStripMenuItem->Size = System::Drawing::Size(138, 22);
+            this->buttonTestToolStripMenuItem->Size = System::Drawing::Size(185, 22);
             this->buttonTestToolStripMenuItem->Text = L"Playground testing";
             this->buttonTestToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::buttonTestToolStripMenuItem_Click);
             // 
@@ -994,7 +994,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->debugToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->debugToolStripMenuItem->Name = L"debugToolStripMenuItem";
-            this->debugToolStripMenuItem->Size = System::Drawing::Size(138, 22);
+            this->debugToolStripMenuItem->Size = System::Drawing::Size(185, 22);
             this->debugToolStripMenuItem->Text = L"Debug";
             this->debugToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::debugToolStripMenuItem_Click);
             // 
@@ -1006,7 +1006,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->aboutToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->aboutToolStripMenuItem->Name = L"aboutToolStripMenuItem";
-            this->aboutToolStripMenuItem->Size = System::Drawing::Size(138, 22);
+            this->aboutToolStripMenuItem->Size = System::Drawing::Size(185, 22);
             this->aboutToolStripMenuItem->Text = L"About";
             this->aboutToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::aboutToolStripMenuItem_Click);
             // 
@@ -2754,7 +2754,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->txtBox_nfcUid->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
             this->txtBox_nfcUid->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)));
-            this->txtBox_nfcUid->Location = System::Drawing::Point(8, 110);
+            this->txtBox_nfcUid->Location = System::Drawing::Point(8, 116);
             this->txtBox_nfcUid->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
             this->txtBox_nfcUid->Multiline = true;
             this->txtBox_nfcUid->Name = L"txtBox_nfcUid";
@@ -2788,10 +2788,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
             this->lbl_nfcHelp->Location = System::Drawing::Point(8, 21);
             this->lbl_nfcHelp->Name = L"lbl_nfcHelp";
-            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 85);
             this->lbl_nfcHelp->TabIndex = 32;
-            this->lbl_nfcHelp->Text = L"Press Scan and try to touch some tags over the Joy-Con (R)\'s analog stick.\r\nWhen "
-                L"done, press stop.";
+            this->lbl_nfcHelp->Text = L"Press Scan and try to touch some tags or NFC-enabled phone over the Joy-Con (R)\'s"
+                L" analog stick.\r\nWhen done, press stop.";
             // 
             // checkBox_enableLeftUserCal
             // 
@@ -3849,7 +3849,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_accGyroCal);
             this->Controls->Add(this->grpBox_nfc);
             // Recalculate buggy textboxes for high DPI
-            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 85);
             this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
             this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
@@ -5114,7 +5114,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_accGyroCal);
             this->Controls->Add(this->grpBox_editUserStickCal);
             this->Controls->Add(this->grpBox_nfc);
-            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 85);
             this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
             this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
@@ -5152,7 +5152,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_accGyroCal);
             this->Controls->Add(this->grpBox_editUserStickCal);
             this->Controls->Add(this->grpBox_nfc);
-            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 73);
+            this->lbl_nfcHelp->Size = System::Drawing::Size(203, 85);
             this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
             this->textBox_lstick_fcal->Size = System::Drawing::Size(207, 44);
             this->textBox_lstick_ucal->Size = System::Drawing::Size(207, 44);
@@ -5405,6 +5405,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
         
         if (res == 0)
             this->lbl_IRStatus->Text = "Status: Done! Saved to IRcamera.png";
+        else
+            this->lbl_IRStatus->Text = "Status: Error! Please try again!";
 
         this->btn_getIRStream->Enabled = true;
         this->btn_getIRImage->Enabled = true;
@@ -5433,6 +5435,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             enable_IRVideoPhoto = false;
             if (res == 0)
                 this->lbl_IRStatus->Text = L"Status: Standby";
+            else
+                this->lbl_IRStatus->Text = "Status: Error! Please try again!";
         }
 
         this->btn_getIRImage->Enabled = true;

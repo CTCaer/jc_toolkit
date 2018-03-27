@@ -496,7 +496,7 @@ int send_rumble() {
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf2, 0);
+    res = hid_read_timeout(handle, buf2, 0, 64);
 
     //New vibration like switch
     Sleep(16);
@@ -511,7 +511,7 @@ int send_rumble() {
     hdr->rumble_l[3] = 0x72;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf2, 0);
+    res = hid_read_timeout(handle, buf2, 0, 64);
 
     Sleep(81);
 
@@ -523,7 +523,7 @@ int send_rumble() {
     hdr->rumble_l[3] = 0x40;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf2, 0);
+    res = hid_read_timeout(handle, buf2, 0, 64);
 
     Sleep(5);
 
@@ -535,7 +535,7 @@ int send_rumble() {
     hdr->rumble_l[3] = 0x64;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf2, 0);
+    res = hid_read_timeout(handle, buf2, 0, 64);
 
     Sleep(5);
 
@@ -554,7 +554,7 @@ int send_rumble() {
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x00;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf, 0);
+    res = hid_read_timeout(handle, buf, 0, 64);
 
     memset(buf, 0, sizeof(buf));
     hdr = (brcm_hdr *)buf;
@@ -565,7 +565,7 @@ int send_rumble() {
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf, 0);
+    res = hid_read_timeout(handle, buf, 0, 64);
 
     // Set HOME Led
     if (handle_ok != 1) {
@@ -583,7 +583,7 @@ int send_rumble() {
         buf[19] = buf[22] = buf[25] = buf[28] = buf[31] = 0x00;
         buf[20] = buf[21] = buf[23] = buf[24] = buf[26] = buf[27] = buf[29] = buf[30] = buf[32] = buf[33] = 0xFF;
         res = hid_write(handle, buf, sizeof(buf));
-        res = hid_read(handle, buf, 0);
+        res = hid_read_timeout(handle, buf, 0, 64);
     }
 
     return 0;
@@ -928,7 +928,7 @@ int button_test() {
     pkt->subcmd = 0x03;
     pkt->subcmd_arg.arg1 = 0x30;
     res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
-    res = hid_read(handle, buf_cmd, 0);
+    res = hid_read_timeout(handle, buf_cmd, 0, 120);
 
     // Enable IMU
     memset(buf_cmd, 0, sizeof(buf_cmd));
@@ -940,7 +940,7 @@ int button_test() {
     pkt->subcmd = 0x40;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
-    res = hid_read(handle, buf_cmd, 0);
+    res = hid_read_timeout(handle, buf_cmd, 0, 120);
 
     // Use SPI calibration and convert them to SI acc unit
     acc_cal_coeff[0] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][0]))) * 4.0f  * 9.8f;
@@ -1053,7 +1053,7 @@ int button_test() {
     pkt->subcmd = 0x03;
     pkt->subcmd_arg.arg1 = 0x3F;
     res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
-    res = hid_read(handle, buf_cmd, 0);
+    res = hid_read_timeout(handle, buf_cmd, 0, 64);
 
     memset(buf_cmd, 0, sizeof(buf_cmd));
     hdr = (brcm_hdr *)buf_cmd;
@@ -1064,7 +1064,7 @@ int button_test() {
     pkt->subcmd = 0x40;
     pkt->subcmd_arg.arg1 = 0x00;
     res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
-    res = hid_read(handle, buf_cmd, 0);
+    res = hid_read_timeout(handle, buf_cmd, 0, 64);
 
     return 0;
 }
@@ -1085,7 +1085,7 @@ int play_tune(int tune_no) {
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf2, 0);
+    res = hid_read_timeout(handle, buf2, 0, 120);
     // This needs to be changed for new bigger tunes.
     u32 *tune = new u32[6000];
     memset(tune, 0, sizeof(tune));
@@ -1136,7 +1136,7 @@ int play_tune(int tune_no) {
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x00;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf, 0);
+    res = hid_read_timeout(handle, buf, 0, 64);
 
     memset(buf, 0, sizeof(buf));
     hdr = (brcm_hdr *)buf;
@@ -1147,7 +1147,7 @@ int play_tune(int tune_no) {
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf, 0);
+    res = hid_read_timeout(handle, buf, 0, 64);
 
     delete[] tune;
 
@@ -1170,7 +1170,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf2, 0);
+    res = hid_read_timeout(handle, buf2, 0, 120);
 
     if (file_type == 1 || file_type == 2) {
         for (int i = 0; i < samples * 4; i = i + 4) {
@@ -1309,7 +1309,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     pkt->subcmd = 0x48;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf, 0);
+    res = hid_read_timeout(handle, buf, 0, 64);
 
     memset(buf, 0, sizeof(buf));
     hdr = (brcm_hdr *)buf;
@@ -1320,7 +1320,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read(handle, buf, 0);
+    res = hid_read_timeout(handle, buf, 0, 64);
 
     return 0;
 }
@@ -1600,6 +1600,7 @@ int ir_sensor(u8* buf_image, u8 ir_res_reg, u8 ir_res_no_of_packets,
     int res;
     u8 buf[0x170];
     int error_reading = 0;
+    int res_get = 0;
     // Set input report to x31
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -1621,10 +1622,16 @@ int ir_sensor(u8* buf_image, u8 ir_res_reg, u8 ir_res_no_of_packets,
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step1:
     // Enable MCU
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1645,10 +1652,16 @@ step1:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step2:
     // Request MCU status
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1671,10 +1684,16 @@ step2:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step3:
     // Set MCU mode
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1702,10 +1721,16 @@ step3:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step4:
     // Request MCU status
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1727,10 +1752,16 @@ step4:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step5:
     // Set IR mode and number of packets for each data blob. Blob size is packets * 300 bytes.
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1762,10 +1793,16 @@ step5:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step6:
     // Request IR mode status
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1792,10 +1829,16 @@ step6:
             if (retries > 4 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step7:
     // Write to registers for the selected IR mode
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1854,10 +1897,16 @@ step7:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step8:
     // Write to registers for the selected IR mode
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1889,10 +1938,16 @@ step8:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            res_get = 1;
+            goto step10;
+        }
     }
 
 step9:
     // Get the IR registers
+    error_reading = 0;
     int pos_ir_registers = 0;
     while (0) {
             memset(buf, 0, sizeof(buf));
@@ -1940,10 +1995,14 @@ step9:
                 printf("\n");
                 break;
             }
+            //error_reading++;
+            //if (error_reading > 7) {
+            //    res_get = 1;
+            //    goto step10;
+            //}
     }
 
     // Stream or Capture images from NIR Camera
-    int res_get = 0;
     if (enable_IRVideoPhoto)
         res_get = get_raw_ir_image(ir_res_no_of_packets, 2);
     else
@@ -1951,7 +2010,7 @@ step9:
 
     //////
     // TODO: Should we send subcmd x21 with 'x230102' to disable IR mode before disabling MCU?
-
+step10:
     // Disable MCU
     memset(buf, 0, sizeof(buf));
     auto hdr = (brcm_hdr *)buf;
@@ -1966,6 +2025,7 @@ step9:
 
 
     // Set input report back to x3f
+    error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
@@ -1986,6 +2046,10 @@ step9:
             if (retries > 8 || res == 0)
                 break;
         }
+        error_reading++;
+        if (error_reading > 7) {
+            goto stepf;
+        }
     }
 
 stepf:
@@ -2003,6 +2067,7 @@ int nfc_tag_info() {
         u8 buf[0x170];
         u8 buf2[0x170];
         int error_reading = 0;
+        int res_get = 0;
         // Set input report to x31
         while (1) {
             memset(buf, 0, sizeof(buf));
@@ -2024,10 +2089,16 @@ int nfc_tag_info() {
                 if (retries > 8 || res == 0)
                     break;
             }
+            error_reading++;
+            if (error_reading > 7) {
+                res_get = 1;
+                goto step9;
+            }
         }
 
     step1:
         // Enable MCU
+        error_reading = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
             auto hdr = (brcm_hdr *)buf;
@@ -2048,10 +2119,16 @@ int nfc_tag_info() {
                 if (retries > 8 || res == 0)
                     break;
             }
+            error_reading++;
+            if (error_reading > 7) {
+                res_get = 1;
+                goto step9;
+            }
         }
 
     step2:
         // Request MCU status
+        error_reading = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
             auto hdr = (brcm_hdr *)buf;
@@ -2074,10 +2151,16 @@ int nfc_tag_info() {
                 if (retries > 8 || res == 0)
                     break;
             }
+            error_reading++;
+            if (error_reading > 7) {
+                res_get = 1;
+                goto step9;
+            }
         }
 
     step3:
         // Set MCU mode
+        error_reading = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
             auto hdr = (brcm_hdr *)buf;
@@ -2105,10 +2188,16 @@ int nfc_tag_info() {
                 if (retries > 8 || res == 0)
                     break;
             }
+            error_reading++;
+            if (error_reading > 7) {
+                res_get = 1;
+                goto step9;
+            }
         }
 
     step4:
         // Request MCU status
+        error_reading = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
             auto hdr = (brcm_hdr *)buf;
@@ -2130,10 +2219,16 @@ int nfc_tag_info() {
                 if (retries > 8 || res == 0)
                     break;
             }
+            error_reading++;
+            if (error_reading > 7) {
+                res_get = 1;
+                goto step9;
+            }
         }
 
     step5:
         // Request NFC mode status
+        error_reading = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
             auto hdr = (brcm_hdr *)buf;
@@ -2162,6 +2257,11 @@ int nfc_tag_info() {
                 retries++;
                 if (retries > 4 || res == 0)
                     break;
+            }
+            error_reading++;
+            if (error_reading > 9) {
+                res_get = 1;
+                goto step9;
             }
         }
 
@@ -2310,6 +2410,11 @@ int nfc_tag_info() {
                 retries++;
                 if (retries > 8 || res == 0)
                     break;
+            }
+            error_reading++;
+            if (error_reading > 7) {
+                res_get = 1;
+                goto stepf;
             }
         }
     stepf:
