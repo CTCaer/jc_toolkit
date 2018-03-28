@@ -12,10 +12,13 @@
 #include "ir_sensor.h"
 #include "tune.h"
 #include "FormJoy.h"
+#include "hidapi_log.h"
 
 using namespace CppWinFormJoy;
 
 #pragma comment(lib, "SetupAPI")
+
+bool enable_traffic_dump = false;
 
 s16 uint16_to_int16(u16 a) {
     s16 b;
@@ -2636,6 +2639,19 @@ int Main(array<String^>^ args) {
             MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
             return 1;
     }
+    // Enable hid traffic debug
+    if (args->Length > 0) {
+        if (args[0] == "-d")
+            enable_traffic_dump = true;
+    }
+    
+    //BOOL chk = AllocConsole();
+    //if (chk)
+    //{
+    //freopen("CONOUT$", "w", stdout);
+    //printf(" printing to console\n");
+    //}
+
     timming_byte = 0x0;
 
     //test_chamber();

@@ -57,15 +57,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         // Pull controller info
         full_refresh(false);
-
-        /*
-        BOOL chk = AllocConsole();
-        if (chk)
-        {
-            freopen("CONOUT$", "w", stdout);
-            printf(" printing to console\n");
-        }
-        */
         
         // Set properties that otherwise get removed by Designer in InitializeComponent()
         this->comboBox_rstOption->Items->Add("Restore Color");

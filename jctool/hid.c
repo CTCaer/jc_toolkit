@@ -65,6 +65,7 @@ extern "C" {
 
 
 #include "hidapi.h"
+#include "hidapi_log.h"
 
 #undef MIN
 #define MIN(x,y) ((x) < (y)? (x): (y))
@@ -612,6 +613,15 @@ int HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *
 {
 	DWORD bytes_written;
 	BOOL res;
+    FILE *traffic_dump_file;
+    errno_t err_traffic;
+
+    // Traffic dump debug log
+    if (enable_traffic_dump) {
+        if ((err_traffic = fopen_s(&traffic_dump_file, "./traffic_log.txt", "a+")) != 0) {
+            enable_traffic_dump = false;
+        }
+    }
 
 	OVERLAPPED ol;
 	unsigned char *buf;
@@ -634,6 +644,15 @@ int HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *
 		memset(buf + length, 0, dev->output_report_length - length);
 		length = dev->output_report_length;
 	}
+
+    // Log buffer to a text file
+    if (enable_traffic_dump) {
+        fprintf_s(traffic_dump_file, "%s", "W: ");
+        for (int buf_index = 0; buf_index < (int)length; buf_index++)
+            fprintf_s(traffic_dump_file, "%02x ", buf[buf_index]);
+        fprintf_s(traffic_dump_file, "%s", "\r\n");
+        fclose(traffic_dump_file);
+    }
 
 	res = WriteFile(dev->device_handle, buf, length, NULL, &ol);
 	
@@ -669,6 +688,15 @@ int HID_API_EXPORT HID_API_CALL hid_read_timeout(hid_device *dev, unsigned char 
 	DWORD bytes_read = 0;
 	size_t copy_len = 0;
 	BOOL res;
+    FILE *traffic_dump_file;
+    errno_t err_traffic;
+
+    // Traffic dump debug log
+    if (enable_traffic_dump) {
+        if ((err_traffic = fopen_s(&traffic_dump_file, "./traffic_log.txt", "a+")) != 0) {
+            enable_traffic_dump = false;
+        }
+    }
 
 	/* Copy the handle for convenience. */
 	HANDLE ev = dev->ol.hEvent;
@@ -732,6 +760,15 @@ end_of_function:
 		return -1;
 	}
 	
+    // Log buffer to a text file
+    if (enable_traffic_dump) {
+        fprintf_s(traffic_dump_file, "%s", "R: ");
+        for (int buf_index = 0; buf_index < (int)copy_len; buf_index++)
+            fprintf_s(traffic_dump_file, "%02x ", data[buf_index]);
+        fprintf_s(traffic_dump_file, "%s", "\r\n");
+        fclose(traffic_dump_file);
+    }
+
 	return copy_len;
 }
 

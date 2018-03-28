@@ -81,6 +81,7 @@
     <ClCompile Include="hid.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="hidapi_log.h" />
     <ClInclude Include="ir_sensor.h" />
     <ClInclude Include="jctool.h" />
     <ClInclude Include="FormJoy.h">
