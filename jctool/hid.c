@@ -648,9 +648,9 @@ int HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *
     // Log buffer to a text file
     if (enable_traffic_dump) {
         fprintf_s(traffic_dump_file, "%s", "W: ");
-        for (int buf_index = 0; buf_index < (int)length; buf_index++)
+        for (int buf_index = 0; buf_index < dev->output_report_length; buf_index++)
             fprintf_s(traffic_dump_file, "%02x ", buf[buf_index]);
-        fprintf_s(traffic_dump_file, "%s", "\r\n");
+        fprintf_s(traffic_dump_file, "%s", "\n\n");
         fclose(traffic_dump_file);
     }
 
@@ -765,7 +765,9 @@ end_of_function:
         fprintf_s(traffic_dump_file, "%s", "R: ");
         for (int buf_index = 0; buf_index < (int)copy_len; buf_index++)
             fprintf_s(traffic_dump_file, "%02x ", data[buf_index]);
-        fprintf_s(traffic_dump_file, "%s", "\r\n");
+        if ((int)copy_len == 0)
+            fprintf_s(traffic_dump_file, "%s", "Requested hid read length was 0 bytes.");
+        fprintf_s(traffic_dump_file, "%s", "\n\n");
         fclose(traffic_dump_file);
     }
 
