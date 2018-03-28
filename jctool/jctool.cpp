@@ -1663,7 +1663,7 @@ step1:
     }
 
 step2:
-    // Request MCU status
+    // Request MCU mode status
     error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -1678,9 +1678,11 @@ step2:
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
             if (buf[0] == 0x31) {
-                //if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x06120004) // Initializing
-                // MCU state: Standby
-                if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x01120004) // Mode is Standby
+                //if (buf[49] == 0x01 && buf[56] == 0x06) // MCU state is Initializing
+                // *(u16*)buf[52]LE x04 in lower than 3.89fw, x05 in 3.89
+                // *(u16*)buf[54]LE x12 in lower than 3.89fw, x18 in 3.89
+                // buf[56]: mcu mode state
+                if (buf[49] == 0x01 && buf[56] == 0x01) // MCU state is Standby
                     goto step3;
             }
             retries++;
@@ -1716,8 +1718,10 @@ step3:
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
             if (buf[0] == 0x21) {
-                // MCU state: Standby
-                if (buf[15] == 0x01 && *(u32*)&buf[19] == 0x01120004) // Mode is Standby
+                // *(u16*)buf[18]LE x04 in lower than 3.89fw, x05 in 3.89
+                // *(u16*)buf[20]LE x12 in lower than 3.89fw, x18 in 3.89
+                // buf[56]: mcu mode state
+                if (buf[15] == 0x01 && *(u32*)&buf[22] == 0x01) // Mcu mode is Standby
                     goto step4;
             }
             retries++;
@@ -1732,7 +1736,7 @@ step3:
     }
 
 step4:
-    // Request MCU status
+    // Request MCU mode status
     error_reading = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
@@ -1747,8 +1751,9 @@ step4:
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
             if (buf[0] == 0x31) {
-                // MCU state: IR mode
-                if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x05120004) // Mode set to IR
+                // *(u16*)buf[52]LE x04 in lower than 3.89fw, x05 in 3.89
+                // *(u16*)buf[54]LE x12 in lower than 3.89fw, x18 in 3.89
+                if (buf[49] == 0x01 && buf[56] == 0x05) // Mcu mode is IR
                     goto step5;
             }
             retries++;
@@ -2130,7 +2135,7 @@ int nfc_tag_info() {
         }
 
     step2:
-        // Request MCU status
+        // Request MCU mode status
         error_reading = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
@@ -2145,9 +2150,11 @@ int nfc_tag_info() {
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
                 if (buf[0] == 0x31) {
-                    //if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x06120004) // Initializing
-                    // MCU state: Standby
-                    if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x01120004) // Mode is Standby
+                    //if (buf[49] == 0x01 && buf[56] == 0x06) // MCU state is Initializing
+                    // *(u16*)buf[52]LE x04 in lower than 3.89fw, x05 in 3.89
+                    // *(u16*)buf[54]LE x12 in lower than 3.89fw, x18 in 3.89
+                    // buf[56]: mcu mode state
+                    if (buf[49] == 0x01 && buf[56] == 0x01) // Mcu mode is Standby
                         goto step3;
                 }
                 retries++;
@@ -2183,8 +2190,9 @@ int nfc_tag_info() {
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
                 if (buf[0] == 0x21) {
-                    // MCU state: Standby
-                    if (buf[15] == 0x01 && *(u32*)&buf[19] == 0x01120004) // Mode still on standby
+                    // *(u16*)buf[18]LE x04 in lower than 3.89fw, x05 in 3.89
+                    // *(u16*)buf[20]LE x12 in lower than 3.89fw, x18 in 3.89
+                    if (buf[15] == 0x01 && buf[22] == 0x01) // Mcu mode is standby
                         goto step4;
                 }
                 retries++;
@@ -2199,7 +2207,7 @@ int nfc_tag_info() {
         }
 
     step4:
-        // Request MCU status
+        // Request MCU mode status
         error_reading = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
@@ -2214,8 +2222,9 @@ int nfc_tag_info() {
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
                 if (buf[0] == 0x31) {
-                    // MCU state: IR mode
-                    if (buf[49] == 0x01 && *(u32*)&buf[53] == 0x04120004) // Mode set to NFC
+                    // *(u16*)buf[52]LE x04 in lower than 3.89fw, x05 in 3.89
+                    // *(u16*)buf[54]LE x12 in lower than 3.89fw, x18 in 3.89
+                    if (buf[49] == 0x01 && buf[56] == 0x04) // Mcu mode is NFC
                         goto step5;
                 }
                 retries++;
