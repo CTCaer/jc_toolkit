@@ -3298,8 +3298,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_changeGripsColor->Enabled = true;
         }
 
-        if (handle_ok == 2) {
-            this->iRCameraToolStripMenuItem->Enabled = true;
+        if (handle_ok != 1) {
+            if (handle_ok == 2)
+                this->iRCameraToolStripMenuItem->Enabled = true;
+            else
+                this->iRCameraToolStripMenuItem->Enabled = false;
             this->grpBox_nfc->Enabled = true;
         }
         else {
@@ -5226,6 +5229,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
 
     private: System::Int32 prepareSendIRConfig() {
+        String^ error_msg;
         int res = 0;
         u8 ir_leds = 0x00;
         u8 ir_res_register = 0x00;
@@ -5320,8 +5324,40 @@ public ref class FormJoy : public System::Windows::Forms::Form
         res = ir_sensor(buf_image, ir_res_register, ir_res_no_of_packets, (u16)(this->numeric_IRExposure->Value * 31200 / 1000),
             ir_leds, (u8)this->trackBar_IRGain->Value, ir_ex_light_filter);
 
-        if (!res == 0)
-            this->lbl_IRStatus->Text = "Status: Error! Please try again.";
+        // Get error
+        switch (res) {
+            case 1:
+                error_msg = "1ID31";
+                break;
+            case 2:
+                error_msg = "2MCUON";
+                break;
+            case 3:
+                error_msg = "3MCUONBUSY";
+                break;
+            case 4:
+                error_msg = "4MCUMODESET";
+                break;
+            case 5:
+                error_msg = "5MCUSETBUSY";
+                break;
+            case 6:
+                error_msg = "6IRMODESET";
+                break;
+            case 7:
+                error_msg = "7IRSETBUSY";
+                break;
+            case 8:
+                error_msg = "8IRCFG";
+                break;
+            case 9:
+                error_msg = "9IRFCFG";
+                break;
+            default:
+                break;
+        }
+        if (res > 0)
+            this->lbl_IRStatus->Text = "Status: Error " + error_msg + "!";
 
         delete[] buf_image;
 
@@ -5405,8 +5441,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
         
         if (res == 0)
             this->lbl_IRStatus->Text = "Status: Done! Saved to IRcamera.png";
-        else
-            this->lbl_IRStatus->Text = "Status: Error! Please try again!";
 
         this->btn_getIRStream->Enabled = true;
         this->btn_getIRImage->Enabled = true;
@@ -5435,8 +5469,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
             enable_IRVideoPhoto = false;
             if (res == 0)
                 this->lbl_IRStatus->Text = L"Status: Standby";
-            else
-                this->lbl_IRStatus->Text = "Status: Error! Please try again!";
         }
 
         this->btn_getIRImage->Enabled = true;
@@ -5457,10 +5489,37 @@ public ref class FormJoy : public System::Windows::Forms::Form
             enable_NFCScanning = false;
         }
         else {
+            String^ error_msg;
             this->btn_NFC->Text = "Stop";
             enable_NFCScanning = true;
             Application::DoEvents();
-            nfc_tag_info();
+            int res = nfc_tag_info();
+
+            // Get error
+            switch (res) {
+            case 1:
+                error_msg = "1ID31";
+                break;
+            case 2:
+                error_msg = "2MCUON";
+                break;
+            case 3:
+                error_msg = "3MCUONBUSY";
+                break;
+            case 4:
+                error_msg = "4MCUMODESET";
+                break;
+            case 5:
+                error_msg = "5MCUSETBUSY";
+                break;
+            case 6:
+                error_msg = "6NFCPOLL";
+                break;
+            default:
+                break;
+            }
+            if (res > 0)
+                this->txtBox_nfcUid->Text = "Error " + error_msg + "!";
         }
     }
 

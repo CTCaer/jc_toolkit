@@ -1654,7 +1654,7 @@ step1:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 2;
             goto step10;
         }
     }
@@ -1686,7 +1686,7 @@ step2:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 3;
             goto step10;
         }
     }
@@ -1723,7 +1723,7 @@ step3:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 4;
             goto step10;
         }
     }
@@ -1754,7 +1754,7 @@ step4:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 5;
             goto step10;
         }
     }
@@ -1795,7 +1795,7 @@ step5:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 6;
             goto step10;
         }
     }
@@ -1831,7 +1831,7 @@ step6:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 7;
             goto step10;
         }
     }
@@ -1899,7 +1899,7 @@ step7:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 8;
             goto step10;
         }
     }
@@ -1940,7 +1940,7 @@ step8:
         }
         error_reading++;
         if (error_reading > 7) {
-            res_get = 1;
+            res_get = 9;
             goto step10;
         }
     }
@@ -1997,7 +1997,7 @@ step9:
             }
             //error_reading++;
             //if (error_reading > 7) {
-            //    res_get = 1;
+            //    res_get = 10;
             //    goto step10;
             //}
     }
@@ -2121,7 +2121,7 @@ int nfc_tag_info() {
             }
             error_reading++;
             if (error_reading > 7) {
-                res_get = 1;
+                res_get = 2;
                 goto step9;
             }
         }
@@ -2153,7 +2153,7 @@ int nfc_tag_info() {
             }
             error_reading++;
             if (error_reading > 7) {
-                res_get = 1;
+                res_get = 3;
                 goto step9;
             }
         }
@@ -2190,7 +2190,7 @@ int nfc_tag_info() {
             }
             error_reading++;
             if (error_reading > 7) {
-                res_get = 1;
+                res_get = 4;
                 goto step9;
             }
         }
@@ -2221,7 +2221,7 @@ int nfc_tag_info() {
             }
             error_reading++;
             if (error_reading > 7) {
-                res_get = 1;
+                res_get = 5;
                 goto step9;
             }
         }
@@ -2260,7 +2260,7 @@ int nfc_tag_info() {
             }
             error_reading++;
             if (error_reading > 9) {
-                res_get = 1;
+                res_get = 6;
                 goto step9;
             }
         }
@@ -2413,11 +2413,12 @@ int nfc_tag_info() {
             }
             error_reading++;
             if (error_reading > 7) {
-                res_get = 1;
                 goto stepf;
             }
         }
     stepf:
+        if (res_get > 0)
+            return res_get;
         Sleep(30);
     }
 
