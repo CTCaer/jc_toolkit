@@ -1941,6 +1941,10 @@ step8:
                 // Registers for mode 7: Image transfer set
                 if (buf[15] == 0x13 && *(u16*)&buf[16] == 0x0700)
                     goto step9;
+                // If the Joy-Con gets to reply to the previous x11 - x03 02 cmd before sending the above,
+                // it will reply with the following if we do not send x11 - x03 02 again:
+                else if (buf[15] == 0x23) // Got mcu mode config.
+                    goto step9;
             }
             retries++;
             if (retries > 8 || res == 0)

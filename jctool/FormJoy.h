@@ -27,16 +27,16 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     FormJoy(void)
     {
-        handler_close = 0;
-        option_is_on = 0;
-        vib_file_type = 0;
+        handler_close   = 0;
+        option_is_on    = 0;
+        vib_file_type   = 0;
         vib_sample_rate = 0;
-        vib_samples = 0;
-        vib_loop_start = 0;
-        vib_loop_end = 0;
-        vib_loop_wait = 0;
+        vib_samples     = 0;
+        vib_loop_start  = 0;
+        vib_loop_end    = 0;
+        vib_loop_wait   = 0;
         disable_expert_mode = true;
-        temp_celsius = true;
+        temp_celsius    = true;
 
         silence_input_report();
         set_led_busy();
@@ -3291,13 +3291,13 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         if (handle_ok != 1) {
             if (handle_ok == 2)
-                this->iRCameraToolStripMenuItem->Enabled = true;
+                this->iRCameraToolStripMenuItem->Enabled = true;  // JC (R)
             else
-                this->iRCameraToolStripMenuItem->Enabled = false;
+                this->iRCameraToolStripMenuItem->Enabled = false; // Pro con
             this->grpBox_nfc->Enabled = true;
         }
         else {
-            this->iRCameraToolStripMenuItem->Enabled = false;
+            this->iRCameraToolStripMenuItem->Enabled = false; // JC (L)
             this->grpBox_nfc->Enabled = false;
         }
 
@@ -3614,7 +3614,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         unsigned char spiColors[12];
         memset(spiColors, 0, 12);
 
-        get_spi_data(0x6050, 12, spiColors);
+        int res = get_spi_data(0x6050, 12, spiColors);
 
         update_joycon_color(
             (u8)spiColors[0], (u8)spiColors[1], (u8)spiColors[2], // Body Colors
@@ -3641,6 +3641,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->jcGripRightColor = Color::FromArgb(0xFF, (u8)spiColors[9], (u8)spiColors[10], (u8)spiColors[11]);
         }
 
+        if (res) {
+            this->lbl_Body_hex_txt->Text = "Error!";
+            this->lbl_Buttons_hex_txt->Text = "Error!";
+        }
     }
 
     private: System::Void update_battery() {
