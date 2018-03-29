@@ -1602,6 +1602,7 @@ int ir_sensor(u8* buf_image, u8 ir_res_reg, u8 ir_res_no_of_packets,
     u16 ir_exposure, u8 ir_leds, u8 ir_digital_gain, u8 ir_ex_light_filter) {
     int res;
     u8 buf[0x170];
+    static int output_buffer_length = 49;
     int error_reading = 0;
     int res_get = 0;
     // Set input report to x31
@@ -1614,7 +1615,7 @@ int ir_sensor(u8* buf_image, u8 ir_res_reg, u8 ir_res_no_of_packets,
         timming_byte++;
         pkt->subcmd = 0x03;
         pkt->subcmd_arg.arg1 = 0x31;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1644,7 +1645,7 @@ step1:
         timming_byte++;
         pkt->subcmd = 0x22;
         pkt->subcmd_arg.arg1 = 0x1;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1673,7 +1674,7 @@ step2:
         hdr->timer = timming_byte & 0xF;
         timming_byte++;
         pkt->subcmd = 0x01;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1713,7 +1714,7 @@ step3:
         pkt->subcmd_21_21.mcu_mode = 0x05; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1746,7 +1747,7 @@ step4:
         hdr->timer = timming_byte & 0xF;
         timming_byte++;
         pkt->subcmd = 0x01;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1788,7 +1789,7 @@ step5:
         pkt->subcmd_21_23_01.mcu_minor_v = 0x0900; // Set required IR MCU FW v3.09. Minor 0x0009.
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1824,7 +1825,7 @@ step6:
 
         buf[47] = mcu_crc8_calc(buf + 11, 36);
         buf[48] = 0xFF;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -1880,7 +1881,7 @@ step7:
         pkt->subcmd_21_23_04.reg9_val   = 0xc8;
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
 
         // Request IR mode status, before waiting for the x21 ack
         memset(buf, 0, sizeof(buf));
@@ -1891,7 +1892,7 @@ step7:
         pkt->subcmd_arg.arg1 = 0x02;
         buf[47] = mcu_crc8_calc(buf + 11, 36);
         buf[48] = 0xFF;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
 
         int retries = 0;
         while (1) {
@@ -1932,7 +1933,7 @@ step8:
         pkt->subcmd_21_23_04.reg1_val   = 0x01;
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
 
         int retries = 0;
         while (1) {
@@ -1943,7 +1944,7 @@ step8:
                     goto step9;
                 // If the Joy-Con gets to reply to the previous x11 - x03 02 cmd before sending the above,
                 // it will reply with the following if we do not send x11 - x03 02 again:
-                else if (buf[15] == 0x23) // Got mcu mode config.
+                else if (buf[15] == 0x23) // Got mcu mode config write.
                     goto step9;
             }
             retries++;
@@ -1980,9 +1981,9 @@ step9:
 
             buf[48] = mcu_crc8_calc(buf + 11, 37);
 
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             Sleep(15);
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int tries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2032,7 +2033,7 @@ step10:
     timming_byte++;
     pkt->subcmd = 0x22;
     pkt->subcmd_arg.arg1 = 0x00;
-    res = hid_write(handle, buf, sizeof(buf));
+    res = hid_write(handle, buf, output_buffer_length);
     res = hid_read_timeout(handle, buf, sizeof(buf), 64);  
 
 
@@ -2047,7 +2048,7 @@ step10:
         timming_byte++;
         pkt->subcmd = 0x03;
         pkt->subcmd_arg.arg1 = 0x3f;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         int retries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2078,6 +2079,7 @@ int nfc_tag_info() {
         int res;
         u8 buf[0x170];
         u8 buf2[0x170];
+        static int output_buffer_length = 49;
         int error_reading = 0;
         int res_get = 0;
         // Set input report to x31
@@ -2090,7 +2092,7 @@ int nfc_tag_info() {
             timming_byte++;
             pkt->subcmd = 0x03;
             pkt->subcmd_arg.arg1 = 0x31;
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2120,7 +2122,7 @@ int nfc_tag_info() {
             timming_byte++;
             pkt->subcmd = 0x22;
             pkt->subcmd_arg.arg1 = 0x1;
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2149,7 +2151,7 @@ int nfc_tag_info() {
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
             pkt->subcmd = 0x01;
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2189,7 +2191,7 @@ int nfc_tag_info() {
             pkt->subcmd_21_21.mcu_mode = 0x04; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
 
             buf[48] = mcu_crc8_calc(buf + 12, 36);
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2221,7 +2223,7 @@ int nfc_tag_info() {
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
             pkt->subcmd = 0x01;
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2261,7 +2263,7 @@ int nfc_tag_info() {
             buf[15] = 0x00; // Length of data after cmd header
 
             buf[47] = mcu_crc8_calc(buf + 11, 36); //Without the last byte
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
@@ -2304,7 +2306,7 @@ int nfc_tag_info() {
             //buf[20] = 0x01;
 
             buf[47] = mcu_crc8_calc(buf + 11, 36); //Without the last byte
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 if (!enable_NFCScanning)
@@ -2377,7 +2379,7 @@ int nfc_tag_info() {
 
             buf2[47] = mcu_crc8_calc(buf2 + 11, 36);
             buf2[48] = 0xFF;
-            res = hid_write(handle, buf2, sizeof(buf2));
+            res = hid_write(handle, buf2, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf2, sizeof(buf2), 64);
@@ -2402,7 +2404,7 @@ int nfc_tag_info() {
         timming_byte++;
         pkt->subcmd = 0x22;
         pkt->subcmd_arg.arg1 = 0x00;
-        res = hid_write(handle, buf, sizeof(buf));
+        res = hid_write(handle, buf, output_buffer_length);
         res = hid_read_timeout(handle, buf, sizeof(buf), 64);
 
 
@@ -2416,7 +2418,7 @@ int nfc_tag_info() {
             timming_byte++;
             pkt->subcmd = 0x03;
             pkt->subcmd_arg.arg1 = 0x3f;
-            res = hid_write(handle, buf, sizeof(buf));
+            res = hid_write(handle, buf, output_buffer_length);
             int retries = 0;
             while (1) {
                 res = hid_read_timeout(handle, buf, sizeof(buf), 64);
