@@ -323,6 +323,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Label^  lbl_userCalMinCenterMax2;
     private: System::Windows::Forms::Button^  btn_writeUserCal;
     private: System::Windows::Forms::Button^  btn_changeGripsColor;
+    private: System::Windows::Forms::Button^  btn_IRConfigLive;
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 #pragma endregion
@@ -501,6 +502,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->lbl_userCalMinCenterMax2 = (gcnew System::Windows::Forms::Label());
             this->grpBox_editUserStickCal = (gcnew System::Windows::Forms::GroupBox());
             this->btn_writeUserCal = (gcnew System::Windows::Forms::Button());
+            this->btn_IRConfigLive = (gcnew System::Windows::Forms::Button());
             this->grpBox_Color->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
             this->grpBox_SPI->SuspendLayout();
@@ -2379,6 +2381,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             this->grpBox_IR->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->grpBox_IR->Controls->Add(this->btn_IRConfigLive);
             this->grpBox_IR->Controls->Add(this->trackBar_IRGain);
             this->grpBox_IR->Controls->Add(this->lbl_EXFilter);
             this->grpBox_IR->Controls->Add(this->comboBox_IRExFilter);
@@ -3137,6 +3140,16 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_writeUserCal->Text = L"Write";
             this->btn_writeUserCal->UseVisualStyleBackColor = false;
             this->btn_writeUserCal->Click += gcnew System::EventHandler(this, &FormJoy::btn_writeUserCal_Click);
+            // 
+            // btn_IRConfigLive
+            // 
+            this->btn_IRConfigLive->Location = System::Drawing::Point(334, 371);
+            this->btn_IRConfigLive->Name = L"btn_IRConfigLive";
+            this->btn_IRConfigLive->Size = System::Drawing::Size(26, 24);
+            this->btn_IRConfigLive->TabIndex = 35;
+            this->btn_IRConfigLive->Text = L"C";
+            this->btn_IRConfigLive->UseVisualStyleBackColor = true;
+            this->btn_IRConfigLive->Click += gcnew System::EventHandler(this, &FormJoy::btn_IRConfigLive_Click);
             // 
             // FormJoy
             // 
@@ -5223,16 +5236,13 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
 
-    private: System::Int32 prepareSendIRConfig() {
+    private: System::Int32 prepareSendIRConfig(bool startNewConfig) {
         String^ error_msg;
+        ir_image_config ir_new_config;
         int res = 0;
-        u8 ir_leds = 0x00;
-        u8 ir_res_register = 0x00;
-        u8 ir_res_no_of_packets = 0x00;
-        u8 ir_ex_light_filter = 0x03;
-        u8 *buf_image = new uint8_t[76800]; //Max res 8bpp
-
-        memset(buf_image, 0, sizeof(buf_image));
+        ir_new_config.ir_leds = 0x00;
+        ir_new_config.ir_res_reg = 0x00;
+        ir_new_config.ir_ex_light_filter = 0x03;
 
         this->lbl_IRStatus->Text = "Status: Configuring";
         Application::DoEvents();
@@ -5243,84 +5253,95 @@ public ref class FormJoy : public System::Windows::Forms::Form
         // The sensor supports a max of Binning [4 x 2] and max Skipping [4 x 4]
         // The maximum reduction in resolution is a combined Binning/Skipping [16 x 8]
         // The bits control the matrices used. Skipping [Bits0,1 x Bits2,3], Binning [Bits4,5 x Bit6]. Bit7 is unused.
-        if (this->radioBtn_IR240p->Checked) {
-            ir_image_width = 320;
-            ir_image_height = 240;
-            ir_res_register = 0b00000000; // Full pixel array
-            ir_res_no_of_packets = 0xff;
-        }
-        else if (this->radioBtn_IR120p->Checked) {
-            ir_image_width = 160;
-            ir_image_height = 120;
-            ir_res_register = 0b01010000; // Sensor Binning [2 X 2]
-            ir_res_no_of_packets = 0x3f;
-        }
-        else if (this->radioBtn_IR60p->Checked) {
-            ir_image_width = 80;
-            ir_image_height = 60;
-            ir_res_register = 0b01100100; // Sensor Binning [4 x 2] and Skipping [1 x 2]
-            ir_res_no_of_packets = 0x0f;
-        }
-        else if (this->radioBtn_IR30p->Checked) {
-            ir_image_width = 40;
-            ir_image_height = 30;
-            ir_res_register = 0b01101001; // Sensor Binning [4 x 2] and Skipping [2 x 4]
-            ir_res_no_of_packets = 0x03;
-        }
-        else {
-            return 8;
+        if (startNewConfig) {
+            if (this->radioBtn_IR240p->Checked) {
+                ir_image_width = 320;
+                ir_image_height = 240;
+                ir_new_config.ir_res_reg = 0b00000000; // Full pixel array
+                ir_max_frag_no = 0xff;
+            }
+            else if (this->radioBtn_IR120p->Checked) {
+                ir_image_width = 160;
+                ir_image_height = 120;
+                ir_new_config.ir_res_reg = 0b01010000; // Sensor Binning [2 X 2]
+                ir_max_frag_no = 0x3f;
+            }
+            else if (this->radioBtn_IR60p->Checked) {
+                ir_image_width = 80;
+                ir_image_height = 60;
+                ir_new_config.ir_res_reg = 0b01100100; // Sensor Binning [4 x 2] and Skipping [1 x 2]
+                ir_max_frag_no = 0x0f;
+            }
+            else if (this->radioBtn_IR30p->Checked) {
+                ir_image_width = 40;
+                ir_image_height = 30;
+                ir_new_config.ir_res_reg = 0b01101001; // Sensor Binning [4 x 2] and Skipping [2 x 4]
+                ir_max_frag_no = 0x03;
+            }
+            else {
+                return 8;
+            }
         }
 
         // IR Leds. Only the below configurations are supported.
         if (this->checkBox_IRBrightLeds->Checked == true && this->checkBox_IRDimLeds->Checked == true)
-            ir_leds = (0b00 << 4); // Both Far/Narrow 75° and Near/Wide 130° Led groups are enabled.
+            ir_new_config.ir_leds = (0b00 << 4); // Both Far/Narrow 75° and Near/Wide 130° Led groups are enabled.
         else if (this->checkBox_IRBrightLeds->Checked == true && this->checkBox_IRDimLeds->Checked == false)
-            ir_leds = (0b10 << 4); // Only Far/Narrow 75° Led group is enabled.
+            ir_new_config.ir_leds = (0b10 << 4); // Only Far/Narrow 75° Led group is enabled.
         else if (this->checkBox_IRBrightLeds->Checked == false && this->checkBox_IRDimLeds->Checked == true)
-            ir_leds = (0b01 << 4); // Only Near/Wide 130° Led group is enabled.
+            ir_new_config.ir_leds = (0b01 << 4); // Only Near/Wide 130° Led group is enabled.
         else if (this->checkBox_IRBrightLeds->Checked == false && this->checkBox_IRDimLeds->Checked == false)
-            ir_leds = (0b11 << 4); // Both groups disabled
+            ir_new_config.ir_leds = (0b11 << 4); // Both groups disabled
 
         // External Light filter
         switch (this->comboBox_IRExFilter->SelectedIndex) {
             case 0:
-                ir_ex_light_filter = 0b00000000; // Disable
+                ir_new_config.ir_ex_light_filter = 0b00000000; // Disable
                 break;
             case 1:
-                ir_ex_light_filter = 0b00000011; // Enable
+                ir_new_config.ir_ex_light_filter = 0b00000011; // Enable
                 break;
             case 2:
-                ir_ex_light_filter = 0b00000111; // Enabled when inverted colors are used in Switch
+                ir_new_config.ir_ex_light_filter = 0b00000111; // Enabled when inverted colors are used in Switch
                 break;
             case 3:
-                ir_ex_light_filter = 0x13;
+                ir_new_config.ir_ex_light_filter = 0x13;
                 break;
             case 4:
-                ir_ex_light_filter = 0x17;
+                ir_new_config.ir_ex_light_filter = 0x17;
                 break;
             case 5:
-                ir_ex_light_filter = 0x23;
+                ir_new_config.ir_ex_light_filter = 0x23;
                 break;
             case 6:
-                ir_ex_light_filter = 0x27;
+                ir_new_config.ir_ex_light_filter = 0x27;
                 break;
             case 7:
-                ir_ex_light_filter = 0x33;
+                ir_new_config.ir_ex_light_filter = 0x33;
                 break;
             case 8:
-                ir_ex_light_filter = 0x37;
+                ir_new_config.ir_ex_light_filter = 0x37;
                 break;
             default:
                 break;
         }
 
-        // Configure the IR camera and take a photo or stream.
         // The exposure time (Shutter speed) is in us. Valid values are 0 to 600us or 0 - 1/1666.66s
-        res = ir_sensor(buf_image, ir_res_register, ir_res_no_of_packets, (u16)(this->numeric_IRExposure->Value * 31200 / 1000),
-            ir_leds, (u8)this->trackBar_IRGain->Value, ir_ex_light_filter);
+        ir_new_config.ir_exposure = (u16)(this->numeric_IRExposure->Value * 31200 / 1000);
+        ir_new_config.ir_digital_gain = (u8)this->trackBar_IRGain->Value;
 
-        // Get error
-        switch (res) {
+        // Initialize camera
+        if (startNewConfig) {
+            u8 *buf_image = new uint8_t[76800]; //Max res 8bpp
+            memset(buf_image, 0, sizeof(buf_image));
+
+            // Configure the IR camera and take a photo or stream.
+            res = ir_sensor(buf_image, ir_new_config);
+
+            delete[] buf_image;
+
+            // Get error
+            switch (res) {
             case 1:
                 error_msg = "1ID31";
                 break;
@@ -5350,11 +5371,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 break;
             default:
                 break;
+            }
+            if (res > 0)
+                this->lbl_IRStatus->Text = "Status: Error " + error_msg + "!";
         }
-        if (res > 0)
-            this->lbl_IRStatus->Text = "Status: Error " + error_msg + "!";
-
-        delete[] buf_image;
+        // Change camera configuration
+        else {
+            res = ir_sensor_config_live(ir_new_config);
+        }
 
         return res;
     }
@@ -5432,7 +5456,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->btn_getIRImage->Enabled = false;
         enable_IRVideoPhoto = false;
 
-        res = prepareSendIRConfig();
+        res = prepareSendIRConfig(true);
         
         if (res == 0)
             this->lbl_IRStatus->Text = "Status: Done! Saved to IRcamera.png";
@@ -5459,7 +5483,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             enable_IRVideoPhoto = true;
             this->btn_getIRStream->Text = L"Stop";
 
-            res = prepareSendIRConfig();
+            res = prepareSendIRConfig(true);
 
             enable_IRVideoPhoto = false;
             if (res == 0)
@@ -5468,6 +5492,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         this->btn_getIRImage->Enabled = true;
         this->btn_getIRStream->Text = L"Stream";
+    }
+
+
+    private: System::Void btn_IRConfigLive_Click(System::Object^  sender, System::EventArgs^  e) {
+        if (enable_IRVideoPhoto)
+            int res = prepareSendIRConfig(false);
     }
 
 

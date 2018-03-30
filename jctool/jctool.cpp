@@ -1329,7 +1329,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 }
 
 
-int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
+int get_raw_ir_image(u8 show_status) {
     std::stringstream ir_status;
 
     int elapsed_time = 0;
@@ -1348,7 +1348,7 @@ int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
     int missed_packet_no = 0;
     bool missed_packet = false;
     int initialization = 2;
-    int max_pixels = ((max_frag_no < 218 ? max_frag_no : 217) + 1) * 300;
+    int max_pixels = ((ir_max_frag_no < 218 ? ir_max_frag_no : 217) + 1) * 300;
     int white_pixels_percent = 0;
 
     memset(buf_image, 0, sizeof(buf_image));
@@ -1373,10 +1373,11 @@ int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
     while (enable_IRVideoPhoto || initialization) {
         memset(buf_reply, 0, sizeof(buf_reply));
         hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+
         //Check if new packet
         if (buf_reply[0] == 0x31 && buf_reply[49] == 0x03) {
             got_frag_no = buf_reply[52];
-            if (got_frag_no == (previous_frag_no + 1) % (max_frag_no + 1)) {
+            if (got_frag_no == (previous_frag_no + 1) % (ir_max_frag_no + 1)) {
                 
                 previous_frag_no = got_frag_no;
 
@@ -1401,7 +1402,7 @@ int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
                 else
                     ir_status << "Status: Initializing.. ";
                 ir_status << std::setfill(' ') << std::setw(3);
-                ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(max_frag_no + 1) * 100.0f;
+                ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(ir_max_frag_no + 1) * 100.0f;
                 ir_status << "% - ";
 
                 //debug
@@ -1411,7 +1412,7 @@ int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
                 elapsed_time = sw->ElapsedMilliseconds;
 
                 // Check if final fragment. Draw the frame.
-                if (got_frag_no == max_frag_no) {
+                if (got_frag_no == ir_max_frag_no) {
                     // Update Viewport
                     elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
                     FormJoy::myform1->setIRPictureWindow(buf_image, true);
@@ -1455,7 +1456,7 @@ int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
                 }
                 // Check if missed fragment and request it.
                 else if(missed_packet_no != got_frag_no && !missed_packet) {
-                    if (max_frag_no != 0x03) {
+                    if (ir_max_frag_no != 0x03) {
                         //debug
                         //printf("%02X Frag: Missed %02X, Prev: %02X, PrevM: %02X\n", got_frag_no, previous_frag_no + 1, previous_frag_no, missed_packet_no);
 
@@ -1537,7 +1538,7 @@ int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
                 else
                     ir_status << "Status: Initializing.. ";
                 ir_status << std::setfill(' ') << std::setw(3);
-                ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(max_frag_no + 1) * 100.0f;
+                ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(ir_max_frag_no + 1) * 100.0f;
                 ir_status << "% - ";
 
                 FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
@@ -1598,8 +1599,7 @@ int get_raw_ir_image(u8 max_frag_no, u8 show_status) {
 }
 
 
-int ir_sensor(u8* buf_image, u8 ir_res_reg, u8 ir_res_no_of_packets,
-    u16 ir_exposure, u8 ir_leds, u8 ir_digital_gain, u8 ir_ex_light_filter) {
+int ir_sensor(u8* buf_image, ir_image_config &ir_cfg) {
     int res;
     u8 buf[0x170];
     static int output_buffer_length = 49;
@@ -1784,7 +1784,7 @@ step5:
         pkt->subcmd_21_23_01.mcu_subcmd  = 0x01; // Set IR mode cmd
         pkt->subcmd_21_23_01.mcu_ir_mode = 0x07; // IR mode - 2: No mode/Disable?, 3: Moment, 4: Dpd, 6: Clustering,
                                                  // 7: Image transfer, 8-10: Hand analysis (Silhouette, Image, Silhouette/Image), 0,1/5/10+: Unknown
-        pkt->subcmd_21_23_01.no_of_frags = ir_res_no_of_packets; // Set number of packets to output per buffer
+        pkt->subcmd_21_23_01.no_of_frags = ir_max_frag_no; // Set number of packets to output per buffer
         pkt->subcmd_21_23_01.mcu_major_v = 0x0300; // Set required IR MCU FW v3.09. Major 0x0003.
         pkt->subcmd_21_23_01.mcu_minor_v = 0x0900; // Set required IR MCU FW v3.09. Minor 0x0009.
 
@@ -1862,21 +1862,21 @@ step7:
         pkt->subcmd_21_23_04.no_of_reg  = 0x09; // Number of registers to write. Max 9.      
 
         pkt->subcmd_21_23_04.reg1_addr  = 0x2e00; // R: 0x002e - Set Resolution based on sensor binning and skipping
-        pkt->subcmd_21_23_04.reg1_val   = ir_res_reg;
+        pkt->subcmd_21_23_04.reg1_val   = ir_cfg.ir_res_reg;
         pkt->subcmd_21_23_04.reg2_addr  = 0x3001; // R: 0x0130 - Set Exposure time LSByte - (31200 * us /1000) & 0xFF - Max: 600us, Max encoded: 0x4920.
-        pkt->subcmd_21_23_04.reg2_val   = ir_exposure & 0xFF;
+        pkt->subcmd_21_23_04.reg2_val   = ir_cfg.ir_exposure & 0xFF;
         pkt->subcmd_21_23_04.reg3_addr  = 0x3101; // R: 0x0131 - Set Exposure time MSByte - ((31200 * us /1000) & 0xFF00) >> 8
-        pkt->subcmd_21_23_04.reg3_val   = (ir_exposure & 0xFF00) >> 8;
+        pkt->subcmd_21_23_04.reg3_val   = (ir_cfg.ir_exposure & 0xFF00) >> 8;
         pkt->subcmd_21_23_04.reg4_addr  = 0x3201; // R: 0x0132 - Enable Max exposure Time - 0: Manual exposure, 1: Max exposure
         pkt->subcmd_21_23_04.reg4_val   = 0x00;
         pkt->subcmd_21_23_04.reg5_addr  = 0x1000; // R: 0x0010 - Set IR Leds groups state - Only 3 LSB usable
-        pkt->subcmd_21_23_04.reg5_val   = ir_leds;
+        pkt->subcmd_21_23_04.reg5_val   = ir_cfg.ir_leds;
         pkt->subcmd_21_23_04.reg6_addr  = 0x2e01; // R: 0x012e - Set digital gain LSB 4 bits of the value
-        pkt->subcmd_21_23_04.reg6_val   = (ir_digital_gain & 0xF) << 4;
+        pkt->subcmd_21_23_04.reg6_val   = (ir_cfg.ir_digital_gain & 0xF) << 4;
         pkt->subcmd_21_23_04.reg7_addr  = 0x2f01; // R: 0x012f - Set digital gain MSB 4 bits of the value
-        pkt->subcmd_21_23_04.reg7_val   = (ir_digital_gain & 0xF0) >> 4;
+        pkt->subcmd_21_23_04.reg7_val   = (ir_cfg.ir_digital_gain & 0xF0) >> 4;
         pkt->subcmd_21_23_04.reg8_addr  = 0x0e00; // R: 0x00e0 - External light filter - LS o bit0: Off/On, bit1: 0x/1x, bit2: ??, bit4,5: ??.
-        pkt->subcmd_21_23_04.reg8_val   = ir_ex_light_filter; // Valid values: 0, 3, 7, 51, 55.
+        pkt->subcmd_21_23_04.reg8_val   = ir_cfg.ir_ex_light_filter;
         pkt->subcmd_21_23_04.reg9_addr  = 0x4301; // R: 0x0143 - Unknown - 200: Default
         pkt->subcmd_21_23_04.reg9_val   = 0xc8;
 
@@ -2017,9 +2017,9 @@ step9:
 
     // Stream or Capture images from NIR Camera
     if (enable_IRVideoPhoto)
-        res_get = get_raw_ir_image(ir_res_no_of_packets, 2);
+        res_get = get_raw_ir_image(2);
     else
-        res_get = get_raw_ir_image(ir_res_no_of_packets, 1);
+        res_get = get_raw_ir_image(1);
 
     //////
     // TODO: Should we send subcmd x21 with 'x230102' to disable IR mode before disabling MCU?
@@ -2067,6 +2067,43 @@ step10:
 
 stepf:
     return res_get;
+}
+
+int ir_sensor_config_live(ir_image_config &ir_cfg) {
+    int res;
+    u8 buf[49];
+
+    memset(buf, 0, sizeof(buf));
+    auto hdr = (brcm_hdr *)buf;
+    auto pkt = (brcm_cmd_01 *)(hdr + 1);
+    hdr->cmd = 0x01;
+    hdr->timer = timming_byte & 0xF;
+    timming_byte++;
+    pkt->subcmd = 0x21;
+
+    pkt->subcmd_21_23_04.mcu_cmd = 0x23; // Write register cmd
+    pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
+    pkt->subcmd_21_23_04.no_of_reg = 0x07; // Number of registers to write. Max 9.
+
+    pkt->subcmd_21_23_04.reg1_addr = 0x3001; // R: 0x0130 - Set Exposure time LSByte
+    pkt->subcmd_21_23_04.reg1_val = ir_cfg.ir_exposure & 0xFF;
+    pkt->subcmd_21_23_04.reg2_addr = 0x3101; // R: 0x0131 - Set Exposure time MSByte
+    pkt->subcmd_21_23_04.reg2_val = (ir_cfg.ir_exposure & 0xFF00) >> 8;
+    pkt->subcmd_21_23_04.reg3_addr = 0x1000; // R: 0x0010 - Set IR Leds groups state
+    pkt->subcmd_21_23_04.reg3_val = ir_cfg.ir_leds;
+    pkt->subcmd_21_23_04.reg4_addr = 0x2e01; // R: 0x012e - Set digital gain LSB 4 bits
+    pkt->subcmd_21_23_04.reg4_val = (ir_cfg.ir_digital_gain & 0xF) << 4;
+    pkt->subcmd_21_23_04.reg5_addr = 0x2f01; // R: 0x012f - Set digital gain MSB 4 bits
+    pkt->subcmd_21_23_04.reg5_val = (ir_cfg.ir_digital_gain & 0xF0) >> 4;
+    pkt->subcmd_21_23_04.reg6_addr = 0x0e00; // R: 0x00e0 - External light filter
+    pkt->subcmd_21_23_04.reg6_val = ir_cfg.ir_ex_light_filter;
+    pkt->subcmd_21_23_04.reg7_addr = 0x0700; // R: 0x0700 - Finalize config
+    pkt->subcmd_21_23_04.reg7_val = 0x01;
+
+    buf[48] = mcu_crc8_calc(buf + 12, 36);
+    res = hid_write(handle, buf, sizeof(buf));
+
+    return res;
 }
 
 

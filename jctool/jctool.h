@@ -81,6 +81,14 @@ struct brcm_cmd_01 {
     };
 };
 
+struct ir_image_config {
+    u8 ir_res_reg;
+    u16 ir_exposure;
+    u8 ir_leds;
+    u8 ir_digital_gain;
+    u8 ir_ex_light_filter;
+};
+
 #pragma pack(pop)
 
 extern std::string get_sn(u32 offset, const u16 read_len);
@@ -98,7 +106,8 @@ extern int send_custom_command(u8* arg);
 extern int device_connection();
 extern int set_led_busy();
 extern int button_test();
-extern int ir_sensor(u8* buf_image, u8 ir_res_reg, u8 ir_res_no_of_packets, u16 ir_exposure, u8 ir_leds, u8 ir_digital_gain, u8 ir_ex_light_filter);
+extern int ir_sensor(u8* buf_image, ir_image_config &ir_cfg);
+extern int ir_sensor_config_live(ir_image_config &ir_cfg);
 extern int nfc_tag_info();
 extern int silence_input_report();
 int handle_ok;
@@ -110,6 +119,7 @@ bool cancel_spi_dump;
 hid_device *handle;
 hid_device *handle_l;
 u8 timming_byte;
+u8 ir_max_frag_no;
 
 namespace CppWinFormJoy {
     class images
