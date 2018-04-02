@@ -2116,6 +2116,8 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
 
+    //get_ir_registers(0,12);
+
     return res;
 }
 

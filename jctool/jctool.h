@@ -82,11 +82,16 @@ struct brcm_cmd_01 {
 };
 
 struct ir_image_config {
-    u8 ir_res_reg;
+    u8  ir_res_reg;
     u16 ir_exposure;
-    u8 ir_leds;
-    u8 ir_digital_gain;
-    u8 ir_ex_light_filter;
+    u8  ir_leds; // add strobe/constant
+    u16 ir_leds_intensity;
+    u8  ir_digital_gain;
+    u8  ir_ex_light_filter;
+    u32 ir_custom_register;
+    u16 ir_buffer_update_time;
+    u8  ir_quantized_image;
+    u8  ir_quantized_pattern;
 };
 
 #pragma pack(pop)
