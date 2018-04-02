@@ -1338,7 +1338,7 @@ int get_raw_ir_image(u8 show_status) {
 
     u8 buf[49];
     u8 buf_reply[0x170];
-    u8 *buf_image = new u8[76800]; // 8bpp greyscale image.
+    u8 *buf_image = new u8[19 * 4096]; // 8bpp greyscale image.
 	uint16_t bad_signal = 0;
     int error_reading = 0;
     float noise_level = 0.0f;
@@ -1428,7 +1428,7 @@ int get_raw_ir_image(u8 show_status) {
                     noise_level = (float)(*(u16*)&buf_reply[57]) / ((float)(*(u16*)&buf_reply[55]) + 1.0f);
                     white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
                     avg_intensity_percent = (int)((buf_reply[53] * 100) / 255);
-                    FormJoy::myform1->lbl_IRHelp->Text = String::Format("Amb Noise: {0:f2},  Int: {1:D}%,  FPS: {2:D} ({3:D}ms)\nEXFilter: {4:D},  White Px: {5:D}%,  ??: {6:D}",
+                    FormJoy::myform1->lbl_IRHelp->Text = String::Format("Amb Noise: {0:f2},  Int: {1:D}%,  FPS: {2:D} ({3:D}ms)\nEXFilter: {4:D},  White Px: {5:D}%,  EXF Int: {6:D}",
                         noise_level, avg_intensity_percent, (int)(1000 / elapsed_time2), elapsed_time2, *(u16*)&buf_reply[57], white_pixels_percent, buf_reply[54]);
 
                     elapsed_time2 = sw->ElapsedMilliseconds;
@@ -1599,7 +1599,7 @@ int get_raw_ir_image(u8 show_status) {
 }
 
 
-int ir_sensor(u8* buf_image, ir_image_config &ir_cfg) {
+int ir_sensor(ir_image_config &ir_cfg) {
     int res;
     u8 buf[0x170];
     static int output_buffer_length = 49;
@@ -1871,9 +1871,9 @@ step7:
         pkt->subcmd_21_23_04.reg4_val   = 0x00;
         pkt->subcmd_21_23_04.reg5_addr  = 0x1000; // R: 0x0010 - Set IR Leds groups state - Only 3 LSB usable
         pkt->subcmd_21_23_04.reg5_val   = ir_cfg.ir_leds;
-        pkt->subcmd_21_23_04.reg6_addr  = 0x2e01; // R: 0x012e - Set digital gain LSB 4 bits of the value
+        pkt->subcmd_21_23_04.reg6_addr  = 0x2e01; // R: 0x012e - Set digital gain LSB 4 bits of the value - 0-0xff
         pkt->subcmd_21_23_04.reg6_val   = (ir_cfg.ir_digital_gain & 0xF) << 4;
-        pkt->subcmd_21_23_04.reg7_addr  = 0x2f01; // R: 0x012f - Set digital gain MSB 4 bits of the value
+        pkt->subcmd_21_23_04.reg7_addr  = 0x2f01; // R: 0x012f - Set digital gain MSB 4 bits of the value - 0-0x7
         pkt->subcmd_21_23_04.reg7_val   = (ir_cfg.ir_digital_gain & 0xF0) >> 4;
         pkt->subcmd_21_23_04.reg8_addr  = 0x0e00; // R: 0x00e0 - External light filter - LS o bit0: Off/On, bit1: 0x/1x, bit2: ??, bit4,5: ??.
         pkt->subcmd_21_23_04.reg8_val   = ir_cfg.ir_ex_light_filter;
@@ -1959,62 +1959,6 @@ step8:
     }
 
 step9:
-    // Get the IR registers
-    error_reading = 0;
-    int pos_ir_registers = 0;
-    while (0) {
-            memset(buf, 0, sizeof(buf));
-            auto hdr = (brcm_hdr *)buf;
-            auto pkt = (brcm_cmd_01 *)(hdr + 1);
-            memset(buf, 0, sizeof(buf));
-            hdr->cmd = 0x11;
-            hdr->timer = timming_byte & 0xF;
-            timming_byte++;
-            pkt->subcmd = 0x03;
-            pkt->subcmd_arg.arg1 = 0x03;
-
-            buf[12] = 0x01; // seems to be always 0x01
-
-            buf[13] = ir_registers[pos_ir_registers];     //0-4
-            buf[14] = ir_registers[pos_ir_registers + 1]; //offset
-            buf[15] = ir_registers[pos_ir_registers + 2]; // CRC? Pass?
-
-            buf[48] = mcu_crc8_calc(buf + 11, 37);
-
-            res = hid_write(handle, buf, output_buffer_length);
-            Sleep(15);
-            res = hid_write(handle, buf, output_buffer_length);
-            int tries = 0;
-            while (1) {
-                res = hid_read_timeout(handle, buf, sizeof(buf), 64);
-                if (buf[49] == 0x1b && buf[52] == ir_registers[pos_ir_registers + 1] && buf[53] == ir_registers[pos_ir_registers + 2]) {
-                    printf("%02X, %02X, %02X - SUCCESS:\n", buf[51], buf[52], buf[53]);
-                    for (int i = 0; i < buf[52] + buf[53]; i++)
-                        printf("%02X", buf[54 + i]);
-                    printf("\n");
-                    //buf[50] 0: success, out of range
-                    break;
-                }
-                tries++;
-                if (tries > 8) {
-                    printf("%02X, %02X, %02X - FAILED\n", ir_registers[pos_ir_registers], ir_registers[pos_ir_registers + 1], ir_registers[pos_ir_registers + 2]);
-                    break;
-                }
-                   
-            }
-            pos_ir_registers += 3;
-            if (pos_ir_registers > 30) {
-                printf("\n");
-                printf("\n");
-                break;
-            }
-            //error_reading++;
-            //if (error_reading > 7) {
-            //    res_get = 10;
-            //    goto step10;
-            //}
-    }
-
     // Stream or Capture images from NIR Camera
     if (enable_IRVideoPhoto)
         res_get = get_raw_ir_image(2);
@@ -2069,6 +2013,75 @@ stepf:
     return res_get;
 }
 
+
+int get_ir_registers(int start_reg, int reg_group) {
+    int res;
+    u8 buf[0x170];
+    static int output_buffer_length = 49;
+    int error_reading = 0;
+    int res_get = 0;
+
+    // Get the IR registers
+    error_reading = 0;
+    int pos_ir_registers = start_reg;
+    while (1) {
+        memset(buf, 0, sizeof(buf));
+        auto hdr = (brcm_hdr *)buf;
+        auto pkt = (brcm_cmd_01 *)(hdr + 1);
+        memset(buf, 0, sizeof(buf));
+        hdr->cmd = 0x11;
+        hdr->timer = timming_byte & 0xF;
+        timming_byte++;
+        pkt->subcmd = 0x03;
+        pkt->subcmd_arg.arg1 = 0x03;
+
+        buf[12] = 0x01; // seems to be always 0x01
+
+        buf[13] = ir_registers[pos_ir_registers];     // 0-4 registers group
+        buf[14] = ir_registers[pos_ir_registers + 1]; // offset. this plus the number of registers, must be less than x7f
+        buf[15] = ir_registers[pos_ir_registers + 2]; // Number of registers to show
+
+        buf[47] = mcu_crc8_calc(buf + 11, 36);
+
+        res = hid_write(handle, buf, output_buffer_length);
+        Sleep(15);
+        res = hid_write(handle, buf, output_buffer_length);
+        int tries = 0;
+        while (1) {
+            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
+            if (buf[49] == 0x1b && buf[52] == ir_registers[pos_ir_registers + 1] && buf[53] == ir_registers[pos_ir_registers + 2]) {
+                //printf("%02X, %02X, %02X - SUCCESS:\n", buf[51], buf[52], buf[53]);
+                for (int i = 0; i < buf[52] + buf[53]; i++)
+                    printf("%02X ", buf[54 + i]);
+                printf("\n");
+                //buf[50] 0: success, out of range
+                break;
+            }
+            tries++;
+            if (tries > 8) {
+                //printf("%02X, %02X, %02X - FAILED\n", ir_registers[pos_ir_registers], ir_registers[pos_ir_registers + 1], ir_registers[pos_ir_registers + 2]);
+                break;
+            }
+
+        }
+        pos_ir_registers += 3;
+        //if (pos_ir_registers > 12) {
+        if (pos_ir_registers > reg_group) {
+            //printf("\n");
+            //printf("\n");
+            break;
+        }
+        //error_reading++;
+        //if (error_reading > 7) {
+        //    res_get = 10;
+        //    goto step10;
+        //}
+    }
+
+    return 0;
+}
+
+
 int ir_sensor_config_live(ir_image_config &ir_cfg) {
     int res;
     u8 buf[49];
@@ -2081,24 +2094,24 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     timming_byte++;
     pkt->subcmd = 0x21;
 
-    pkt->subcmd_21_23_04.mcu_cmd = 0x23; // Write register cmd
+    pkt->subcmd_21_23_04.mcu_cmd    = 0x23; // Write register cmd
     pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
     pkt->subcmd_21_23_04.no_of_reg = 0x07; // Number of registers to write. Max 9.
 
     pkt->subcmd_21_23_04.reg1_addr = 0x3001; // R: 0x0130 - Set Exposure time LSByte
-    pkt->subcmd_21_23_04.reg1_val = ir_cfg.ir_exposure & 0xFF;
+    pkt->subcmd_21_23_04.reg1_val  = ir_cfg.ir_exposure & 0xFF;
     pkt->subcmd_21_23_04.reg2_addr = 0x3101; // R: 0x0131 - Set Exposure time MSByte
-    pkt->subcmd_21_23_04.reg2_val = (ir_cfg.ir_exposure & 0xFF00) >> 8;
+    pkt->subcmd_21_23_04.reg2_val  = (ir_cfg.ir_exposure & 0xFF00) >> 8;
     pkt->subcmd_21_23_04.reg3_addr = 0x1000; // R: 0x0010 - Set IR Leds groups state
-    pkt->subcmd_21_23_04.reg3_val = ir_cfg.ir_leds;
+    pkt->subcmd_21_23_04.reg3_val  = ir_cfg.ir_leds;
     pkt->subcmd_21_23_04.reg4_addr = 0x2e01; // R: 0x012e - Set digital gain LSB 4 bits
-    pkt->subcmd_21_23_04.reg4_val = (ir_cfg.ir_digital_gain & 0xF) << 4;
+    pkt->subcmd_21_23_04.reg4_val  = (ir_cfg.ir_digital_gain & 0xF) << 4;
     pkt->subcmd_21_23_04.reg5_addr = 0x2f01; // R: 0x012f - Set digital gain MSB 4 bits
-    pkt->subcmd_21_23_04.reg5_val = (ir_cfg.ir_digital_gain & 0xF0) >> 4;
+    pkt->subcmd_21_23_04.reg5_val  = (ir_cfg.ir_digital_gain & 0xF0) >> 4;
     pkt->subcmd_21_23_04.reg6_addr = 0x0e00; // R: 0x00e0 - External light filter
-    pkt->subcmd_21_23_04.reg6_val = ir_cfg.ir_ex_light_filter;
+    pkt->subcmd_21_23_04.reg6_val  = ir_cfg.ir_ex_light_filter;
     pkt->subcmd_21_23_04.reg7_addr = 0x0700; // R: 0x0700 - Finalize config
-    pkt->subcmd_21_23_04.reg7_val = 0x01;
+    pkt->subcmd_21_23_04.reg7_val  = 0x01;
 
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
@@ -2696,13 +2709,14 @@ int Main(array<String^>^ args) {
         if (args[0] == "-d")
             enable_traffic_dump = true;
     }
-    
-    //BOOL chk = AllocConsole();
-    //if (chk)
-    //{
-    //freopen("CONOUT$", "w", stdout);
-    //printf(" printing to console\n");
-    //}
+
+    /*
+    BOOL chk = AllocConsole();
+    if (chk) {
+        freopen("CONOUT$", "w", stdout);
+        printf(" printing to console\n");
+    }
+    */
 
     timming_byte = 0x0;
 

@@ -106,7 +106,7 @@ extern int send_custom_command(u8* arg);
 extern int device_connection();
 extern int set_led_busy();
 extern int button_test();
-extern int ir_sensor(u8* buf_image, ir_image_config &ir_cfg);
+extern int ir_sensor(ir_image_config &ir_cfg);
 extern int ir_sensor_config_live(ir_image_config &ir_cfg);
 extern int nfc_tag_info();
 extern int silence_input_report();

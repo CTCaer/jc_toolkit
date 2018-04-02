@@ -5238,11 +5238,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     private: System::Int32 prepareSendIRConfig(bool startNewConfig) {
         String^ error_msg;
-        ir_image_config ir_new_config;
+        ir_image_config ir_new_config = {0};
         int res = 0;
-        ir_new_config.ir_leds = 0x00;
-        ir_new_config.ir_res_reg = 0x00;
-        ir_new_config.ir_ex_light_filter = 0x03;
 
         this->lbl_IRStatus->Text = "Status: Configuring";
         Application::DoEvents();
@@ -5332,13 +5329,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         // Initialize camera
         if (startNewConfig) {
-            u8 *buf_image = new uint8_t[76800]; //Max res 8bpp
-            memset(buf_image, 0, sizeof(buf_image));
-
             // Configure the IR camera and take a photo or stream.
-            res = ir_sensor(buf_image, ir_new_config);
-
-            delete[] buf_image;
+            res = ir_sensor(ir_new_config);
 
             // Get error
             switch (res) {
