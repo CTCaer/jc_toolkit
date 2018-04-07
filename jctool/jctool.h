@@ -84,14 +84,16 @@ struct brcm_cmd_01 {
 struct ir_image_config {
     u8  ir_res_reg;
     u16 ir_exposure;
-    u8  ir_leds; // add strobe/constant
-    u16 ir_leds_intensity;
+    u8  ir_leds; // Leds to enable, Strobe/Flashlight modes
+    u16 ir_leds_intensity; // MSByte: Leds 1/2, LSB: Leds 3/4
     u8  ir_digital_gain;
     u8  ir_ex_light_filter;
-    u32 ir_custom_register;
+    u32 ir_custom_register; // MSByte: Enable/Disable, Middle Byte: Edge smoothing, LSB: Color interpolation
     u16 ir_buffer_update_time;
-    u8  ir_quantized_image;
-    u8  ir_quantized_pattern;
+    u8  ir_hand_analysis_mode;
+    u8  ir_hand_analysis_threshold;
+    u32 ir_denoise; // MSByte: Enable/Disable, Middle Byte: Edge smoothing, LSB: Color interpolation
+    u8  ir_flip;
 };
 
 #pragma pack(pop)

@@ -1666,7 +1666,7 @@ step1:
 step2:
     // Request MCU mode status
     error_reading = 0;
-    while (1) {
+    while (1) { // Not necessary, but we keep to make sure the MCU is ready.
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
         auto pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -1739,7 +1739,7 @@ step3:
 step4:
     // Request MCU mode status
     error_reading = 0;
-    while (1) {
+    while (1) { // Not necessary, but we keep to make sure the MCU mode changed.
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
         auto pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -1812,7 +1812,7 @@ step5:
 step6:
     // Request IR mode status
     error_reading = 0;
-    while (1) {
+    while (0) { // Not necessary
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
         auto pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -1927,10 +1927,27 @@ step8:
 
         pkt->subcmd_21_23_04.mcu_cmd    = 0x23; // Write register cmd
         pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
-        pkt->subcmd_21_23_04.no_of_reg  = 0x01; // Number of registers to write. Max 9.      
+        pkt->subcmd_21_23_04.no_of_reg  = 0x08; // Number of registers to write. Max 9.      
 
-        pkt->subcmd_21_23_04.reg1_addr  = 0x0700; // R: 0x0007 - Finalize config - Without this, the register changes do not have any effect.
-        pkt->subcmd_21_23_04.reg1_val   = 0x01;
+        pkt->subcmd_21_23_04.reg1_addr  = 0x1100; // R: 0x0011 - Leds 1/2 Intensity - Max 0x0F.
+        pkt->subcmd_21_23_04.reg1_val   = (ir_cfg.ir_leds_intensity >> 8) & 0xFF;
+        pkt->subcmd_21_23_04.reg2_addr  = 0x1200; // R: 0x0012 - Leds 3/4 Intensity - Max 0x10.
+        pkt->subcmd_21_23_04.reg2_val   = ir_cfg.ir_leds_intensity & 0xFF;
+        pkt->subcmd_21_23_04.reg3_addr  = 0x2d00; // R: 0x002d - Flip image - 0: Normal, 1: Vertically, 2: Horizontally, 3: Both 
+        pkt->subcmd_21_23_04.reg3_val   = ir_cfg.ir_flip;
+        pkt->subcmd_21_23_04.reg4_addr  = 0x6701; // R: 0x0167 - Enable De-noise smoothing algorithms - 0: Disable, 1: Enable.
+        pkt->subcmd_21_23_04.reg4_val   = (ir_cfg.ir_denoise >> 16) & 0xFF;
+        pkt->subcmd_21_23_04.reg5_addr  = 0x6801; // R: 0x0168 - Edge smoothing threshold - Max 0xFF, Default 0x23
+        pkt->subcmd_21_23_04.reg5_val   = (ir_cfg.ir_denoise >> 8) & 0xFF;
+        pkt->subcmd_21_23_04.reg6_addr  = 0x6901; // R: 0x0169 - Color Interpolation threshold - Max 0xFF, Default 0x44
+        pkt->subcmd_21_23_04.reg6_val   = ir_cfg.ir_denoise & 0xFF;
+        pkt->subcmd_21_23_04.reg7_addr  = 0x0400; // R: 0x0004 - LSB Buffer Update Time - Default 0x32
+        if (ir_cfg.ir_res_reg == 0x69)
+            pkt->subcmd_21_23_04.reg7_val = 0x2d; // A value of <= 0x2d is fast enough for 30 x 40, so the first fragment has the updated frame.  
+        else
+            pkt->subcmd_21_23_04.reg7_val = 0x32; // All the other resolutions the default is enough. Otherwise a lower value can break hand analysis.
+        pkt->subcmd_21_23_04.reg8_addr  = 0x0700; // R: 0x0007 - Finalize config - Without this, the register changes do not have any effect.
+        pkt->subcmd_21_23_04.reg8_val   = 0x01;
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
         res = hid_write(handle, buf, output_buffer_length);
@@ -2096,7 +2113,7 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
 
     pkt->subcmd_21_23_04.mcu_cmd    = 0x23; // Write register cmd
     pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
-    pkt->subcmd_21_23_04.no_of_reg = 0x07; // Number of registers to write. Max 9.
+    pkt->subcmd_21_23_04.no_of_reg  = 0x09; // Number of registers to write. Max 9.
 
     pkt->subcmd_21_23_04.reg1_addr = 0x3001; // R: 0x0130 - Set Exposure time LSByte
     pkt->subcmd_21_23_04.reg1_val  = ir_cfg.ir_exposure & 0xFF;
@@ -2110,8 +2127,35 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     pkt->subcmd_21_23_04.reg5_val  = (ir_cfg.ir_digital_gain & 0xF0) >> 4;
     pkt->subcmd_21_23_04.reg6_addr = 0x0e00; // R: 0x00e0 - External light filter
     pkt->subcmd_21_23_04.reg6_val  = ir_cfg.ir_ex_light_filter;
-    pkt->subcmd_21_23_04.reg7_addr = 0x0700; // R: 0x0700 - Finalize config
-    pkt->subcmd_21_23_04.reg7_val  = 0x01;
+    pkt->subcmd_21_23_04.reg7_addr = (ir_cfg.ir_custom_register & 0xFF) << 8 | (ir_cfg.ir_custom_register >> 8) & 0xFF;
+    pkt->subcmd_21_23_04.reg7_val  = (ir_cfg.ir_custom_register >> 16) & 0xFF;
+    pkt->subcmd_21_23_04.reg8_addr = 0x1100; // R: 0x0011 - Leds 1/2 Intensity - Max 0x0F.
+    pkt->subcmd_21_23_04.reg8_val = (ir_cfg.ir_leds_intensity >> 8) & 0xFF;
+    pkt->subcmd_21_23_04.reg9_addr = 0x1200; // R: 0x0012 - Leds 3/4 Intensity - Max 0x10.
+    pkt->subcmd_21_23_04.reg9_val = ir_cfg.ir_leds_intensity & 0xFF;
+
+    buf[48] = mcu_crc8_calc(buf + 12, 36);
+    res = hid_write(handle, buf, sizeof(buf));
+
+    //Sleep(15);
+
+    pkt->subcmd_21_23_04.no_of_reg = 0x06; // Number of registers to write. Max 9.
+
+    pkt->subcmd_21_23_04.reg1_addr = 0x2d00; // R: 0x002d - Flip image - 0: Normal, 1: Vertically, 2: Horizontally, 3: Both 
+    pkt->subcmd_21_23_04.reg1_val = ir_cfg.ir_flip;
+    pkt->subcmd_21_23_04.reg2_addr = 0x6701; // R: 0x0167 - Enable De-noise smoothing algorithms - 0: Disable, 1: Enable.
+    pkt->subcmd_21_23_04.reg2_val = (ir_cfg.ir_denoise >> 16) & 0xFF;
+    pkt->subcmd_21_23_04.reg3_addr = 0x6801; // R: 0x0168 - Edge smoothing threshold - Max 0xFF, Default 0x23
+    pkt->subcmd_21_23_04.reg3_val = (ir_cfg.ir_denoise >> 8) & 0xFF;
+    pkt->subcmd_21_23_04.reg4_addr = 0x6901; // R: 0x0169 - Color Interpolation threshold - Max 0xFF, Default 0x44
+    pkt->subcmd_21_23_04.reg4_val = ir_cfg.ir_denoise & 0xFF;
+    pkt->subcmd_21_23_04.reg5_addr = 0x0400; // R: 0x0004 - LSB Buffer Update Time - Default 0x32
+    if (ir_cfg.ir_res_reg == 0x69)
+        pkt->subcmd_21_23_04.reg5_val = 0x2d; // A value of <= 0x2d is fast enough for 30 x 40, so the first fragment has the updated frame.  
+    else
+        pkt->subcmd_21_23_04.reg5_val = 0x32; // All the other resolutions the default is enough. Otherwise a lower value can break hand analysis.
+    pkt->subcmd_21_23_04.reg6_addr = 0x0700; // R: 0x0007 - Finalize config - Without this, the register changes do not have any effect.
+    pkt->subcmd_21_23_04.reg6_val = 0x01;
 
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));

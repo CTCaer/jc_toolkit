@@ -66,19 +66,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->comboBox_rstOption->Items->Add("Full Restore");
         this->comboBox_rstOption->DrawItem +=
             gcnew System::Windows::Forms::DrawItemEventHandler(this, &FormJoy::comboBox_darkTheme_DrawItem);
-
-        this->comboBox_IRExFilter->Items->Add("Disable");
-        this->comboBox_IRExFilter->Items->Add("Enable");
-        this->comboBox_IRExFilter->Items->Add("Enable 0x07");
-        this->comboBox_IRExFilter->Items->Add("Enable 0x13");
-        this->comboBox_IRExFilter->Items->Add("Enable 0x17");
-        this->comboBox_IRExFilter->Items->Add("Enable 0x23");
-        this->comboBox_IRExFilter->Items->Add("Enable 0x27");
-        this->comboBox_IRExFilter->Items->Add("Enable 0x33");
-        this->comboBox_IRExFilter->Items->Add("Enable 0x37");
-        this->comboBox_IRExFilter->SelectedItem = "Enable";
-        this->comboBox_IRExFilter->DrawItem +=
-            gcnew System::Windows::Forms::DrawItemEventHandler(this, &FormJoy::comboBox_darkTheme_DrawItem);
             
         this->menuStrip1->Renderer =
             gcnew System::Windows::Forms::ToolStripProfessionalRenderer(gcnew Overrides::TestColorTable());
@@ -103,6 +90,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->textBox_vib_loop_times->Validating += gcnew CancelEventHandler(this, &FormJoy::textBox_loop_Validating);
         this->textBox_vib_loop_times->Validated += gcnew EventHandler(this, &FormJoy::textBox_loop_Validated);
 
+        this->chkBox_IRFlashlight->CheckedChanged += gcnew EventHandler(this, &FormJoy::IRFlashlight_checkedChanged);
+        this->chkBox_IRBrightLeds->CheckedChanged += gcnew EventHandler(this, &FormJoy::IRLeds_checkedChanged);
+        this->chkBox_IRDimLeds->CheckedChanged    += gcnew EventHandler(this, &FormJoy::IRLeds_checkedChanged);
+        this->chkBox_IRDenoise->CheckedChanged    += gcnew EventHandler(this, &FormJoy::IRDenoise_checkedChanged);
+
         this->toolTip1->SetToolTip(this->label_sn, L"Click here to change your S/N");
         this->toolTip1->SetToolTip(this->textBox_vib_loop_times,
             L"Set how many additional times the loop will be played.\n\nChoose a number from 0 to 999");
@@ -110,8 +102,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             L"Set how many additional times the loop will be played.\n\nChoose a number from 0 to 999");
 
         // Unicode escapes
-        this->checkBox_IRBrightLeds->Text = L"Far/Narrow   (75\u00B0)  Leds 1/2";
-        this->checkBox_IRDimLeds->Text    = L"Near/Wide  (130\u00B0)  Leds 3/4";
+        this->chkBox_IRBrightLeds->Text = L"Far/Narrow   (75\u00B0)  Leds 1/2";
+        this->chkBox_IRDimLeds->Text    = L"Near/Wide  (130\u00B0)  Leds 3/4";
         
         // Final form window adjustments
         this->CenterToScreen();
@@ -281,8 +273,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::RadioButton^  radioBtn_IR120p;
     private: System::Windows::Forms::RadioButton^  radioBtn_IR240p;
     private: System::Windows::Forms::TrackBar^  trackBar_IRGain;
-    private: System::Windows::Forms::CheckBox^  checkBox_IRDimLeds;
-    private: System::Windows::Forms::CheckBox^  checkBox_IRBrightLeds;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRDimLeds;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRBrightLeds;
     private: System::Windows::Forms::GroupBox^  grpBox_IRColorize;
     private: System::Windows::Forms::RadioButton^  radioBtn_IRColorHeat;
     private: System::Windows::Forms::RadioButton^  radioBtn_IRColorGreen;
@@ -294,8 +286,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
     public:  System::Windows::Forms::Label^  lbl_IRStatus;
     public:  System::Windows::Forms::Label^  lbl_IRHelp;
     private: System::Windows::Forms::Label^  lbl_exposure;
-    private: System::Windows::Forms::ComboBox^  comboBox_IRExFilter;
-    private: System::Windows::Forms::Label^  lbl_EXFilter;
     private: System::Windows::Forms::Button^  btn_getIRStream;
     private: System::Windows::Forms::GroupBox^  grpBox_nfc;
     private: System::Windows::Forms::Button^  btn_NFC;
@@ -324,6 +314,23 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Button^  btn_writeUserCal;
     private: System::Windows::Forms::Button^  btn_changeGripsColor;
     private: System::Windows::Forms::Button^  btn_IRConfigLive;
+    private: System::Windows::Forms::NumericUpDown^  numeric_IRCustomRegVal;
+    private: System::Windows::Forms::NumericUpDown^  numeric_IRCustomRegAddr;
+    private: System::Windows::Forms::GroupBox^  grpBox_IRSettings;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRExFilter;
+    private: System::Windows::Forms::Label^  lbl_IRLed2Int;
+    private: System::Windows::Forms::Label^  lbl_IRLed1Int;
+    private: System::Windows::Forms::TrackBar^  trackBar_IRDimLeds;
+    private: System::Windows::Forms::TrackBar^  trackBar_IRBrightLeds;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRStrobe;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRFlashlight;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRSelfie;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRDenoise;
+    private: System::Windows::Forms::NumericUpDown^  numeric_IRDenoiseEdgeSmoothing;
+    private: System::Windows::Forms::NumericUpDown^  numeric_IRDenoiseColorInterpolation;
+    private: System::Windows::Forms::Label^  lbl_IRDenoise2;
+    private: System::Windows::Forms::Label^  lbl_IRDenoise1;
+
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
 #pragma endregion
@@ -415,7 +422,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolTip1 = (gcnew System::Windows::Forms::ToolTip(this->components));
             this->lbl_exposure = (gcnew System::Windows::Forms::Label());
             this->numeric_IRExposure = (gcnew System::Windows::Forms::NumericUpDown());
-            this->lbl_EXFilter = (gcnew System::Windows::Forms::Label());
             this->trackBar_IRGain = (gcnew System::Windows::Forms::TrackBar());
             this->grpBox_VibPlayer = (gcnew System::Windows::Forms::GroupBox());
             this->groupBox_vib_info = (gcnew System::Windows::Forms::GroupBox());
@@ -458,24 +464,26 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->panel_filler = (gcnew System::Windows::Forms::Panel());
             this->grpBox_accGyroCal = (gcnew System::Windows::Forms::GroupBox());
             this->grpBox_IR = (gcnew System::Windows::Forms::GroupBox());
-            this->comboBox_IRExFilter = (gcnew System::Windows::Forms::ComboBox());
-            this->btn_getIRStream = (gcnew System::Windows::Forms::Button());
             this->lbl_IRStatus = (gcnew System::Windows::Forms::Label());
             this->lbl_IRHelp = (gcnew System::Windows::Forms::Label());
+            this->pictureBoxIR = (gcnew System::Windows::Forms::PictureBox());
+            this->numeric_IRCustomRegVal = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_IRCustomRegAddr = (gcnew System::Windows::Forms::NumericUpDown());
+            this->btn_IRConfigLive = (gcnew System::Windows::Forms::Button());
+            this->btn_getIRStream = (gcnew System::Windows::Forms::Button());
             this->lbl_digitalGain = (gcnew System::Windows::Forms::Label());
             this->grpBox_IRColorize = (gcnew System::Windows::Forms::GroupBox());
             this->radioBtn_IRColorHeat = (gcnew System::Windows::Forms::RadioButton());
             this->radioBtn_IRColorGreen = (gcnew System::Windows::Forms::RadioButton());
             this->radioBtn_IRColorRed = (gcnew System::Windows::Forms::RadioButton());
             this->radioBtn_IRColorGrey = (gcnew System::Windows::Forms::RadioButton());
-            this->checkBox_IRDimLeds = (gcnew System::Windows::Forms::CheckBox());
-            this->checkBox_IRBrightLeds = (gcnew System::Windows::Forms::CheckBox());
+            this->chkBox_IRDimLeds = (gcnew System::Windows::Forms::CheckBox());
+            this->chkBox_IRBrightLeds = (gcnew System::Windows::Forms::CheckBox());
             this->grpBox_IRRes = (gcnew System::Windows::Forms::GroupBox());
             this->radioBtn_IR30p = (gcnew System::Windows::Forms::RadioButton());
             this->radioBtn_IR60p = (gcnew System::Windows::Forms::RadioButton());
             this->radioBtn_IR120p = (gcnew System::Windows::Forms::RadioButton());
             this->radioBtn_IR240p = (gcnew System::Windows::Forms::RadioButton());
-            this->pictureBoxIR = (gcnew System::Windows::Forms::PictureBox());
             this->btn_getIRImage = (gcnew System::Windows::Forms::Button());
             this->grpBox_nfc = (gcnew System::Windows::Forms::GroupBox());
             this->txtBox_nfcUid = (gcnew System::Windows::Forms::TextBox());
@@ -502,7 +510,20 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->lbl_userCalMinCenterMax2 = (gcnew System::Windows::Forms::Label());
             this->grpBox_editUserStickCal = (gcnew System::Windows::Forms::GroupBox());
             this->btn_writeUserCal = (gcnew System::Windows::Forms::Button());
-            this->btn_IRConfigLive = (gcnew System::Windows::Forms::Button());
+            this->grpBox_IRSettings = (gcnew System::Windows::Forms::GroupBox());
+            this->chkBox_IRSelfie = (gcnew System::Windows::Forms::CheckBox());
+            this->chkBox_IRStrobe = (gcnew System::Windows::Forms::CheckBox());
+            this->chkBox_IRFlashlight = (gcnew System::Windows::Forms::CheckBox());
+            this->lbl_IRLed2Int = (gcnew System::Windows::Forms::Label());
+            this->lbl_IRLed1Int = (gcnew System::Windows::Forms::Label());
+            this->trackBar_IRDimLeds = (gcnew System::Windows::Forms::TrackBar());
+            this->trackBar_IRBrightLeds = (gcnew System::Windows::Forms::TrackBar());
+            this->chkBox_IRExFilter = (gcnew System::Windows::Forms::CheckBox());
+            this->chkBox_IRDenoise = (gcnew System::Windows::Forms::CheckBox());
+            this->numeric_IRDenoiseEdgeSmoothing = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_IRDenoiseColorInterpolation = (gcnew System::Windows::Forms::NumericUpDown());
+            this->lbl_IRDenoise1 = (gcnew System::Windows::Forms::Label());
+            this->lbl_IRDenoise2 = (gcnew System::Windows::Forms::Label());
             this->grpBox_Color->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
             this->grpBox_SPI->SuspendLayout();
@@ -528,9 +549,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStrip1->SuspendLayout();
             this->grpBox_accGyroCal->SuspendLayout();
             this->grpBox_IR->SuspendLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxIR))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRCustomRegVal))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRCustomRegAddr))->BeginInit();
             this->grpBox_IRColorize->SuspendLayout();
             this->grpBox_IRRes->SuspendLayout();
-            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxIR))->BeginInit();
             this->grpBox_nfc->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_leftUserCal_y_plus))->BeginInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_leftUserCal_y_center))->BeginInit();
@@ -547,6 +570,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->groupBox_leftStickUCal->SuspendLayout();
             this->groupBox_rightStickUCal->SuspendLayout();
             this->grpBox_editUserStickCal->SuspendLayout();
+            this->grpBox_IRSettings->SuspendLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRDimLeds))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRBrightLeds))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseEdgeSmoothing))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseColorInterpolation))->BeginInit();
             this->SuspendLayout();
             // 
             // btn_writeColorsToSpi
@@ -927,7 +955,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             });
             this->menuStrip1->Location = System::Drawing::Point(0, 0);
             this->menuStrip1->Name = L"menuStrip1";
-            this->menuStrip1->Size = System::Drawing::Size(2112, 25);
+            this->menuStrip1->Size = System::Drawing::Size(1925, 25);
             this->menuStrip1->TabIndex = 0;
             this->menuStrip1->Text = L"menuStrip1";
             // 
@@ -1643,7 +1671,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->lbl_exposure->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->lbl_exposure->Location = System::Drawing::Point(250, 215);
+            this->lbl_exposure->Location = System::Drawing::Point(665, 152);
             this->lbl_exposure->Name = L"lbl_exposure";
             this->lbl_exposure->Size = System::Drawing::Size(57, 13);
             this->lbl_exposure->TabIndex = 31;
@@ -1658,7 +1686,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_IRExposure->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
             this->numeric_IRExposure->Increment = System::Decimal(gcnew cli::array< System::Int32 >(4) { 20, 0, 0, 0 });
-            this->numeric_IRExposure->Location = System::Drawing::Point(254, 233);
+            this->numeric_IRExposure->Location = System::Drawing::Point(669, 170);
             this->numeric_IRExposure->Margin = System::Windows::Forms::Padding(0);
             this->numeric_IRExposure->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 600, 0, 0, 0 });
             this->numeric_IRExposure->Name = L"numeric_IRExposure";
@@ -1668,32 +1696,18 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_IRExposure->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
             this->numeric_IRExposure->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 300, 0, 0, 0 });
             // 
-            // lbl_EXFilter
-            // 
-            this->lbl_EXFilter->AutoSize = true;
-            this->lbl_EXFilter->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-                static_cast<System::Byte>(161)));
-            this->lbl_EXFilter->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
-                static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->lbl_EXFilter->Location = System::Drawing::Point(317, 215);
-            this->lbl_EXFilter->Name = L"lbl_EXFilter";
-            this->lbl_EXFilter->Size = System::Drawing::Size(109, 13);
-            this->lbl_EXFilter->TabIndex = 34;
-            this->lbl_EXFilter->Text = L"External Light Filter:";
-            this->lbl_EXFilter->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
-            // 
             // trackBar_IRGain
             // 
+            this->trackBar_IRGain->AutoSize = false;
             this->trackBar_IRGain->LargeChange = 1;
-            this->trackBar_IRGain->Location = System::Drawing::Point(249, 165);
+            this->trackBar_IRGain->Location = System::Drawing::Point(466, 168);
             this->trackBar_IRGain->Margin = System::Windows::Forms::Padding(0);
             this->trackBar_IRGain->Maximum = 20;
             this->trackBar_IRGain->Minimum = 1;
             this->trackBar_IRGain->Name = L"trackBar_IRGain";
             this->trackBar_IRGain->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->trackBar_IRGain->Size = System::Drawing::Size(195, 45);
+            this->trackBar_IRGain->Size = System::Drawing::Size(195, 28);
             this->trackBar_IRGain->TabIndex = 4;
-            this->trackBar_IRGain->TickStyle = System::Windows::Forms::TickStyle::Both;
             this->trackBar_IRGain->Value = 2;
             this->trackBar_IRGain->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBarIR_ValueChanged);
             // 
@@ -2262,7 +2276,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->toolStrip1->Location = System::Drawing::Point(0, 880);
             this->toolStrip1->Name = L"toolStrip1";
             this->toolStrip1->Padding = System::Windows::Forms::Padding(6, 1, 6, 3);
-            this->toolStrip1->Size = System::Drawing::Size(2112, 25);
+            this->toolStrip1->Size = System::Drawing::Size(1925, 25);
             this->toolStrip1->Stretch = true;
             this->toolStrip1->TabIndex = 44;
             this->toolStrip1->Text = L"toolStrip1";
@@ -2381,66 +2395,19 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             this->grpBox_IR->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
-            this->grpBox_IR->Controls->Add(this->btn_IRConfigLive);
-            this->grpBox_IR->Controls->Add(this->trackBar_IRGain);
-            this->grpBox_IR->Controls->Add(this->lbl_EXFilter);
-            this->grpBox_IR->Controls->Add(this->comboBox_IRExFilter);
-            this->grpBox_IR->Controls->Add(this->btn_getIRStream);
             this->grpBox_IR->Controls->Add(this->lbl_IRStatus);
-            this->grpBox_IR->Controls->Add(this->lbl_exposure);
             this->grpBox_IR->Controls->Add(this->lbl_IRHelp);
-            this->grpBox_IR->Controls->Add(this->lbl_digitalGain);
-            this->grpBox_IR->Controls->Add(this->numeric_IRExposure);
-            this->grpBox_IR->Controls->Add(this->grpBox_IRColorize);
-            this->grpBox_IR->Controls->Add(this->checkBox_IRDimLeds);
-            this->grpBox_IR->Controls->Add(this->checkBox_IRBrightLeds);
-            this->grpBox_IR->Controls->Add(this->grpBox_IRRes);
             this->grpBox_IR->Controls->Add(this->pictureBoxIR);
-            this->grpBox_IR->Controls->Add(this->btn_getIRImage);
             this->grpBox_IR->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->grpBox_IR->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
             this->grpBox_IR->Location = System::Drawing::Point(1652, 36);
             this->grpBox_IR->Margin = System::Windows::Forms::Padding(0, 0, 14, 0);
             this->grpBox_IR->Name = L"grpBox_IR";
-            this->grpBox_IR->Size = System::Drawing::Size(449, 399);
+            this->grpBox_IR->Size = System::Drawing::Size(252, 399);
             this->grpBox_IR->TabIndex = 49;
             this->grpBox_IR->TabStop = false;
             this->grpBox_IR->Text = L"IR Camera";
-            // 
-            // comboBox_IRExFilter
-            // 
-            this->comboBox_IRExFilter->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
-            this->comboBox_IRExFilter->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
-            this->comboBox_IRExFilter->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-            this->comboBox_IRExFilter->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
-            this->comboBox_IRExFilter->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
-                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->comboBox_IRExFilter->FormattingEnabled = true;
-            this->comboBox_IRExFilter->Location = System::Drawing::Point(321, 233);
-            this->comboBox_IRExFilter->Margin = System::Windows::Forms::Padding(0);
-            this->comboBox_IRExFilter->Name = L"comboBox_IRExFilter";
-            this->comboBox_IRExFilter->Size = System::Drawing::Size(119, 25);
-            this->comboBox_IRExFilter->TabIndex = 33;
-            // 
-            // btn_getIRStream
-            // 
-            this->btn_getIRStream->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
-                static_cast<System::Int32>(static_cast<System::Byte>(85)));
-            this->btn_getIRStream->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
-                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
-            this->btn_getIRStream->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-            this->btn_getIRStream->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
-            this->btn_getIRStream->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(60)),
-                static_cast<System::Int32>(static_cast<System::Byte>(40)));
-            this->btn_getIRStream->Location = System::Drawing::Point(356, 355);
-            this->btn_getIRStream->Name = L"btn_getIRStream";
-            this->btn_getIRStream->Size = System::Drawing::Size(87, 30);
-            this->btn_getIRStream->TabIndex = 32;
-            this->btn_getIRStream->Text = L"Stream";
-            this->btn_getIRStream->UseVisualStyleBackColor = false;
-            this->btn_getIRStream->Click += gcnew System::EventHandler(this, &FormJoy::btn_getVideo_Click);
             // 
             // lbl_IRStatus
             // 
@@ -2464,9 +2431,84 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->lbl_IRHelp->Location = System::Drawing::Point(2, 346);
             this->lbl_IRHelp->Name = L"lbl_IRHelp";
-            this->lbl_IRHelp->Size = System::Drawing::Size(223, 26);
+            this->lbl_IRHelp->Size = System::Drawing::Size(223, 13);
             this->lbl_IRHelp->TabIndex = 5;
-            this->lbl_IRHelp->Text = L"The photo will be taken after initialization\r\nLine2\r\n";
+            this->lbl_IRHelp->Text = L"The photo will be taken after initialization\r\n";
+            // 
+            // pictureBoxIR
+            // 
+            this->pictureBoxIR->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(50)), static_cast<System::Int32>(static_cast<System::Byte>(50)),
+                static_cast<System::Int32>(static_cast<System::Byte>(50)));
+            this->pictureBoxIR->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
+            this->pictureBoxIR->Location = System::Drawing::Point(5, 21);
+            this->pictureBoxIR->Margin = System::Windows::Forms::Padding(0);
+            this->pictureBoxIR->Name = L"pictureBoxIR";
+            this->pictureBoxIR->Size = System::Drawing::Size(242, 322);
+            this->pictureBoxIR->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
+            this->pictureBoxIR->TabIndex = 2;
+            this->pictureBoxIR->TabStop = false;
+            // 
+            // numeric_IRCustomRegVal
+            // 
+            this->numeric_IRCustomRegVal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_IRCustomRegVal->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_IRCustomRegVal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_IRCustomRegVal->Hexadecimal = true;
+            this->numeric_IRCustomRegVal->Location = System::Drawing::Point(595, 21);
+            this->numeric_IRCustomRegVal->Margin = System::Windows::Forms::Padding(0);
+            this->numeric_IRCustomRegVal->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 255, 0, 0, 0 });
+            this->numeric_IRCustomRegVal->Name = L"numeric_IRCustomRegVal";
+            this->numeric_IRCustomRegVal->Size = System::Drawing::Size(53, 25);
+            this->numeric_IRCustomRegVal->TabIndex = 37;
+            this->numeric_IRCustomRegVal->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_IRCustomRegVal->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // numeric_IRCustomRegAddr
+            // 
+            this->numeric_IRCustomRegAddr->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_IRCustomRegAddr->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_IRCustomRegAddr->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_IRCustomRegAddr->Hexadecimal = true;
+            this->numeric_IRCustomRegAddr->Location = System::Drawing::Point(506, 21);
+            this->numeric_IRCustomRegAddr->Margin = System::Windows::Forms::Padding(0);
+            this->numeric_IRCustomRegAddr->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 1535, 0, 0, 0 });
+            this->numeric_IRCustomRegAddr->Name = L"numeric_IRCustomRegAddr";
+            this->numeric_IRCustomRegAddr->Size = System::Drawing::Size(74, 25);
+            this->numeric_IRCustomRegAddr->TabIndex = 36;
+            this->numeric_IRCustomRegAddr->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_IRCustomRegAddr->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // btn_IRConfigLive
+            // 
+            this->btn_IRConfigLive->Location = System::Drawing::Point(668, 21);
+            this->btn_IRConfigLive->Name = L"btn_IRConfigLive";
+            this->btn_IRConfigLive->Size = System::Drawing::Size(26, 24);
+            this->btn_IRConfigLive->TabIndex = 35;
+            this->btn_IRConfigLive->Text = L"C";
+            this->btn_IRConfigLive->UseVisualStyleBackColor = true;
+            this->btn_IRConfigLive->Click += gcnew System::EventHandler(this, &FormJoy::btn_IRConfigLive_Click);
+            // 
+            // btn_getIRStream
+            // 
+            this->btn_getIRStream->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_getIRStream->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_getIRStream->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->btn_getIRStream->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
+            this->btn_getIRStream->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(60)),
+                static_cast<System::Int32>(static_cast<System::Byte>(40)));
+            this->btn_getIRStream->Location = System::Drawing::Point(141, 174);
+            this->btn_getIRStream->Name = L"btn_getIRStream";
+            this->btn_getIRStream->Size = System::Drawing::Size(87, 30);
+            this->btn_getIRStream->TabIndex = 32;
+            this->btn_getIRStream->Text = L"Stream";
+            this->btn_getIRStream->UseVisualStyleBackColor = false;
+            this->btn_getIRStream->Click += gcnew System::EventHandler(this, &FormJoy::btn_getVideo_Click);
             // 
             // lbl_digitalGain
             // 
@@ -2475,7 +2517,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->lbl_digitalGain->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->lbl_digitalGain->Location = System::Drawing::Point(250, 147);
+            this->lbl_digitalGain->Location = System::Drawing::Point(467, 150);
             this->lbl_digitalGain->Name = L"lbl_digitalGain";
             this->lbl_digitalGain->Size = System::Drawing::Size(158, 13);
             this->lbl_digitalGain->TabIndex = 30;
@@ -2490,12 +2532,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_IRColorize->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->grpBox_IRColorize->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->grpBox_IRColorize->Location = System::Drawing::Point(251, 267);
+            this->grpBox_IRColorize->Location = System::Drawing::Point(130, 24);
             this->grpBox_IRColorize->Name = L"grpBox_IRColorize";
-            this->grpBox_IRColorize->Size = System::Drawing::Size(192, 77);
+            this->grpBox_IRColorize->Size = System::Drawing::Size(114, 140);
             this->grpBox_IRColorize->TabIndex = 4;
             this->grpBox_IRColorize->TabStop = false;
-            this->grpBox_IRColorize->Text = L"Palette (can change live)";
+            this->grpBox_IRColorize->Text = L"Colorize";
             // 
             // radioBtn_IRColorHeat
             // 
@@ -2507,7 +2549,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->radioBtn_IRColorHeat->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(207)),
                 static_cast<System::Int32>(static_cast<System::Byte>(179)), static_cast<System::Int32>(static_cast<System::Byte>(255)));
-            this->radioBtn_IRColorHeat->Location = System::Drawing::Point(106, 19);
+            this->radioBtn_IRColorHeat->Location = System::Drawing::Point(7, 73);
             this->radioBtn_IRColorHeat->Margin = System::Windows::Forms::Padding(0);
             this->radioBtn_IRColorHeat->Name = L"radioBtn_IRColorHeat";
             this->radioBtn_IRColorHeat->Size = System::Drawing::Size(74, 21);
@@ -2540,7 +2582,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->radioBtn_IRColorRed->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
             this->radioBtn_IRColorRed->ForeColor = System::Drawing::Color::Tomato;
-            this->radioBtn_IRColorRed->Location = System::Drawing::Point(106, 46);
+            this->radioBtn_IRColorRed->Location = System::Drawing::Point(7, 100);
             this->radioBtn_IRColorRed->Margin = System::Windows::Forms::Padding(0);
             this->radioBtn_IRColorRed->Name = L"radioBtn_IRColorRed";
             this->radioBtn_IRColorRed->Size = System::Drawing::Size(72, 21);
@@ -2560,42 +2602,42 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->radioBtn_IRColorGrey->Location = System::Drawing::Point(7, 19);
             this->radioBtn_IRColorGrey->Margin = System::Windows::Forms::Padding(0);
             this->radioBtn_IRColorGrey->Name = L"radioBtn_IRColorGrey";
-            this->radioBtn_IRColorGrey->Size = System::Drawing::Size(53, 21);
+            this->radioBtn_IRColorGrey->Size = System::Drawing::Size(82, 21);
             this->radioBtn_IRColorGrey->TabIndex = 0;
-            this->radioBtn_IRColorGrey->Text = L"Grey";
+            this->radioBtn_IRColorGrey->Text = L"Greyscale";
             this->radioBtn_IRColorGrey->UseVisualStyleBackColor = false;
             // 
-            // checkBox_IRDimLeds
+            // chkBox_IRDimLeds
             // 
-            this->checkBox_IRDimLeds->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
-            this->checkBox_IRDimLeds->Checked = true;
-            this->checkBox_IRDimLeds->CheckState = System::Windows::Forms::CheckState::Checked;
-            this->checkBox_IRDimLeds->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->chkBox_IRDimLeds->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRDimLeds->Checked = true;
+            this->chkBox_IRDimLeds->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->chkBox_IRDimLeds->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
-            this->checkBox_IRDimLeds->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
-                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->checkBox_IRDimLeds->Location = System::Drawing::Point(249, 118);
-            this->checkBox_IRDimLeds->Name = L"checkBox_IRDimLeds";
-            this->checkBox_IRDimLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->checkBox_IRDimLeds->Size = System::Drawing::Size(194, 21);
-            this->checkBox_IRDimLeds->TabIndex = 27;
-            this->checkBox_IRDimLeds->Text = L"Near/Wide  (130°)  Leds 3/4";
+            this->chkBox_IRDimLeds->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->chkBox_IRDimLeds->Location = System::Drawing::Point(252, 76);
+            this->chkBox_IRDimLeds->Name = L"chkBox_IRDimLeds";
+            this->chkBox_IRDimLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRDimLeds->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRDimLeds->TabIndex = 27;
+            this->chkBox_IRDimLeds->Text = L"Near/Wide  (130°)  Leds 3/4";
             // 
-            // checkBox_IRBrightLeds
+            // chkBox_IRBrightLeds
             // 
-            this->checkBox_IRBrightLeds->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
-            this->checkBox_IRBrightLeds->Checked = true;
-            this->checkBox_IRBrightLeds->CheckState = System::Windows::Forms::CheckState::Checked;
-            this->checkBox_IRBrightLeds->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+            this->chkBox_IRBrightLeds->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRBrightLeds->Checked = true;
+            this->chkBox_IRBrightLeds->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->chkBox_IRBrightLeds->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
-            this->checkBox_IRBrightLeds->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
-                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->checkBox_IRBrightLeds->Location = System::Drawing::Point(249, 93);
-            this->checkBox_IRBrightLeds->Name = L"checkBox_IRBrightLeds";
-            this->checkBox_IRBrightLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->checkBox_IRBrightLeds->Size = System::Drawing::Size(195, 21);
-            this->checkBox_IRBrightLeds->TabIndex = 26;
-            this->checkBox_IRBrightLeds->Text = L"Far/Narrow   (75°)  Leds 1/2";
+            this->chkBox_IRBrightLeds->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->chkBox_IRBrightLeds->Location = System::Drawing::Point(252, 17);
+            this->chkBox_IRBrightLeds->Name = L"chkBox_IRBrightLeds";
+            this->chkBox_IRBrightLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRBrightLeds->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRBrightLeds->TabIndex = 26;
+            this->chkBox_IRBrightLeds->Text = L"Far/Narrow   (75°)  Leds 1/2";
             // 
             // grpBox_IRRes
             // 
@@ -2606,9 +2648,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_IRRes->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->grpBox_IRRes->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->grpBox_IRRes->Location = System::Drawing::Point(251, 12);
+            this->grpBox_IRRes->Location = System::Drawing::Point(10, 24);
             this->grpBox_IRRes->Name = L"grpBox_IRRes";
-            this->grpBox_IRRes->Size = System::Drawing::Size(192, 77);
+            this->grpBox_IRRes->Size = System::Drawing::Size(114, 140);
             this->grpBox_IRRes->TabIndex = 3;
             this->grpBox_IRRes->TabStop = false;
             this->grpBox_IRRes->Text = L"Resolution";
@@ -2623,7 +2665,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->radioBtn_IR30p->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->radioBtn_IR30p->Location = System::Drawing::Point(102, 47);
+            this->radioBtn_IR30p->Location = System::Drawing::Point(7, 104);
             this->radioBtn_IR30p->Margin = System::Windows::Forms::Padding(0);
             this->radioBtn_IR30p->Name = L"radioBtn_IR30p";
             this->radioBtn_IR30p->Size = System::Drawing::Size(68, 21);
@@ -2642,7 +2684,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->radioBtn_IR60p->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->radioBtn_IR60p->Location = System::Drawing::Point(7, 46);
+            this->radioBtn_IR60p->Location = System::Drawing::Point(7, 77);
             this->radioBtn_IR60p->Margin = System::Windows::Forms::Padding(0);
             this->radioBtn_IR60p->Name = L"radioBtn_IR60p";
             this->radioBtn_IR60p->Size = System::Drawing::Size(68, 21);
@@ -2661,7 +2703,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->radioBtn_IR120p->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->radioBtn_IR120p->Location = System::Drawing::Point(102, 19);
+            this->radioBtn_IR120p->Location = System::Drawing::Point(7, 50);
             this->radioBtn_IR120p->Margin = System::Windows::Forms::Padding(0);
             this->radioBtn_IR120p->Name = L"radioBtn_IR120p";
             this->radioBtn_IR120p->Size = System::Drawing::Size(82, 21);
@@ -2682,7 +2724,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->radioBtn_IR240p->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->radioBtn_IR240p->Location = System::Drawing::Point(7, 19);
+            this->radioBtn_IR240p->Location = System::Drawing::Point(7, 23);
             this->radioBtn_IR240p->Margin = System::Windows::Forms::Padding(0);
             this->radioBtn_IR240p->Name = L"radioBtn_IR240p";
             this->radioBtn_IR240p->Size = System::Drawing::Size(82, 21);
@@ -2691,18 +2733,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->radioBtn_IR240p->Text = L"240 x 320";
             this->radioBtn_IR240p->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
             this->radioBtn_IR240p->UseVisualStyleBackColor = false;
-            // 
-            // pictureBoxIR
-            // 
-            this->pictureBoxIR->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(50)), static_cast<System::Int32>(static_cast<System::Byte>(50)),
-                static_cast<System::Int32>(static_cast<System::Byte>(50)));
-            this->pictureBoxIR->BorderStyle = System::Windows::Forms::BorderStyle::FixedSingle;
-            this->pictureBoxIR->Location = System::Drawing::Point(5, 21);
-            this->pictureBoxIR->Name = L"pictureBoxIR";
-            this->pictureBoxIR->Size = System::Drawing::Size(242, 322);
-            this->pictureBoxIR->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
-            this->pictureBoxIR->TabIndex = 2;
-            this->pictureBoxIR->TabStop = false;
             // 
             // btn_getIRImage
             // 
@@ -2714,7 +2744,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_getIRImage->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
             this->btn_getIRImage->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
                 static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->btn_getIRImage->Location = System::Drawing::Point(251, 355);
+            this->btn_getIRImage->Location = System::Drawing::Point(25, 174);
             this->btn_getIRImage->Name = L"btn_getIRImage";
             this->btn_getIRImage->Size = System::Drawing::Size(87, 30);
             this->btn_getIRImage->TabIndex = 1;
@@ -3141,15 +3171,238 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_writeUserCal->UseVisualStyleBackColor = false;
             this->btn_writeUserCal->Click += gcnew System::EventHandler(this, &FormJoy::btn_writeUserCal_Click);
             // 
-            // btn_IRConfigLive
+            // grpBox_IRSettings
             // 
-            this->btn_IRConfigLive->Location = System::Drawing::Point(334, 371);
-            this->btn_IRConfigLive->Name = L"btn_IRConfigLive";
-            this->btn_IRConfigLive->Size = System::Drawing::Size(26, 24);
-            this->btn_IRConfigLive->TabIndex = 35;
-            this->btn_IRConfigLive->Text = L"C";
-            this->btn_IRConfigLive->UseVisualStyleBackColor = true;
-            this->btn_IRConfigLive->Click += gcnew System::EventHandler(this, &FormJoy::btn_IRConfigLive_Click);
+            this->grpBox_IRSettings->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+                static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->grpBox_IRSettings->Controls->Add(this->lbl_IRDenoise2);
+            this->grpBox_IRSettings->Controls->Add(this->lbl_IRDenoise1);
+            this->grpBox_IRSettings->Controls->Add(this->numeric_IRDenoiseColorInterpolation);
+            this->grpBox_IRSettings->Controls->Add(this->numeric_IRDenoiseEdgeSmoothing);
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRDenoise);
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRSelfie);
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRStrobe);
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRFlashlight);
+            this->grpBox_IRSettings->Controls->Add(this->lbl_IRLed2Int);
+            this->grpBox_IRSettings->Controls->Add(this->lbl_IRLed1Int);
+            this->grpBox_IRSettings->Controls->Add(this->trackBar_IRDimLeds);
+            this->grpBox_IRSettings->Controls->Add(this->trackBar_IRBrightLeds);
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRExFilter);
+            this->grpBox_IRSettings->Controls->Add(this->btn_getIRStream);
+            this->grpBox_IRSettings->Controls->Add(this->trackBar_IRGain);
+            this->grpBox_IRSettings->Controls->Add(this->btn_getIRImage);
+            this->grpBox_IRSettings->Controls->Add(this->btn_IRConfigLive);
+            this->grpBox_IRSettings->Controls->Add(this->grpBox_IRRes);
+            this->grpBox_IRSettings->Controls->Add(this->grpBox_IRColorize);
+            this->grpBox_IRSettings->Controls->Add(this->numeric_IRCustomRegVal);
+            this->grpBox_IRSettings->Controls->Add(this->numeric_IRCustomRegAddr);
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRBrightLeds);
+            this->grpBox_IRSettings->Controls->Add(this->lbl_exposure);
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRDimLeds);
+            this->grpBox_IRSettings->Controls->Add(this->numeric_IRExposure);
+            this->grpBox_IRSettings->Controls->Add(this->lbl_digitalGain);
+            this->grpBox_IRSettings->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_IRSettings->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->grpBox_IRSettings->Location = System::Drawing::Point(1184, 445);
+            this->grpBox_IRSettings->Margin = System::Windows::Forms::Padding(0, 0, 0, 39);
+            this->grpBox_IRSettings->Name = L"grpBox_IRSettings";
+            this->grpBox_IRSettings->Size = System::Drawing::Size(732, 215);
+            this->grpBox_IRSettings->TabIndex = 41;
+            this->grpBox_IRSettings->TabStop = false;
+            this->grpBox_IRSettings->Text = L"IR Camera Settings";
+            // 
+            // chkBox_IRSelfie
+            // 
+            this->chkBox_IRSelfie->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRSelfie->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRSelfie->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(188)),
+                static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->chkBox_IRSelfie->Location = System::Drawing::Point(477, 52);
+            this->chkBox_IRSelfie->Name = L"chkBox_IRSelfie";
+            this->chkBox_IRSelfie->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRSelfie->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRSelfie->TabIndex = 45;
+            this->chkBox_IRSelfie->Text = L"Selfie mode (flip image)";
+            // 
+            // chkBox_IRStrobe
+            // 
+            this->chkBox_IRStrobe->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRStrobe->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRStrobe->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->chkBox_IRStrobe->Location = System::Drawing::Point(252, 160);
+            this->chkBox_IRStrobe->Name = L"chkBox_IRStrobe";
+            this->chkBox_IRStrobe->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRStrobe->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRStrobe->TabIndex = 44;
+            this->chkBox_IRStrobe->Text = L"Strobe Flash mode";
+            // 
+            // chkBox_IRFlashlight
+            // 
+            this->chkBox_IRFlashlight->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRFlashlight->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRFlashlight->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->chkBox_IRFlashlight->Location = System::Drawing::Point(252, 135);
+            this->chkBox_IRFlashlight->Name = L"chkBox_IRFlashlight";
+            this->chkBox_IRFlashlight->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRFlashlight->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRFlashlight->TabIndex = 43;
+            this->chkBox_IRFlashlight->Text = L"Flashlight mode";
+            // 
+            // lbl_IRLed2Int
+            // 
+            this->lbl_IRLed2Int->AutoSize = true;
+            this->lbl_IRLed2Int->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_IRLed2Int->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_IRLed2Int->Location = System::Drawing::Point(269, 102);
+            this->lbl_IRLed2Int->Name = L"lbl_IRLed2Int";
+            this->lbl_IRLed2Int->Size = System::Drawing::Size(54, 13);
+            this->lbl_IRLed2Int->TabIndex = 42;
+            this->lbl_IRLed2Int->Text = L"Intensity:";
+            this->lbl_IRLed2Int->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
+            // 
+            // lbl_IRLed1Int
+            // 
+            this->lbl_IRLed1Int->AutoSize = true;
+            this->lbl_IRLed1Int->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_IRLed1Int->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_IRLed1Int->Location = System::Drawing::Point(269, 43);
+            this->lbl_IRLed1Int->Name = L"lbl_IRLed1Int";
+            this->lbl_IRLed1Int->Size = System::Drawing::Size(54, 13);
+            this->lbl_IRLed1Int->TabIndex = 41;
+            this->lbl_IRLed1Int->Text = L"Intensity:";
+            this->lbl_IRLed1Int->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
+            // 
+            // trackBar_IRDimLeds
+            // 
+            this->trackBar_IRDimLeds->AutoSize = false;
+            this->trackBar_IRDimLeds->LargeChange = 1;
+            this->trackBar_IRDimLeds->Location = System::Drawing::Point(326, 100);
+            this->trackBar_IRDimLeds->Margin = System::Windows::Forms::Padding(0);
+            this->trackBar_IRDimLeds->Maximum = 16;
+            this->trackBar_IRDimLeds->Name = L"trackBar_IRDimLeds";
+            this->trackBar_IRDimLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->trackBar_IRDimLeds->Size = System::Drawing::Size(121, 28);
+            this->trackBar_IRDimLeds->TabIndex = 40;
+            this->trackBar_IRDimLeds->Value = 16;
+            this->trackBar_IRDimLeds->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBarIRLedsIntensity_ValueChanged);
+            // 
+            // trackBar_IRBrightLeds
+            // 
+            this->trackBar_IRBrightLeds->AutoSize = false;
+            this->trackBar_IRBrightLeds->LargeChange = 1;
+            this->trackBar_IRBrightLeds->Location = System::Drawing::Point(326, 41);
+            this->trackBar_IRBrightLeds->Margin = System::Windows::Forms::Padding(0);
+            this->trackBar_IRBrightLeds->Maximum = 15;
+            this->trackBar_IRBrightLeds->Name = L"trackBar_IRBrightLeds";
+            this->trackBar_IRBrightLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->trackBar_IRBrightLeds->Size = System::Drawing::Size(121, 28);
+            this->trackBar_IRBrightLeds->TabIndex = 39;
+            this->trackBar_IRBrightLeds->Value = 15;
+            this->trackBar_IRBrightLeds->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBarIRLedsIntensity_ValueChanged);
+            // 
+            // chkBox_IRExFilter
+            // 
+            this->chkBox_IRExFilter->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRExFilter->Checked = true;
+            this->chkBox_IRExFilter->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->chkBox_IRExFilter->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRExFilter->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->chkBox_IRExFilter->Location = System::Drawing::Point(252, 185);
+            this->chkBox_IRExFilter->Name = L"chkBox_IRExFilter";
+            this->chkBox_IRExFilter->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRExFilter->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRExFilter->TabIndex = 38;
+            this->chkBox_IRExFilter->Text = L"External IR Filter";
+            // 
+            // chkBox_IRDenoise
+            // 
+            this->chkBox_IRDenoise->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRDenoise->Checked = true;
+            this->chkBox_IRDenoise->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->chkBox_IRDenoise->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRDenoise->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->chkBox_IRDenoise->Location = System::Drawing::Point(466, 101);
+            this->chkBox_IRDenoise->Name = L"chkBox_IRDenoise";
+            this->chkBox_IRDenoise->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRDenoise->Size = System::Drawing::Size(90, 21);
+            this->chkBox_IRDenoise->TabIndex = 46;
+            this->chkBox_IRDenoise->Text = L"De-noise";
+            // 
+            // numeric_IRDenoiseEdgeSmoothing
+            // 
+            this->numeric_IRDenoiseEdgeSmoothing->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_IRDenoiseEdgeSmoothing->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_IRDenoiseEdgeSmoothing->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_IRDenoiseEdgeSmoothing->Location = System::Drawing::Point(571, 101);
+            this->numeric_IRDenoiseEdgeSmoothing->Margin = System::Windows::Forms::Padding(0);
+            this->numeric_IRDenoiseEdgeSmoothing->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 256, 0, 0, 0 });
+            this->numeric_IRDenoiseEdgeSmoothing->Name = L"numeric_IRDenoiseEdgeSmoothing";
+            this->numeric_IRDenoiseEdgeSmoothing->Size = System::Drawing::Size(53, 25);
+            this->numeric_IRDenoiseEdgeSmoothing->TabIndex = 47;
+            this->numeric_IRDenoiseEdgeSmoothing->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_IRDenoiseEdgeSmoothing->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            this->numeric_IRDenoiseEdgeSmoothing->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 35, 0, 0, 0 });
+            // 
+            // numeric_IRDenoiseColorInterpolation
+            // 
+            this->numeric_IRDenoiseColorInterpolation->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_IRDenoiseColorInterpolation->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_IRDenoiseColorInterpolation->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_IRDenoiseColorInterpolation->Location = System::Drawing::Point(638, 101);
+            this->numeric_IRDenoiseColorInterpolation->Margin = System::Windows::Forms::Padding(0);
+            this->numeric_IRDenoiseColorInterpolation->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 256, 0, 0, 0 });
+            this->numeric_IRDenoiseColorInterpolation->Name = L"numeric_IRDenoiseColorInterpolation";
+            this->numeric_IRDenoiseColorInterpolation->Size = System::Drawing::Size(53, 25);
+            this->numeric_IRDenoiseColorInterpolation->TabIndex = 48;
+            this->numeric_IRDenoiseColorInterpolation->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_IRDenoiseColorInterpolation->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            this->numeric_IRDenoiseColorInterpolation->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 68, 0, 0, 0 });
+            // 
+            // lbl_IRDenoise1
+            // 
+            this->lbl_IRDenoise1->AutoSize = true;
+            this->lbl_IRDenoise1->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_IRDenoise1->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_IRDenoise1->Location = System::Drawing::Point(560, 84);
+            this->lbl_IRDenoise1->Name = L"lbl_IRDenoise1";
+            this->lbl_IRDenoise1->Size = System::Drawing::Size(64, 13);
+            this->lbl_IRDenoise1->TabIndex = 49;
+            this->lbl_IRDenoise1->Text = L"Edge smth:";
+            this->lbl_IRDenoise1->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
+            // 
+            // lbl_IRDenoise2
+            // 
+            this->lbl_IRDenoise2->AutoSize = true;
+            this->lbl_IRDenoise2->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_IRDenoise2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_IRDenoise2->Location = System::Drawing::Point(637, 84);
+            this->lbl_IRDenoise2->Name = L"lbl_IRDenoise2";
+            this->lbl_IRDenoise2->Size = System::Drawing::Size(69, 13);
+            this->lbl_IRDenoise2->TabIndex = 50;
+            this->lbl_IRDenoise2->Text = L"Color intrpl:";
+            this->lbl_IRDenoise2->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
             // 
             // FormJoy
             // 
@@ -3159,7 +3412,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
             this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
-            this->ClientSize = System::Drawing::Size(2112, 905);
+            this->ClientSize = System::Drawing::Size(1925, 905);
+            this->Controls->Add(this->grpBox_IRSettings);
             this->Controls->Add(this->grpBox_editUserStickCal);
             this->Controls->Add(this->grpBox_nfc);
             this->Controls->Add(this->grpBox_IR);
@@ -3238,11 +3492,13 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_accGyroCal->PerformLayout();
             this->grpBox_IR->ResumeLayout(false);
             this->grpBox_IR->PerformLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxIR))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRCustomRegVal))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRCustomRegAddr))->EndInit();
             this->grpBox_IRColorize->ResumeLayout(false);
             this->grpBox_IRColorize->PerformLayout();
             this->grpBox_IRRes->ResumeLayout(false);
             this->grpBox_IRRes->PerformLayout();
-            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxIR))->EndInit();
             this->grpBox_nfc->ResumeLayout(false);
             this->grpBox_nfc->PerformLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_leftUserCal_y_plus))->EndInit();
@@ -3262,6 +3518,12 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->groupBox_rightStickUCal->ResumeLayout(false);
             this->groupBox_rightStickUCal->PerformLayout();
             this->grpBox_editUserStickCal->ResumeLayout(false);
+            this->grpBox_IRSettings->ResumeLayout(false);
+            this->grpBox_IRSettings->PerformLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRDimLeds))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRBrightLeds))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseEdgeSmoothing))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseColorInterpolation))->EndInit();
             this->ResumeLayout(false);
             this->PerformLayout();
 
@@ -3887,6 +4149,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         if (option_is_on != 6) {
             reset_window_option(false);
             this->Controls->Add(this->grpBox_IR);
+            this->Controls->Add(this->grpBox_IRSettings);
             this->btn_getIRStream->Text = L"Stream";
             option_is_on = 6;
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
@@ -3908,6 +4171,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->Controls->Remove(this->grpBox_ButtonTest);
         this->Controls->Remove(this->grpBox_editUserStickCal);
         this->Controls->Remove(this->grpBox_IR);
+        this->Controls->Remove(this->grpBox_IRSettings);
 
         this->Controls->Remove(this->grpBox_nfc);
         this->Controls->Remove(this->btn_enableExpertMode);
@@ -5090,6 +5354,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         else if (option_is_on == 6) {
             enable_IRVideoPhoto = false;
             this->Controls->Remove(this->grpBox_IR);
+            this->Controls->Remove(this->grpBox_IRSettings);
         }
 
         JCColorPicker->Show();
@@ -5145,6 +5410,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
         else if (option_is_on == 6) {
             this->Controls->Add(this->grpBox_IR);
+            this->Controls->Add(this->grpBox_IRSettings);
             this->btn_getIRStream->Text = L"Stream";
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
@@ -5183,6 +5449,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
         else if (option_is_on == 6) {
             this->Controls->Add(this->grpBox_IR);
+            this->Controls->Add(this->grpBox_IRSettings);
             this->btn_getIRStream->Text = L"Stream";
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
@@ -5220,7 +5487,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->menuStrip1->Refresh();
         this->toolStrip1->Refresh();
     }
-    
+
+
     private: System::Void fixToolstripOverlap(System::Object^  sender, System::EventArgs^  e) {
         this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         System::Drawing::Rectangle screenRectangle = RectangleToScreen(this->ClientRectangle);
@@ -5228,11 +5496,75 @@ public ref class FormJoy : public System::Windows::Forms::Form
         
         this->grpBox_Color->Margin = System::Windows::Forms::Padding(0, 0, 14, titleHeight);
         this->grpBox_StickCal->Margin = System::Windows::Forms::Padding(0, 0, 0, titleHeight);
+        this->grpBox_IRSettings->Margin = System::Windows::Forms::Padding(0, 0, 0, titleHeight);
     }
 
 
     private: System::Void TrackBarIR_ValueChanged(System::Object^ sender, System::EventArgs^ e) {
         this->toolTip1->SetToolTip(this->trackBar_IRGain, String::Format("{0:d}x", this->trackBar_IRGain->Value));
+    }
+
+
+    private: System::Void TrackBarIRLedsIntensity_ValueChanged(System::Object^ sender, System::EventArgs^ e) {
+        TrackBar^ temp = (TrackBar^)sender;
+        if (temp->Maximum == 15)
+            this->toolTip1->SetToolTip((TrackBar^)sender, String::Format("{0:d}%", (temp->Value * 100) / 15));
+        else
+            this->toolTip1->SetToolTip((TrackBar^)sender, String::Format("{0:d}%", (temp->Value * 100) / 16));
+    }
+
+
+    private: System::Void IRFlashlight_checkedChanged(System::Object^ sender, System::EventArgs^ e) {
+        if (this->chkBox_IRFlashlight->Checked) {
+            this->chkBox_IRExFilter->Enabled = false;
+            this->trackBar_IRBrightLeds->Enabled = false;
+            this->trackBar_IRDimLeds->Enabled = false;
+            this->lbl_IRLed1Int->Enabled = false;
+            this->lbl_IRLed2Int->Enabled = false;
+        }
+        else {
+            this->chkBox_IRExFilter->Enabled = true;
+            this->trackBar_IRBrightLeds->Enabled = true;
+            this->trackBar_IRDimLeds->Enabled = true;
+            this->lbl_IRLed1Int->Enabled = true;
+            this->lbl_IRLed2Int->Enabled = true;
+        }
+    }
+
+
+    private: System::Void IRLeds_checkedChanged(System::Object^ sender, System::EventArgs^ e) {
+        if (this->chkBox_IRBrightLeds->Checked) {
+            this->trackBar_IRBrightLeds->Enabled = true;
+            this->lbl_IRLed1Int->Enabled = true;
+        }
+        else {
+            this->trackBar_IRBrightLeds->Enabled = false;
+            this->lbl_IRLed1Int->Enabled = false;
+        }
+        if (this->chkBox_IRDimLeds->Checked) {
+            this->trackBar_IRDimLeds->Enabled = true;
+            this->lbl_IRLed2Int->Enabled = true;
+        }
+        else {
+            this->trackBar_IRDimLeds->Enabled = false;
+            this->lbl_IRLed2Int->Enabled = false;
+        }
+    }
+
+
+    private: System::Void IRDenoise_checkedChanged(System::Object^ sender, System::EventArgs^ e) {
+        if (this->chkBox_IRDenoise->Checked) {
+            this->numeric_IRDenoiseEdgeSmoothing->Enabled = true;
+            this->numeric_IRDenoiseColorInterpolation->Enabled = true;
+            this->lbl_IRDenoise1->Enabled = true;
+            this->lbl_IRDenoise2->Enabled = true;
+        }
+        else {
+            this->numeric_IRDenoiseEdgeSmoothing->Enabled = false;
+            this->numeric_IRDenoiseColorInterpolation->Enabled = false;
+            this->lbl_IRDenoise1->Enabled = false;
+            this->lbl_IRDenoise2->Enabled = false;
+        }
     }
 
 
@@ -5280,52 +5612,48 @@ public ref class FormJoy : public System::Windows::Forms::Form
             }
         }
 
-        // IR Leds. Only the below configurations are supported.
-        if (this->checkBox_IRBrightLeds->Checked == true && this->checkBox_IRDimLeds->Checked == true)
-            ir_new_config.ir_leds = (0b00 << 4); // Both Far/Narrow 75° and Near/Wide 130° Led groups are enabled.
-        else if (this->checkBox_IRBrightLeds->Checked == true && this->checkBox_IRDimLeds->Checked == false)
-            ir_new_config.ir_leds = (0b10 << 4); // Only Far/Narrow 75° Led group is enabled.
-        else if (this->checkBox_IRBrightLeds->Checked == false && this->checkBox_IRDimLeds->Checked == true)
-            ir_new_config.ir_leds = (0b01 << 4); // Only Near/Wide 130° Led group is enabled.
-        else if (this->checkBox_IRBrightLeds->Checked == false && this->checkBox_IRDimLeds->Checked == false)
-            ir_new_config.ir_leds = (0b11 << 4); // Both groups disabled
+        // Enable IR Leds. Only the following configurations are supported.
+        if (this->chkBox_IRBrightLeds->Checked == true && this->chkBox_IRDimLeds->Checked == true)
+            ir_new_config.ir_leds = 0b000000; // Both Far/Narrow 75° and Near/Wide 130° Led groups are enabled.
+        else if (this->chkBox_IRBrightLeds->Checked == true && this->chkBox_IRDimLeds->Checked == false)
+            ir_new_config.ir_leds = 0b100000; // Only Far/Narrow 75° Led group is enabled.
+        else if (this->chkBox_IRBrightLeds->Checked == false && this->chkBox_IRDimLeds->Checked == true)
+            ir_new_config.ir_leds = 0b010000; // Only Near/Wide 130° Led group is enabled.
+        else if (this->chkBox_IRBrightLeds->Checked == false && this->chkBox_IRDimLeds->Checked == false)
+            ir_new_config.ir_leds = 0b110000; // Both groups disabled
 
-        // External Light filter
-        switch (this->comboBox_IRExFilter->SelectedIndex) {
-            case 0:
-                ir_new_config.ir_ex_light_filter = 0b00000000; // Disable
-                break;
-            case 1:
-                ir_new_config.ir_ex_light_filter = 0b00000011; // Enable
-                break;
-            case 2:
-                ir_new_config.ir_ex_light_filter = 0b00000111; // Enabled when inverted colors are used in Switch
-                break;
-            case 3:
-                ir_new_config.ir_ex_light_filter = 0x13;
-                break;
-            case 4:
-                ir_new_config.ir_ex_light_filter = 0x17;
-                break;
-            case 5:
-                ir_new_config.ir_ex_light_filter = 0x23;
-                break;
-            case 6:
-                ir_new_config.ir_ex_light_filter = 0x27;
-                break;
-            case 7:
-                ir_new_config.ir_ex_light_filter = 0x33;
-                break;
-            case 8:
-                ir_new_config.ir_ex_light_filter = 0x37;
-                break;
-            default:
-                break;
-        }
+        // IR Leds Intensity
+        ir_new_config.ir_leds_intensity = ((u8)this->trackBar_IRBrightLeds->Value << 8) | (u8)this->trackBar_IRDimLeds->Value;
 
-        // The exposure time (Shutter speed) is in us. Valid values are 0 to 600us or 0 - 1/1666.66s
+        // IR Leds Effects
+        if (this->chkBox_IRFlashlight->Checked)
+            ir_new_config.ir_leds |= 0b01;
+        if (this->chkBox_IRStrobe->Checked)
+            ir_new_config.ir_leds |= 0b10000000;
+
+        // External Light filter (Dark-frame subtraction). Additionally, disable if leds in flashlight mode.
+        if (this->chkBox_IRExFilter->Checked && this->chkBox_IRExFilter->Enabled)
+            ir_new_config.ir_ex_light_filter = 0x03;
+        else
+            ir_new_config.ir_ex_light_filter = 0x00;
+
+        // Flip image. Food for tracking camera movement when taking selfies :P
+        if (this->chkBox_IRSelfie->Checked)
+            ir_new_config.ir_flip = 0x02;
+        else
+            ir_new_config.ir_flip = 0x00;
+
+        // Exposure time (Shutter speed) is in us. Valid values are 0 to 600us or 0 - 1/1666.66s
         ir_new_config.ir_exposure = (u16)(this->numeric_IRExposure->Value * 31200 / 1000);
         ir_new_config.ir_digital_gain = (u8)this->trackBar_IRGain->Value;
+
+        //De-noise algorithms
+        if (this->chkBox_IRDenoise->Checked)
+            ir_new_config.ir_denoise = 0x01 << 16;
+        else
+            ir_new_config.ir_denoise = 0x00 << 16;
+        ir_new_config.ir_denoise |= ((u8)this->numeric_IRDenoiseEdgeSmoothing->Value & 0xFF) << 8;
+        ir_new_config.ir_denoise |= (u8)this->numeric_IRDenoiseColorInterpolation->Value & 0xFF;
 
         // Initialize camera
         if (startNewConfig) {
@@ -5369,6 +5697,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
         // Change camera configuration
         else {
+            ir_new_config.ir_custom_register = ((u16)this->numeric_IRCustomRegAddr->Value) | ((u8)this->numeric_IRCustomRegVal->Value << 16);
             res = ir_sensor_config_live(ir_new_config);
         }
 
@@ -5468,6 +5797,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         int res;
 
         this->btn_getIRImage->Enabled = false;
+        this->grpBox_IRRes->Enabled = false;
         if (enable_IRVideoPhoto) {
             enable_IRVideoPhoto = false;
         }
@@ -5483,6 +5813,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
 
         this->btn_getIRImage->Enabled = true;
+        this->grpBox_IRRes->Enabled = true;
         this->btn_getIRStream->Text = L"Stream";
     }
 
