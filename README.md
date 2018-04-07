@@ -1,5 +1,8 @@
 # Joy-Con Toolkit
 
+![](http://ctcaer.com/wii/jc6.png)
+This image is for reference.
+
 ## Prerequisites:
 
 **Microsoft Visual C++ 2017 (x86) Redistributable** (All Windows versions)
