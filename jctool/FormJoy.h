@@ -36,7 +36,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         vib_loop_end    = 0;
         vib_loop_wait   = 0;
         disable_expert_mode = true;
-        temp_celsius    = true;
+        temp_celsius        = true;
 
         silence_input_report();
         set_led_busy();
@@ -47,13 +47,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
         myform1 = this;
 
         //Initialise locations on start for easy designing
-        this->grpBox_DebugCmd->Location = System::Drawing::Point(494, 36);
-        this->grpBox_Restore->Location = System::Drawing::Point(494, 36);
-        this->grpBox_ChangeSN->Location = System::Drawing::Point(494, 36);
-        this->grpBox_VibPlayer->Location = System::Drawing::Point(494, 36);
-        this->grpBox_ButtonTest->Location = System::Drawing::Point(494, 36);
-        this->grpBox_IR->Location = System::Drawing::Point(494, 36);
+        this->grpBox_DebugCmd->Location         = System::Drawing::Point(494, 36);
+        this->grpBox_Restore->Location          = System::Drawing::Point(494, 36);
+        this->grpBox_ChangeSN->Location         = System::Drawing::Point(494, 36);
+        this->grpBox_VibPlayer->Location        = System::Drawing::Point(494, 36);
+        this->grpBox_ButtonTest->Location       = System::Drawing::Point(494, 36);
+        this->grpBox_IR->Location               = System::Drawing::Point(494, 36);
         this->grpBox_editUserStickCal->Location = System::Drawing::Point(724, 36);
+        this->grpBox_IRSettings->Location       = System::Drawing::Point(14, 445);
 
         // Pull controller info
         full_refresh(false);
@@ -71,24 +72,24 @@ public ref class FormJoy : public System::Windows::Forms::Form
             gcnew System::Windows::Forms::ToolStripProfessionalRenderer(gcnew Overrides::TestColorTable());
         this->toolStrip1->Renderer = gcnew Overrides::OverrideTSSR();
 
-        this->textBoxDbg_cmd->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
-        this->textBoxDbg_cmd->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
-        this->textBoxDbg_subcmd->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_subcmd_Validating);
-        this->textBoxDbg_subcmd->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_subcmd_Validated);
-        this->textBoxDbg_SubcmdArg->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_SubcmdArg_Validating);
-        this->textBoxDbg_SubcmdArg->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_SubcmdArg_Validated);
-        this->textBoxDbg_lfamp->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
-        this->textBoxDbg_lfamp->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
-        this->textBoxDbg_lfreq->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
-        this->textBoxDbg_lfreq->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
-        this->textBoxDbg_hamp->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
-        this->textBoxDbg_hamp->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
-        this->textBoxDbg_hfreq->Validating += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
-        this->textBoxDbg_hfreq->Validated += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
-        this->textBox_chg_sn->Validating += gcnew CancelEventHandler(this, &FormJoy::textBox_chg_sn_Validating);
-        this->textBox_chg_sn->Validated += gcnew EventHandler(this, &FormJoy::textBox_chg_sn_Validated);
+        this->textBoxDbg_cmd->Validating         += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
+        this->textBoxDbg_cmd->Validated          += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
+        this->textBoxDbg_subcmd->Validating      += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_subcmd_Validating);
+        this->textBoxDbg_subcmd->Validated       += gcnew EventHandler(this, &FormJoy::textBoxDbg_subcmd_Validated);
+        this->textBoxDbg_SubcmdArg->Validating   += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_SubcmdArg_Validating);
+        this->textBoxDbg_SubcmdArg->Validated    += gcnew EventHandler(this, &FormJoy::textBoxDbg_SubcmdArg_Validated);
+        this->textBoxDbg_lfamp->Validating       += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
+        this->textBoxDbg_lfamp->Validated        += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
+        this->textBoxDbg_lfreq->Validating       += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
+        this->textBoxDbg_lfreq->Validated        += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
+        this->textBoxDbg_hamp->Validating        += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
+        this->textBoxDbg_hamp->Validated         += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
+        this->textBoxDbg_hfreq->Validating       += gcnew CancelEventHandler(this, &FormJoy::textBoxDbg_Validating);
+        this->textBoxDbg_hfreq->Validated        += gcnew EventHandler(this, &FormJoy::textBoxDbg_Validated);
+        this->textBox_chg_sn->Validating         += gcnew CancelEventHandler(this, &FormJoy::textBox_chg_sn_Validating);
+        this->textBox_chg_sn->Validated          += gcnew EventHandler(this, &FormJoy::textBox_chg_sn_Validated);
         this->textBox_vib_loop_times->Validating += gcnew CancelEventHandler(this, &FormJoy::textBox_loop_Validating);
-        this->textBox_vib_loop_times->Validated += gcnew EventHandler(this, &FormJoy::textBox_loop_Validated);
+        this->textBox_vib_loop_times->Validated  += gcnew EventHandler(this, &FormJoy::textBox_loop_Validated);
 
         this->chkBox_IRFlashlight->CheckedChanged += gcnew EventHandler(this, &FormJoy::IRFlashlight_checkedChanged);
         this->chkBox_IRBrightLeds->CheckedChanged += gcnew EventHandler(this, &FormJoy::IRLeds_checkedChanged);
@@ -1884,6 +1885,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             // trackBar_hf_amp
             // 
+            this->trackBar_hf_amp->AutoSize = false;
             this->trackBar_hf_amp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_hf_amp->LargeChange = 1;
@@ -1893,13 +1895,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_hf_amp->Name = L"trackBar_hf_amp";
             this->trackBar_hf_amp->Orientation = System::Windows::Forms::Orientation::Vertical;
             this->trackBar_hf_amp->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->trackBar_hf_amp->Size = System::Drawing::Size(45, 104);
+            this->trackBar_hf_amp->Size = System::Drawing::Size(35, 104);
             this->trackBar_hf_amp->TabIndex = 8;
             this->trackBar_hf_amp->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
             this->trackBar_hf_amp->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
             // 
             // trackBar_lf_amp
             // 
+            this->trackBar_lf_amp->AutoSize = false;
             this->trackBar_lf_amp->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_lf_amp->LargeChange = 1;
@@ -1909,13 +1912,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_lf_amp->Name = L"trackBar_lf_amp";
             this->trackBar_lf_amp->Orientation = System::Windows::Forms::Orientation::Vertical;
             this->trackBar_lf_amp->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->trackBar_lf_amp->Size = System::Drawing::Size(45, 104);
+            this->trackBar_lf_amp->Size = System::Drawing::Size(35, 104);
             this->trackBar_lf_amp->TabIndex = 6;
             this->trackBar_lf_amp->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
             this->trackBar_lf_amp->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
             // 
             // trackBar_hf_freq
             // 
+            this->trackBar_hf_freq->AutoSize = false;
             this->trackBar_hf_freq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_hf_freq->LargeChange = 1;
@@ -1925,13 +1929,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_hf_freq->Name = L"trackBar_hf_freq";
             this->trackBar_hf_freq->Orientation = System::Windows::Forms::Orientation::Vertical;
             this->trackBar_hf_freq->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->trackBar_hf_freq->Size = System::Drawing::Size(45, 104);
+            this->trackBar_hf_freq->Size = System::Drawing::Size(35, 104);
             this->trackBar_hf_freq->TabIndex = 9;
             this->trackBar_hf_freq->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
             this->trackBar_hf_freq->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);
             // 
             // trackBar_lf_freq
             // 
+            this->trackBar_lf_freq->AutoSize = false;
             this->trackBar_lf_freq->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
             this->trackBar_lf_freq->LargeChange = 1;
@@ -1941,7 +1946,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->trackBar_lf_freq->Name = L"trackBar_lf_freq";
             this->trackBar_lf_freq->Orientation = System::Windows::Forms::Orientation::Vertical;
             this->trackBar_lf_freq->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->trackBar_lf_freq->Size = System::Drawing::Size(45, 104);
+            this->trackBar_lf_freq->Size = System::Drawing::Size(35, 104);
             this->trackBar_lf_freq->TabIndex = 7;
             this->trackBar_lf_freq->TickStyle = System::Windows::Forms::TickStyle::TopLeft;
             this->trackBar_lf_freq->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBar_ValueChanged);

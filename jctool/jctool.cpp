@@ -2042,6 +2042,7 @@ int get_ir_registers(int start_reg, int reg_group) {
     error_reading = 0;
     int pos_ir_registers = start_reg;
     while (1) {
+    repeat_send:
         memset(buf, 0, sizeof(buf));
         auto hdr = (brcm_hdr *)buf;
         auto pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -2052,48 +2053,47 @@ int get_ir_registers(int start_reg, int reg_group) {
         pkt->subcmd = 0x03;
         pkt->subcmd_arg.arg1 = 0x03;
 
-        buf[12] = 0x01; // seems to be always 0x01
+        buf[12] = 0x1; // seems to be always 0x01
 
-        buf[13] = ir_registers[pos_ir_registers];     // 0-4 registers group
-        buf[14] = ir_registers[pos_ir_registers + 1]; // offset. this plus the number of registers, must be less than x7f
-        buf[15] = ir_registers[pos_ir_registers + 2]; // Number of registers to show
+        buf[13] = pos_ir_registers; // 0-4 registers page/group
+        buf[14] = 0x00; // offset. this plus the number of registers, must be less than x7f
+        buf[15] = 0x7f; // Number of registers to show + 1
 
         buf[47] = mcu_crc8_calc(buf + 11, 36);
 
         res = hid_write(handle, buf, output_buffer_length);
-        Sleep(15);
-        res = hid_write(handle, buf, output_buffer_length);
+
         int tries = 0;
         while (1) {
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
-            if (buf[49] == 0x1b && buf[52] == ir_registers[pos_ir_registers + 1] && buf[53] == ir_registers[pos_ir_registers + 2]) {
-                //printf("%02X, %02X, %02X - SUCCESS:\n", buf[51], buf[52], buf[53]);
-                for (int i = 0; i < buf[52] + buf[53]; i++)
-                    printf("%02X ", buf[54 + i]);
+            if (buf[49] == 0x1b && buf[51] == pos_ir_registers && buf[52] == 0x00) {
+                error_reading = 0;
+                printf("--->%02X, %02X : %02X:\n", buf[51], buf[52], buf[53]);
+                for (int i = 0; i <= buf[52] + buf[53]; i++)
+                    if ((i & 0xF) == 0xF)
+                        printf("%02X | ", buf[54 + i]);
+                    else
+                        printf("%02X ", buf[54 + i]);
                 printf("\n");
-                //buf[50] 0: success, out of range
                 break;
             }
             tries++;
             if (tries > 8) {
-                //printf("%02X, %02X, %02X - FAILED\n", ir_registers[pos_ir_registers], ir_registers[pos_ir_registers + 1], ir_registers[pos_ir_registers + 2]);
-                break;
+                error_reading++;
+                if (error_reading > 5) {
+                    return 1;
+                }
+                goto repeat_send;
             }
 
         }
-        pos_ir_registers += 3;
-        //if (pos_ir_registers > 12) {
+        pos_ir_registers++;
         if (pos_ir_registers > reg_group) {
-            //printf("\n");
-            //printf("\n");
             break;
         }
-        //error_reading++;
-        //if (error_reading > 7) {
-        //    res_get = 10;
-        //    goto step10;
-        //}
+        
     }
+    printf("\n");
 
     return 0;
 }
@@ -2160,7 +2160,7 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
 
-    //get_ir_registers(0,12);
+    // get_ir_registers(0,4);
 
     return res;
 }
