@@ -12,6 +12,7 @@
 #include "ir_sensor.h"
 #include "tune.h"
 #include "FormJoy.h"
+#include "hidapi.h"
 #include "hidapi_log.h"
 
 using namespace CppWinFormJoy;
@@ -19,6 +20,9 @@ using namespace CppWinFormJoy;
 #pragma comment(lib, "SetupAPI")
 
 bool enable_traffic_dump = false;
+
+hid_device *handle;
+hid_device *handle_l;
 
 s16 uint16_to_int16(u16 a) {
     s16 b;
@@ -1785,8 +1789,8 @@ step5:
         pkt->subcmd_21_23_01.mcu_ir_mode = 0x07; // IR mode - 2: No mode/Disable?, 3: Moment, 4: Dpd, 6: Clustering,
                                                  // 7: Image transfer, 8-10: Hand analysis (Silhouette, Image, Silhouette/Image), 0,1/5/10+: Unknown
         pkt->subcmd_21_23_01.no_of_frags = ir_max_frag_no; // Set number of packets to output per buffer
-        pkt->subcmd_21_23_01.mcu_major_v = 0x0300; // Set required IR MCU FW v3.09. Major 0x0003.
-        pkt->subcmd_21_23_01.mcu_minor_v = 0x0900; // Set required IR MCU FW v3.09. Minor 0x0009.
+        pkt->subcmd_21_23_01.mcu_major_v = 0x0500; // Set required IR MCU FW v5.18. Major 0x0005.
+        pkt->subcmd_21_23_01.mcu_minor_v = 0x1800; // Set required IR MCU FW v5.18. Minor 0x0018.
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
         res = hid_write(handle, buf, output_buffer_length);
@@ -1877,7 +1881,7 @@ step7:
         pkt->subcmd_21_23_04.reg7_val   = (ir_cfg.ir_digital_gain & 0xF0) >> 4;
         pkt->subcmd_21_23_04.reg8_addr  = 0x0e00; // R: 0x00e0 - External light filter - LS o bit0: Off/On, bit1: 0x/1x, bit2: ??, bit4,5: ??.
         pkt->subcmd_21_23_04.reg8_val   = ir_cfg.ir_ex_light_filter;
-        pkt->subcmd_21_23_04.reg9_addr  = 0x4301; // R: 0x0143 - Unknown - 200: Default
+        pkt->subcmd_21_23_04.reg9_addr  = 0x4301; // R: 0x0143 - ExLF/White pixel stats threshold - 200: Default
         pkt->subcmd_21_23_04.reg9_val   = 0xc8;
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
@@ -2137,7 +2141,8 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
 
-    //Sleep(15);
+    // Important. Otherwise we gonna have a dropped packet.
+    Sleep(15);
 
     pkt->subcmd_21_23_04.no_of_reg = 0x06; // Number of registers to write. Max 9.
 
@@ -2161,6 +2166,7 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     res = hid_write(handle, buf, sizeof(buf));
 
     // get_ir_registers(0,4);
+    // get_ir_registers((ir_cfg.ir_custom_register >> 8) & 0xFF, (ir_cfg.ir_custom_register >> 8) & 0xFF);
 
     return res;
 }

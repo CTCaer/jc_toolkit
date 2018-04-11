@@ -1,6 +1,5 @@
 #pragma once
 #include <cstdint>
-#include "hidapi.h"
 
 using namespace System;
 
@@ -120,11 +119,10 @@ extern int silence_input_report();
 int handle_ok;
 bool enable_button_test;
 bool enable_IRVideoPhoto;
+bool enable_IRAutoExposure;
 bool enable_NFCScanning;
 bool cancel_spi_dump;
 
-hid_device *handle;
-hid_device *handle_l;
 u8 timming_byte;
 u8 ir_max_frag_no;
 
