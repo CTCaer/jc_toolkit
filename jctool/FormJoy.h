@@ -91,10 +91,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->textBox_vib_loop_times->Validating += gcnew CancelEventHandler(this, &FormJoy::textBox_loop_Validating);
         this->textBox_vib_loop_times->Validated  += gcnew EventHandler(this, &FormJoy::textBox_loop_Validated);
 
-        this->chkBox_IRFlashlight->CheckedChanged += gcnew EventHandler(this, &FormJoy::IRFlashlight_checkedChanged);
-        this->chkBox_IRBrightLeds->CheckedChanged += gcnew EventHandler(this, &FormJoy::IRLeds_checkedChanged);
-        this->chkBox_IRDimLeds->CheckedChanged    += gcnew EventHandler(this, &FormJoy::IRLeds_checkedChanged);
-        this->chkBox_IRDenoise->CheckedChanged    += gcnew EventHandler(this, &FormJoy::IRDenoise_checkedChanged);
+        this->chkBox_IRFlashlight->CheckedChanged   += gcnew EventHandler(this, &FormJoy::IRFlashlight_checkedChanged);
+        this->chkBox_IRBrightLeds->CheckedChanged   += gcnew EventHandler(this, &FormJoy::IRLeds_checkedChanged);
+        this->chkBox_IRDimLeds->CheckedChanged      += gcnew EventHandler(this, &FormJoy::IRLeds_checkedChanged);
+        this->chkBox_IRDenoise->CheckedChanged      += gcnew EventHandler(this, &FormJoy::IRDenoise_checkedChanged);
+        this->chkBox_IRAutoExposure->CheckedChanged += gcnew EventHandler(this, &FormJoy::IRAutoExposure_checkedChanged);
 
         this->toolTip1->SetToolTip(this->label_sn, L"Click here to change your S/N");
         this->toolTip1->SetToolTip(this->textBox_vib_loop_times,
@@ -281,7 +282,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::RadioButton^  radioBtn_IRColorGreen;
     private: System::Windows::Forms::RadioButton^  radioBtn_IRColorRed;
     private: System::Windows::Forms::RadioButton^  radioBtn_IRColorGrey;
-    private: System::Windows::Forms::NumericUpDown^  numeric_IRExposure;
+    public:  System::Windows::Forms::NumericUpDown^  numeric_IRExposure;
     private: System::Windows::Forms::Label^  lbl_digitalGain;
     private: System::Windows::Forms::RadioButton^  radioBtn_IR30p;
     public:  System::Windows::Forms::Label^  lbl_IRStatus;
@@ -332,6 +333,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Label^  lbl_IRDenoise2;
     private: System::Windows::Forms::Label^  lbl_IRDenoise1;
     private: System::Windows::Forms::Label^  lbl_IRCustomReg;
+    private: System::Windows::Forms::CheckBox^  chkBox_IRAutoExposure;
     private: System::Windows::Forms::GroupBox^  grpBox_IRSettingsDenoise;
 
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
@@ -514,6 +516,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_editUserStickCal = (gcnew System::Windows::Forms::GroupBox());
             this->btn_writeUserCal = (gcnew System::Windows::Forms::Button());
             this->grpBox_IRSettings = (gcnew System::Windows::Forms::GroupBox());
+            this->chkBox_IRAutoExposure = (gcnew System::Windows::Forms::CheckBox());
             this->grpBox_IRSettingsDenoise = (gcnew System::Windows::Forms::GroupBox());
             this->numeric_IRDenoiseEdgeSmoothing = (gcnew System::Windows::Forms::NumericUpDown());
             this->chkBox_IRDenoise = (gcnew System::Windows::Forms::CheckBox());
@@ -3194,6 +3197,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             this->grpBox_IRSettings->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->grpBox_IRSettings->Controls->Add(this->chkBox_IRAutoExposure);
             this->grpBox_IRSettings->Controls->Add(this->grpBox_IRSettingsDenoise);
             this->grpBox_IRSettings->Controls->Add(this->lbl_IRCustomReg);
             this->grpBox_IRSettings->Controls->Add(this->chkBox_IRSelfie);
@@ -3227,6 +3231,21 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_IRSettings->TabIndex = 41;
             this->grpBox_IRSettings->TabStop = false;
             this->grpBox_IRSettings->Text = L"IR Camera Settings";
+            // 
+            // chkBox_IRAutoExposure
+            // 
+            this->chkBox_IRAutoExposure->CheckAlign = System::Drawing::ContentAlignment::BottomCenter;
+            this->chkBox_IRAutoExposure->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRAutoExposure->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->chkBox_IRAutoExposure->Location = System::Drawing::Point(121, 155);
+            this->chkBox_IRAutoExposure->Name = L"chkBox_IRAutoExposure";
+            this->chkBox_IRAutoExposure->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRAutoExposure->Size = System::Drawing::Size(78, 53);
+            this->chkBox_IRAutoExposure->TabIndex = 51;
+            this->chkBox_IRAutoExposure->Text = L"Auto EV\r\n(beta)";
+            this->chkBox_IRAutoExposure->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
             // 
             // grpBox_IRSettingsDenoise
             // 
@@ -5620,6 +5639,26 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
 
+    private: System::Void IRAutoExposure_checkedChanged(System::Object^ sender, System::EventArgs^ e) {
+        if (this->chkBox_IRAutoExposure->Checked) {
+            if (this->radioBtn_IR30p->Checked)
+                this->radioBtn_IR60p->Checked = true;
+            this->radioBtn_IR30p->Enabled = false;
+            this->trackBar_IRGain->Enabled = false;
+            this->numeric_IRExposure->Enabled = false;
+            this->lbl_digitalGain->Enabled = false;
+            this->lbl_exposure->Enabled = false;
+        }
+        else {
+            this->radioBtn_IR30p->Enabled = true;
+            this->trackBar_IRGain->Enabled = true;
+            this->numeric_IRExposure->Enabled = true;
+            this->lbl_digitalGain->Enabled = true;
+            this->lbl_exposure->Enabled = true;
+        }
+    }
+
+ 
     private: System::Int32 prepareSendIRConfig(bool startNewConfig) {
         String^ error_msg;
         ir_image_config ir_new_config = {0};
@@ -5697,7 +5736,15 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         // Exposure time (Shutter speed) is in us. Valid values are 0 to 600us or 0 - 1/1666.66s
         ir_new_config.ir_exposure = (u16)(this->numeric_IRExposure->Value * 31200 / 1000);
-        ir_new_config.ir_digital_gain = (u8)this->trackBar_IRGain->Value;
+        if (!this->chkBox_IRAutoExposure->Checked && enable_IRVideoPhoto) {
+            enable_IRAutoExposure = false;
+            ir_new_config.ir_digital_gain = (u8)this->trackBar_IRGain->Value;
+        }
+        else {
+            enable_IRAutoExposure = true;
+            ir_new_config.ir_digital_gain = 1; // Disable digital gain for auto exposure
+        }
+        
 
         //De-noise algorithms
         if (this->chkBox_IRDenoise->Checked)

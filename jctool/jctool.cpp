@@ -1333,6 +1333,48 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
 }
 
 
+int ir_sensor_auto_exposure(int white_pixels_percent) {
+    int res;
+    u8 buf[49];
+    u16 new_exposure = 0;
+    int old_exposure = (u16)FormJoy::myform1->numeric_IRExposure->Value;
+
+    // Calculate new exposure;
+    if (white_pixels_percent == 0)
+        old_exposure += 10;
+    else if (white_pixels_percent > 5)
+        old_exposure -= (white_pixels_percent / 4) * 20;
+
+    old_exposure = CLAMP(old_exposure, 0, 600);
+    FormJoy::myform1->numeric_IRExposure->Value = old_exposure;
+    new_exposure = old_exposure * 31200 / 1000;
+
+    memset(buf, 0, sizeof(buf));
+    auto hdr = (brcm_hdr *)buf;
+    auto pkt = (brcm_cmd_01 *)(hdr + 1);
+    hdr->cmd = 0x01;
+    hdr->timer = timming_byte & 0xF;
+    timming_byte++;
+    pkt->subcmd = 0x21;
+
+    pkt->subcmd_21_23_04.mcu_cmd = 0x23; // Write register cmd
+    pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
+    pkt->subcmd_21_23_04.no_of_reg = 0x03; // Number of registers to write. Max 9.
+
+    pkt->subcmd_21_23_04.reg1_addr = 0x3001; // R: 0x0130 - Set Exposure time LSByte
+    pkt->subcmd_21_23_04.reg1_val = new_exposure & 0xFF;
+    pkt->subcmd_21_23_04.reg2_addr = 0x3101; // R: 0x0131 - Set Exposure time MSByte
+    pkt->subcmd_21_23_04.reg2_val = (new_exposure & 0xFF00) >> 8;
+    pkt->subcmd_21_23_04.reg3_addr = 0x0700; // R: 0x0007 - Finalize config - Without this, the register changes do not have any effect.
+    pkt->subcmd_21_23_04.reg3_val = 0x01;
+
+    buf[48] = mcu_crc8_calc(buf + 12, 36);
+    res = hid_write(handle, buf, sizeof(buf));
+
+    return res;
+}
+
+
 int get_raw_ir_image(u8 show_status) {
     std::stringstream ir_status;
 
@@ -1393,6 +1435,13 @@ int get_raw_ir_image(u8 show_status) {
                 hid_write(handle, buf, sizeof(buf));
 
                 memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+
+                // Auto exposure.
+                // TODO: Fix placement, so it doesn't drop next fragment.
+                if (enable_IRAutoExposure && initialization < 2 && got_frag_no == 0){
+                    white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
+                    ir_sensor_auto_exposure(white_pixels_percent);
+                }
 
                 // Status percentage
                 ir_status.str("");
@@ -2165,8 +2214,8 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
 
-    // get_ir_registers(0,4);
-    // get_ir_registers((ir_cfg.ir_custom_register >> 8) & 0xFF, (ir_cfg.ir_custom_register >> 8) & 0xFF);
+    // get_ir_registers(0,4); // Get all register pages
+    // get_ir_registers((ir_cfg.ir_custom_register >> 8) & 0xFF, (ir_cfg.ir_custom_register >> 8) & 0xFF); // Get all registers based on changed register's page
 
     return res;
 }
