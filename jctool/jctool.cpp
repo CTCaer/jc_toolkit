@@ -949,12 +949,12 @@ int button_test() {
     res = hid_write(handle, buf_cmd, sizeof(buf_cmd));
     res = hid_read_timeout(handle, buf_cmd, 0, 120);
 
-    // Use SPI calibration and convert them to SI acc unit
+    // Use SPI calibration and convert them to SI acc unit (m/s^2)
     acc_cal_coeff[0] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][0]))) * 4.0f  * 9.8f;
     acc_cal_coeff[1] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][1]))) * 4.0f  * 9.8f;
     acc_cal_coeff[2] = (float)(1.0 / (float)(16384 - uint16_to_int16(sensor_cal[0][2]))) * 4.0f  * 9.8f;
 
-    // Use SPI calibration and convert them to SI gyro unit
+    // Use SPI calibration and convert them to SI gyro unit (rad/s)
     gyro_cal_coeff[0] = (float)(936.0 / (float)(13371 - uint16_to_int16(sensor_cal[1][0])) * 0.01745329251994);
     gyro_cal_coeff[1] = (float)(936.0 / (float)(13371 - uint16_to_int16(sensor_cal[1][1])) * 0.01745329251994);
     gyro_cal_coeff[2] = (float)(936.0 / (float)(13371 - uint16_to_int16(sensor_cal[1][2])) * 0.01745329251994);
@@ -979,8 +979,8 @@ int button_test() {
 
                 input_report_cmd += String::Format(L"Vibration decision: ");
                 input_report_cmd += String::Format(L"{0:X}, {1:X}\r\n", (buf_reply[12] >> 7) & 1, (buf_reply[12] >> 4) & 7);
-                input_report_cmd += String::Format(L"\r\nButtons: ");
 
+                input_report_cmd += String::Format(L"\r\nButtons: ");
                 for (int i = 3; i < 6; i++)
                     input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
             
@@ -1017,20 +1017,20 @@ int button_test() {
 
                 input_report_sys = String::Format(L"Acc/meter (Raw/Cal):\r\n");
                 //The controller sends the sensor data 3 times with a little bit different values. Skip them
-                input_report_sys += String::Format(L"X: {0:X4}  {1,6:F1} m/s\u00B2\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
+                input_report_sys += String::Format(L"X: {0:X4}  {1,7:F2} m/s\u00B2\r\n", buf_reply[13] | (buf_reply[14] << 8) & 0xFF00,
                     (float)(uint16_to_int16(buf_reply[13] | (buf_reply[14] << 8) & 0xFF00)) * acc_cal_coeff[0]);
-                input_report_sys += String::Format(L"Y: {0:X4}  {1,6:F1} m/s\u00B2\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
+                input_report_sys += String::Format(L"Y: {0:X4}  {1,7:F2} m/s\u00B2\r\n", buf_reply[15] | (buf_reply[16] << 8) & 0xFF00,
                     (float)(uint16_to_int16(buf_reply[15] | (buf_reply[16] << 8) & 0xFF00)) * acc_cal_coeff[1]);
-                input_report_sys += String::Format(L"Z: {0:X4}  {1,6:F1} m/s\u00B2\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
+                input_report_sys += String::Format(L"Z: {0:X4}  {1,7:F2} m/s\u00B2\r\n", buf_reply[17] | (buf_reply[18] << 8) & 0xFF00,
                     (float)(uint16_to_int16(buf_reply[17] | (buf_reply[18] << 8) & 0xFF00))  * acc_cal_coeff[2]);
 
                 input_report_sys += String::Format(L"\r\nGyroscope (Raw/Cal):\r\n");
-                input_report_sys += String::Format(L"X: {0:X4}  {1,6:F1} rad/s\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00,
-                    (float)(uint16_to_int16(buf_reply[19] | (buf_reply[20] << 8) & 0xFF00)) * gyro_cal_coeff[0]);
-                input_report_sys += String::Format(L"Y: {0:X4}  {1,6:F1} rad/s\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00,
-                    (float)(uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00)) * gyro_cal_coeff[1]);
-                input_report_sys += String::Format(L"Z: {0:X4}  {1,6:F1} rad/s\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00,
-                    (float)(uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00)) * gyro_cal_coeff[2]);
+                input_report_sys += String::Format(L"X: {0:X4}  {1,7:F2} rad/s\r\n", buf_reply[19] | (buf_reply[20] << 8) & 0xFF00,
+                    (float)(uint16_to_int16(buf_reply[19] | (buf_reply[20] << 8) & 0xFF00) - uint16_to_int16(sensor_cal[1][0])) * gyro_cal_coeff[0]);
+                input_report_sys += String::Format(L"Y: {0:X4}  {1,7:F2} rad/s\r\n", buf_reply[21] | (buf_reply[22] << 8) & 0xFF00,
+                    (float)(uint16_to_int16(buf_reply[21] | (buf_reply[22] << 8) & 0xFF00) - uint16_to_int16(sensor_cal[1][1])) * gyro_cal_coeff[1]);
+                input_report_sys += String::Format(L"Z: {0:X4}  {1,7:F2} rad/s\r\n", buf_reply[23] | (buf_reply[24] << 8) & 0xFF00,
+                    (float)(uint16_to_int16(buf_reply[23] | (buf_reply[24] << 8) & 0xFF00) - uint16_to_int16(sensor_cal[1][2])) * gyro_cal_coeff[2]);
             }
             else if (buf_reply[0] == 0x3F) {
                 input_report_cmd = L"";
@@ -1039,7 +1039,7 @@ int button_test() {
             }
 
             if (limit_output == 1) {
-                FormJoy::myform1->textBox_btn_test_reply->Text = input_report_cmd;
+                FormJoy::myform1->textBox_btn_test_reply->Text    = input_report_cmd;
                 FormJoy::myform1->textBox_btn_test_subreply->Text = input_report_sys;
             }
             //Only update every 75ms for better readability. No need for real time parsing.
@@ -1357,16 +1357,16 @@ int ir_sensor_auto_exposure(int white_pixels_percent) {
     timming_byte++;
     pkt->subcmd = 0x21;
 
-    pkt->subcmd_21_23_04.mcu_cmd = 0x23; // Write register cmd
+    pkt->subcmd_21_23_04.mcu_cmd    = 0x23; // Write register cmd
     pkt->subcmd_21_23_04.mcu_subcmd = 0x04; // Write register to IR mode subcmd
-    pkt->subcmd_21_23_04.no_of_reg = 0x03; // Number of registers to write. Max 9.
+    pkt->subcmd_21_23_04.no_of_reg  = 0x03; // Number of registers to write. Max 9.
 
     pkt->subcmd_21_23_04.reg1_addr = 0x3001; // R: 0x0130 - Set Exposure time LSByte
-    pkt->subcmd_21_23_04.reg1_val = new_exposure & 0xFF;
+    pkt->subcmd_21_23_04.reg1_val  = new_exposure & 0xFF;
     pkt->subcmd_21_23_04.reg2_addr = 0x3101; // R: 0x0131 - Set Exposure time MSByte
-    pkt->subcmd_21_23_04.reg2_val = (new_exposure & 0xFF00) >> 8;
+    pkt->subcmd_21_23_04.reg2_val  = (new_exposure & 0xFF00) >> 8;
     pkt->subcmd_21_23_04.reg3_addr = 0x0700; // R: 0x0007 - Finalize config - Without this, the register changes do not have any effect.
-    pkt->subcmd_21_23_04.reg3_val = 0x01;
+    pkt->subcmd_21_23_04.reg3_val  = 0x01;
 
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
@@ -1762,9 +1762,9 @@ step3:
         timming_byte++;
         pkt->subcmd = 0x21;
         
-        pkt->subcmd_21_21.mcu_cmd = 0x21; // Set MCU mode cmd
+        pkt->subcmd_21_21.mcu_cmd    = 0x21; // Set MCU mode cmd
         pkt->subcmd_21_21.mcu_subcmd = 0x00; // Set MCU mode cmd
-        pkt->subcmd_21_21.mcu_mode = 0x05; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
+        pkt->subcmd_21_21.mcu_mode   = 0x05; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
 
         buf[48] = mcu_crc8_calc(buf + 12, 36);
         res = hid_write(handle, buf, output_buffer_length);
@@ -1835,7 +1835,7 @@ step5:
         pkt->subcmd = 0x21;
         pkt->subcmd_21_23_01.mcu_cmd     = 0x23;
         pkt->subcmd_21_23_01.mcu_subcmd  = 0x01; // Set IR mode cmd
-        pkt->subcmd_21_23_01.mcu_ir_mode = 0x07; // IR mode - 2: No mode/Disable?, 3: Moment, 4: Dpd, 6: Clustering,
+        pkt->subcmd_21_23_01.mcu_ir_mode = 0x07; // IR mode - 2: No mode/Disable?, 3: Moment, 4: Dpd (Wii-style pointing), 6: Clustering,
                                                  // 7: Image transfer, 8-10: Hand analysis (Silhouette, Image, Silhouette/Image), 0,1/5/10+: Unknown
         pkt->subcmd_21_23_01.no_of_frags = ir_max_frag_no; // Set number of packets to output per buffer
         pkt->subcmd_21_23_01.mcu_major_v = 0x0500; // Set required IR MCU FW v5.18. Major 0x0005.
@@ -2183,9 +2183,9 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     pkt->subcmd_21_23_04.reg7_addr = (ir_cfg.ir_custom_register & 0xFF) << 8 | (ir_cfg.ir_custom_register >> 8) & 0xFF;
     pkt->subcmd_21_23_04.reg7_val  = (ir_cfg.ir_custom_register >> 16) & 0xFF;
     pkt->subcmd_21_23_04.reg8_addr = 0x1100; // R: 0x0011 - Leds 1/2 Intensity - Max 0x0F.
-    pkt->subcmd_21_23_04.reg8_val = (ir_cfg.ir_leds_intensity >> 8) & 0xFF;
+    pkt->subcmd_21_23_04.reg8_val  = (ir_cfg.ir_leds_intensity >> 8) & 0xFF;
     pkt->subcmd_21_23_04.reg9_addr = 0x1200; // R: 0x0012 - Leds 3/4 Intensity - Max 0x10.
-    pkt->subcmd_21_23_04.reg9_val = ir_cfg.ir_leds_intensity & 0xFF;
+    pkt->subcmd_21_23_04.reg9_val  = ir_cfg.ir_leds_intensity & 0xFF;
 
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
@@ -2196,20 +2196,20 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     pkt->subcmd_21_23_04.no_of_reg = 0x06; // Number of registers to write. Max 9.
 
     pkt->subcmd_21_23_04.reg1_addr = 0x2d00; // R: 0x002d - Flip image - 0: Normal, 1: Vertically, 2: Horizontally, 3: Both 
-    pkt->subcmd_21_23_04.reg1_val = ir_cfg.ir_flip;
+    pkt->subcmd_21_23_04.reg1_val  = ir_cfg.ir_flip;
     pkt->subcmd_21_23_04.reg2_addr = 0x6701; // R: 0x0167 - Enable De-noise smoothing algorithms - 0: Disable, 1: Enable.
-    pkt->subcmd_21_23_04.reg2_val = (ir_cfg.ir_denoise >> 16) & 0xFF;
+    pkt->subcmd_21_23_04.reg2_val  = (ir_cfg.ir_denoise >> 16) & 0xFF;
     pkt->subcmd_21_23_04.reg3_addr = 0x6801; // R: 0x0168 - Edge smoothing threshold - Max 0xFF, Default 0x23
-    pkt->subcmd_21_23_04.reg3_val = (ir_cfg.ir_denoise >> 8) & 0xFF;
+    pkt->subcmd_21_23_04.reg3_val  = (ir_cfg.ir_denoise >> 8) & 0xFF;
     pkt->subcmd_21_23_04.reg4_addr = 0x6901; // R: 0x0169 - Color Interpolation threshold - Max 0xFF, Default 0x44
-    pkt->subcmd_21_23_04.reg4_val = ir_cfg.ir_denoise & 0xFF;
+    pkt->subcmd_21_23_04.reg4_val  = ir_cfg.ir_denoise & 0xFF;
     pkt->subcmd_21_23_04.reg5_addr = 0x0400; // R: 0x0004 - LSB Buffer Update Time - Default 0x32
     if (ir_cfg.ir_res_reg == 0x69)
         pkt->subcmd_21_23_04.reg5_val = 0x2d; // A value of <= 0x2d is fast enough for 30 x 40, so the first fragment has the updated frame.  
     else
         pkt->subcmd_21_23_04.reg5_val = 0x32; // All the other resolutions the default is enough. Otherwise a lower value can break hand analysis.
     pkt->subcmd_21_23_04.reg6_addr = 0x0700; // R: 0x0007 - Finalize config - Without this, the register changes do not have any effect.
-    pkt->subcmd_21_23_04.reg6_val = 0x01;
+    pkt->subcmd_21_23_04.reg6_val  = 0x01;
 
     buf[48] = mcu_crc8_calc(buf + 12, 36);
     res = hid_write(handle, buf, sizeof(buf));
@@ -2337,9 +2337,9 @@ int nfc_tag_info() {
             timming_byte++;
             pkt->subcmd = 0x21;
 
-            pkt->subcmd_21_21.mcu_cmd = 0x21; // Set MCU mode cmd
+            pkt->subcmd_21_21.mcu_cmd    = 0x21; // Set MCU mode cmd
             pkt->subcmd_21_21.mcu_subcmd = 0x00; // Set MCU mode cmd
-            pkt->subcmd_21_21.mcu_mode = 0x04; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
+            pkt->subcmd_21_21.mcu_mode   = 0x04; // MCU mode - 1: Standby, 4: NFC, 5: IR, 6: Initializing/FW Update?
 
             buf[48] = mcu_crc8_calc(buf + 12, 36);
             res = hid_write(handle, buf, output_buffer_length);
@@ -2471,6 +2471,7 @@ int nfc_tag_info() {
                     // buf[55] always x31?
                     // buf[56]: MCU/NFC state
                     // buf[62]: nfc tag type
+                    // buf[62]: MSB size?
                     // buf[64]: size of following data and it's the last NFC header byte
                     if (buf[49] == 0x2a && *(u16*)&buf[50] == 0x0500 && buf[56] == 0x09) { // buf[56] == 0x09: Tag detected
                         //for (int i = 0; i < 8; i++) {
@@ -2751,16 +2752,27 @@ int test_chamber() {
     }
 
 int device_connection(){
-    handle_ok = 0;
-    if (handle = hid_open(0x57e, 0x2006, nullptr))
-        handle_ok = 1;
-    if (!handle_ok) {
-        if (handle = hid_open(0x57e, 0x2007, nullptr))
+    if (check_connection_ok) {
+        handle_ok = 0;
+        // Joy-Con (L)
+        if (handle = hid_open(0x57e, 0x2006, nullptr)) {
+            handle_ok = 1;
+            return 1;
+        }
+        // Joy-Con (R)
+        if (handle = hid_open(0x57e, 0x2007, nullptr)) {
             handle_ok = 2;
-    }
-    if (!handle_ok) {
-        if (handle = hid_open(0x57e, 0x2009, nullptr))
+            return 2;
+        }
+        // Pro Controller
+        if (handle = hid_open(0x57e, 0x2009, nullptr)) {
             handle_ok = 3;
+            return 3;
+        }
+        // Nothing found
+        else {
+            return 0;
+        }
     }
     /*
     //usb test
@@ -2768,12 +2780,6 @@ int device_connection(){
         hid_init();
         struct hid_device_info *devs = hid_enumerate(0x057E, 0x200e);
         if (devs){
-            BOOL chk = AllocConsole();
-            if (chk)
-            {
-                freopen("CONOUT$", "w", stdout);
-                printf(" printing to console\n");
-            }
             usb_device_print(devs);
             handle_l = hid_open_path(devs->path);
             devs = devs->next;
@@ -2786,38 +2792,37 @@ int device_connection(){
         hid_free_enumeration(devs);
     }
     */
-    if (handle_ok == 0)
-        return 0;
-
-    return 1;
+    return handle_ok;
 }
 
 [STAThread]
 int Main(array<String^>^ args) {
-    while (!device_connection()) {
-        if (MessageBox::Show(L"The device is not paired or the device was disconnected!\n\n" +
-            "To pair:\n  1. Press and hold the sync button until the leds are on\n" +
-            "  2. Pair the Bluetooth controller in Windows\n\nTo connect again:\n" +
-            "  1. Press a button on the controller\n  (If this doesn\'t work, re-pair.)\n\n" +
-            "To re-pair:\n  1. Go to 'Settings -> Devices' or Devices and Printers'\n" +
-            "  2. Remove the controller\n  3. Follow the pair instructions",
-            L"CTCaer's Joy-Con Toolkit - Connection Error!",
-            MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
-            return 1;
-    }
-    // Enable hid traffic debug
-    if (args->Length > 0) {
-        if (args[0] == "-d")
-            enable_traffic_dump = true;
-    }
-
     /*
     BOOL chk = AllocConsole();
     if (chk) {
         freopen("CONOUT$", "w", stdout);
-        printf(" printing to console\n");
     }
     */
+    check_connection_ok = true;
+    while (!device_connection()) {
+        if (MessageBox::Show(
+            L"The device is not paired or the device was disconnected!\n\n" +
+            L"To pair:\n  1. Press and hold the sync button until the leds are on\n" +
+            L"  2. Pair the Bluetooth controller in Windows\n\nTo connect again:\n" +
+            L"  1. Press a button on the controller\n  (If this doesn\'t work, re-pair.)\n\n" +
+            L"To re-pair:\n  1. Go to 'Settings -> Devices' or Devices and Printers'\n" +
+            L"  2. Remove the controller\n  3. Follow the pair instructions",
+            L"CTCaer's Joy-Con Toolkit - Connection Error!",
+            MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
+            return 1;
+    }
+    // Enable debugging
+    if (args->Length > 0) {
+        if (args[0] == "-d")
+            enable_traffic_dump = true; // Enable hid_write/read logging to text file
+        else if (args[0] == "-f")
+            check_connection_ok = false;   // Don't check connection after the 1st successful one
+    }
 
     timming_byte = 0x0;
 

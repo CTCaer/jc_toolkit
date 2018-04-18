@@ -116,12 +116,13 @@ extern int ir_sensor(ir_image_config &ir_cfg);
 extern int ir_sensor_config_live(ir_image_config &ir_cfg);
 extern int nfc_tag_info();
 extern int silence_input_report();
-int handle_ok;
+int  handle_ok;
 bool enable_button_test;
 bool enable_IRVideoPhoto;
 bool enable_IRAutoExposure;
 bool enable_NFCScanning;
 bool cancel_spi_dump;
+bool check_connection_ok;
 
 u8 timming_byte;
 u8 ir_max_frag_no;
