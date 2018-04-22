@@ -97,8 +97,11 @@ struct ir_image_config {
 
 #pragma pack(pop)
 
-extern std::string get_sn(u32 offset, const u16 read_len);
 extern s16 uint16_to_int16(u16 a);
+extern void decode_stick_params(u16 *decoded_stick_params, u8 *encoded_stick_params);
+extern void encode_stick_params(u8 *encoded_stick_params, u16 *decoded_stick_params);
+
+extern std::string get_sn(u32 offset, const u16 read_len);
 extern int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf);
 extern int write_spi_data(u32 offset, const u16 write_len, u8* test_buf);
 extern int get_device_info(u8* test_buf);

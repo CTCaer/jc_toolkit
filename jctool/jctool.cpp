@@ -32,6 +32,14 @@ s16 uint16_to_int16(u16 a) {
 }
 
 
+u16 int16_to_uint16(s16 a) {
+    u16 b;
+    char* aPointer = (char*)&a, *bPointer = (char*)&b;
+    memcpy(bPointer, aPointer, sizeof(a));
+    return b;
+}
+
+
 u8 mcu_crc8_calc(u8 *buf, u8 size) {
     u8 crc8 = 0x0;
 
@@ -39,6 +47,19 @@ u8 mcu_crc8_calc(u8 *buf, u8 size) {
         crc8 = mcu_crc8_table[(u8)(crc8 ^ buf[i])];
     }
     return crc8;
+}
+
+
+void decode_stick_params(u16 *decoded_stick_params, u8 *encoded_stick_params) {
+    decoded_stick_params[0] = (encoded_stick_params[1] << 8) & 0xF00 | encoded_stick_params[0];
+    decoded_stick_params[1] = (encoded_stick_params[2] << 4) | (encoded_stick_params[1] >> 4);
+}
+
+
+void encode_stick_params(u8 *encoded_stick_params, u16 *decoded_stick_params) {
+    encoded_stick_params[0] =  decoded_stick_params[0] & 0xFF;
+    encoded_stick_params[1] = (decoded_stick_params[0] & 0xF00) >> 8 | (decoded_stick_params[1] & 0xF) << 4;
+    encoded_stick_params[2] = (decoded_stick_params[1] & 0xFF0) >> 4;
 }
 
 
@@ -762,8 +783,6 @@ int button_test() {
     u8 stick_model[0x24];
     u8 factory_sensor_cal[0x18];
     u8 user_sensor_cal[0x1A];
-    u16 factory_sensor_cal_calm[0xC];
-    u16 user_sensor_cal_calm[0xC];
     s16 sensor_cal[0x2][0x3];
     u16 stick_cal_x_l[0x3];
     u16 stick_cal_y_l[0x3];
@@ -775,8 +794,6 @@ int button_test() {
     memset(stick_model, 0, 0x12);
     memset(factory_sensor_cal, 0, 0x18);
     memset(user_sensor_cal, 0, 0x1A);
-    memset(factory_sensor_cal_calm, 0, 0xC);
-    memset(user_sensor_cal_calm, 0, 0xC);
     memset(sensor_cal, 0, sizeof(sensor_cal));
     memset(stick_cal_x_l, 0, sizeof(stick_cal_x_l));
     memset(stick_cal_y_l, 0, sizeof(stick_cal_y_l));
