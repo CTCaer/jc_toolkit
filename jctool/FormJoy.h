@@ -52,9 +52,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->grpBox_ChangeSN->Location         = System::Drawing::Point(494, 36);
         this->grpBox_VibPlayer->Location        = System::Drawing::Point(494, 36);
         this->grpBox_ButtonTest->Location       = System::Drawing::Point(494, 36);
+        this->grpBox_nfc->Location              = System::Drawing::Point(724, 36);
         this->grpBox_IR->Location               = System::Drawing::Point(521, 36);
-        this->grpBox_editUserStickCal->Location = System::Drawing::Point(724, 36);
         this->grpBox_IRSettings->Location       = System::Drawing::Point(14, 120);
+        this->grpBox_editCalModel->Location     = System::Drawing::Point(14, 120);
 
         // Get controller info
         full_refresh(false);
@@ -308,10 +309,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::NumericUpDown^  numeric_rightUserCal_x_plus;
     private: System::Windows::Forms::NumericUpDown^  numeric_rightUserCal_x_center;
     private: System::Windows::Forms::NumericUpDown^  numeric_rightUserCal_x_minus;
-    private: System::Windows::Forms::GroupBox^  grpBox_editUserStickCal;
-    private: System::Windows::Forms::GroupBox^  groupBox_leftStickUCal;
+    private: System::Windows::Forms::GroupBox^  grpBox_leftStickUCal;
     private: System::Windows::Forms::Label^  lbl_userCalMinCenterMax;
-    private: System::Windows::Forms::GroupBox^  groupBox_rightStickUCal;
+    private: System::Windows::Forms::GroupBox^  grpBox_rightStickUCal;
     private: System::Windows::Forms::Label^  lbl_userCalMinCenterMax2;
     private: System::Windows::Forms::Button^  btn_writeUserCal;
     private: System::Windows::Forms::Button^  btn_changeGripsColor;
@@ -336,6 +336,30 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::CheckBox^  chkBox_IRAutoExposure;
     private: System::Windows::Forms::GroupBox^  grpBox_IRSettingsDenoise;
     private: System::Windows::Forms::GroupBox^  grpBox_IRInfraredLight;
+    private: System::Windows::Forms::GroupBox^  grpBox_editCalModel;
+    private: System::Windows::Forms::Button^  btn_writeStickParams;
+    private: System::Windows::Forms::GroupBox^  grpBox_CalUserAcc;
+    private: System::Windows::Forms::Label^  lbl_CalGyroHelp;
+    private: System::Windows::Forms::Label^  lbl_CalAccHelp;
+    private: System::Windows::Forms::NumericUpDown^  numeric_CalEditAccX;
+    private: System::Windows::Forms::NumericUpDown^  numeric_CalEditGyroX;
+    private: System::Windows::Forms::NumericUpDown^  numeric_CalEditGyroY;
+    private: System::Windows::Forms::NumericUpDown^  numeric_CalEditAccY;
+    private: System::Windows::Forms::NumericUpDown^  numeric_CalEditGyroZ;
+    private: System::Windows::Forms::NumericUpDown^  numeric_CalEditAccZ;
+    private: System::Windows::Forms::CheckBox^  checkBox_enableSensorUserCal;
+    private: System::Windows::Forms::GroupBox^  grpBox_StickDevParam;
+    private: System::Windows::Forms::ToolStripMenuItem^  editCalibrationToolStripMenuItem;
+    private: System::Windows::Forms::Label^  lbl_deadzone;
+    private: System::Windows::Forms::NumericUpDown^  numeric_StickParamDeadzone;
+    private: System::Windows::Forms::Label^  lbl_rangeReatio;
+    private: System::Windows::Forms::NumericUpDown^  numeric_StickParamRangeRatio;
+    private: System::Windows::Forms::Label^  lbl_editStickDevHelp;
+    private: System::Windows::Forms::Label^  lbl_proStickHelp;
+    private: System::Windows::Forms::Label^  lbl_mainStickHelp;
+    private: System::Windows::Forms::NumericUpDown^  numeric_StickParamRangeRatio2;
+    private: System::Windows::Forms::NumericUpDown^  numeric_StickParamDeadzone2;
+
 
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
@@ -382,6 +406,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->iRCameraToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->menuToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->buttonTestToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+            this->editCalibrationToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->debugToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->aboutToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
             this->lbl_subcmdArgs = (gcnew System::Windows::Forms::Label());
@@ -510,13 +535,20 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_rightUserCal_x_plus = (gcnew System::Windows::Forms::NumericUpDown());
             this->numeric_rightUserCal_x_center = (gcnew System::Windows::Forms::NumericUpDown());
             this->numeric_rightUserCal_x_minus = (gcnew System::Windows::Forms::NumericUpDown());
-            this->groupBox_leftStickUCal = (gcnew System::Windows::Forms::GroupBox());
+            this->grpBox_leftStickUCal = (gcnew System::Windows::Forms::GroupBox());
             this->lbl_userCalMinCenterMax = (gcnew System::Windows::Forms::Label());
-            this->groupBox_rightStickUCal = (gcnew System::Windows::Forms::GroupBox());
+            this->grpBox_rightStickUCal = (gcnew System::Windows::Forms::GroupBox());
             this->lbl_userCalMinCenterMax2 = (gcnew System::Windows::Forms::Label());
-            this->grpBox_editUserStickCal = (gcnew System::Windows::Forms::GroupBox());
             this->btn_writeUserCal = (gcnew System::Windows::Forms::Button());
             this->grpBox_IRSettings = (gcnew System::Windows::Forms::GroupBox());
+            this->grpBox_IRInfraredLight = (gcnew System::Windows::Forms::GroupBox());
+            this->chkBox_IRExFilter = (gcnew System::Windows::Forms::CheckBox());
+            this->trackBar_IRBrightLeds = (gcnew System::Windows::Forms::TrackBar());
+            this->trackBar_IRDimLeds = (gcnew System::Windows::Forms::TrackBar());
+            this->chkBox_IRStrobe = (gcnew System::Windows::Forms::CheckBox());
+            this->lbl_IRLed1Int = (gcnew System::Windows::Forms::Label());
+            this->chkBox_IRFlashlight = (gcnew System::Windows::Forms::CheckBox());
+            this->lbl_IRLed2Int = (gcnew System::Windows::Forms::Label());
             this->chkBox_IRAutoExposure = (gcnew System::Windows::Forms::CheckBox());
             this->grpBox_IRSettingsDenoise = (gcnew System::Windows::Forms::GroupBox());
             this->numeric_IRDenoiseEdgeSmoothing = (gcnew System::Windows::Forms::NumericUpDown());
@@ -526,14 +558,28 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->lbl_IRDenoise1 = (gcnew System::Windows::Forms::Label());
             this->lbl_IRCustomReg = (gcnew System::Windows::Forms::Label());
             this->chkBox_IRSelfie = (gcnew System::Windows::Forms::CheckBox());
-            this->chkBox_IRStrobe = (gcnew System::Windows::Forms::CheckBox());
-            this->chkBox_IRFlashlight = (gcnew System::Windows::Forms::CheckBox());
-            this->lbl_IRLed2Int = (gcnew System::Windows::Forms::Label());
-            this->lbl_IRLed1Int = (gcnew System::Windows::Forms::Label());
-            this->trackBar_IRDimLeds = (gcnew System::Windows::Forms::TrackBar());
-            this->trackBar_IRBrightLeds = (gcnew System::Windows::Forms::TrackBar());
-            this->chkBox_IRExFilter = (gcnew System::Windows::Forms::CheckBox());
-            this->grpBox_IRInfraredLight = (gcnew System::Windows::Forms::GroupBox());
+            this->grpBox_editCalModel = (gcnew System::Windows::Forms::GroupBox());
+            this->lbl_editStickDevHelp = (gcnew System::Windows::Forms::Label());
+            this->grpBox_CalUserAcc = (gcnew System::Windows::Forms::GroupBox());
+            this->lbl_CalGyroHelp = (gcnew System::Windows::Forms::Label());
+            this->lbl_CalAccHelp = (gcnew System::Windows::Forms::Label());
+            this->numeric_CalEditAccX = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_CalEditGyroX = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_CalEditGyroY = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_CalEditAccY = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_CalEditGyroZ = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_CalEditAccZ = (gcnew System::Windows::Forms::NumericUpDown());
+            this->checkBox_enableSensorUserCal = (gcnew System::Windows::Forms::CheckBox());
+            this->grpBox_StickDevParam = (gcnew System::Windows::Forms::GroupBox());
+            this->lbl_proStickHelp = (gcnew System::Windows::Forms::Label());
+            this->lbl_mainStickHelp = (gcnew System::Windows::Forms::Label());
+            this->numeric_StickParamRangeRatio2 = (gcnew System::Windows::Forms::NumericUpDown());
+            this->numeric_StickParamDeadzone2 = (gcnew System::Windows::Forms::NumericUpDown());
+            this->btn_writeStickParams = (gcnew System::Windows::Forms::Button());
+            this->lbl_rangeReatio = (gcnew System::Windows::Forms::Label());
+            this->numeric_StickParamRangeRatio = (gcnew System::Windows::Forms::NumericUpDown());
+            this->lbl_deadzone = (gcnew System::Windows::Forms::Label());
+            this->numeric_StickParamDeadzone = (gcnew System::Windows::Forms::NumericUpDown());
             this->grpBox_Color->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxPreview))->BeginInit();
             this->grpBox_SPI->SuspendLayout();
@@ -577,16 +623,28 @@ public ref class FormJoy : public System::Windows::Forms::Form
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_rightUserCal_x_plus))->BeginInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_rightUserCal_x_center))->BeginInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_rightUserCal_x_minus))->BeginInit();
-            this->groupBox_leftStickUCal->SuspendLayout();
-            this->groupBox_rightStickUCal->SuspendLayout();
-            this->grpBox_editUserStickCal->SuspendLayout();
+            this->grpBox_leftStickUCal->SuspendLayout();
+            this->grpBox_rightStickUCal->SuspendLayout();
             this->grpBox_IRSettings->SuspendLayout();
+            this->grpBox_IRInfraredLight->SuspendLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRBrightLeds))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRDimLeds))->BeginInit();
             this->grpBox_IRSettingsDenoise->SuspendLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseEdgeSmoothing))->BeginInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseColorInterpolation))->BeginInit();
-            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRDimLeds))->BeginInit();
-            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRBrightLeds))->BeginInit();
-            this->grpBox_IRInfraredLight->SuspendLayout();
+            this->grpBox_editCalModel->SuspendLayout();
+            this->grpBox_CalUserAcc->SuspendLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditAccX))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditGyroX))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditGyroY))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditAccY))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditGyroZ))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditAccZ))->BeginInit();
+            this->grpBox_StickDevParam->SuspendLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamRangeRatio2))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamDeadzone2))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamRangeRatio))->BeginInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamDeadzone))->BeginInit();
             this->SuspendLayout();
             // 
             // btn_writeColorsToSpi
@@ -998,9 +1056,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->menuToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(55)),
                 static_cast<System::Int32>(static_cast<System::Byte>(55)), static_cast<System::Int32>(static_cast<System::Byte>(55)));
             this->menuToolStripMenuItem->DisplayStyle = System::Windows::Forms::ToolStripItemDisplayStyle::Text;
-            this->menuToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {
+            this->menuToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {
                 this->buttonTestToolStripMenuItem,
-                    this->debugToolStripMenuItem, this->aboutToolStripMenuItem
+                    this->editCalibrationToolStripMenuItem, this->debugToolStripMenuItem, this->aboutToolStripMenuItem
             });
             this->menuToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
@@ -1015,9 +1073,22 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->buttonTestToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->buttonTestToolStripMenuItem->Name = L"buttonTestToolStripMenuItem";
-            this->buttonTestToolStripMenuItem->Size = System::Drawing::Size(185, 22);
+            this->buttonTestToolStripMenuItem->ShowShortcutKeys = false;
+            this->buttonTestToolStripMenuItem->Size = System::Drawing::Size(177, 22);
             this->buttonTestToolStripMenuItem->Text = L"Playground testing";
             this->buttonTestToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::buttonTestToolStripMenuItem_Click);
+            // 
+            // editCalibrationToolStripMenuItem
+            // 
+            this->editCalibrationToolStripMenuItem->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+                static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->editCalibrationToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->editCalibrationToolStripMenuItem->Name = L"editCalibrationToolStripMenuItem";
+            this->editCalibrationToolStripMenuItem->ShowShortcutKeys = false;
+            this->editCalibrationToolStripMenuItem->Size = System::Drawing::Size(177, 22);
+            this->editCalibrationToolStripMenuItem->Text = L"Edit Calibration";
+            this->editCalibrationToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::editCalibrationToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
@@ -1027,7 +1098,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->debugToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->debugToolStripMenuItem->Name = L"debugToolStripMenuItem";
-            this->debugToolStripMenuItem->Size = System::Drawing::Size(185, 22);
+            this->debugToolStripMenuItem->ShowShortcutKeys = false;
+            this->debugToolStripMenuItem->Size = System::Drawing::Size(177, 22);
             this->debugToolStripMenuItem->Text = L"Debug";
             this->debugToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::debugToolStripMenuItem_Click);
             // 
@@ -1039,7 +1111,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->aboutToolStripMenuItem->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
                 static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
             this->aboutToolStripMenuItem->Name = L"aboutToolStripMenuItem";
-            this->aboutToolStripMenuItem->Size = System::Drawing::Size(185, 22);
+            this->aboutToolStripMenuItem->ShowShortcutKeys = false;
+            this->aboutToolStripMenuItem->Size = System::Drawing::Size(177, 22);
             this->aboutToolStripMenuItem->Text = L"About";
             this->aboutToolStripMenuItem->Click += gcnew System::EventHandler(this, &FormJoy::aboutToolStripMenuItem_Click);
             // 
@@ -2289,7 +2362,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 this->toolStripBtn_batt,
                     this->toolStripLabel_batt, this->toolStripLabel_temp, this->toolStripBtn_refresh, this->toolStripBtn_Disconnect
             });
-            this->toolStrip1->Location = System::Drawing::Point(0, 880);
+            this->toolStrip1->Location = System::Drawing::Point(0, 1065);
             this->toolStrip1->Name = L"toolStrip1";
             this->toolStrip1->Padding = System::Windows::Forms::Padding(6, 1, 6, 3);
             this->toolStrip1->Size = System::Drawing::Size(1925, 25);
@@ -2790,7 +2863,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_nfc->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
             this->grpBox_nfc->Location = System::Drawing::Point(724, 445);
-            this->grpBox_nfc->Margin = System::Windows::Forms::Padding(0);
+            this->grpBox_nfc->Margin = System::Windows::Forms::Padding(0, 0, 14, 0);
             this->grpBox_nfc->Name = L"grpBox_nfc";
             this->grpBox_nfc->Size = System::Drawing::Size(220, 215);
             this->grpBox_nfc->TabIndex = 35;
@@ -2851,11 +2924,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->checkBox_enableLeftUserCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->checkBox_enableLeftUserCal->Location = System::Drawing::Point(9, 110);
+            this->checkBox_enableLeftUserCal->Location = System::Drawing::Point(8, 111);
             this->checkBox_enableLeftUserCal->Margin = System::Windows::Forms::Padding(0);
             this->checkBox_enableLeftUserCal->Name = L"checkBox_enableLeftUserCal";
             this->checkBox_enableLeftUserCal->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->checkBox_enableLeftUserCal->Size = System::Drawing::Size(187, 22);
+            this->checkBox_enableLeftUserCal->Size = System::Drawing::Size(189, 22);
             this->checkBox_enableLeftUserCal->TabIndex = 3;
             this->checkBox_enableLeftUserCal->Text = L"Enable Left Stick Cal";
             // 
@@ -2892,7 +2965,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_leftUserCal_y_center->TabIndex = 47;
             this->numeric_leftUserCal_y_center->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
             this->numeric_leftUserCal_y_center->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
-            this->numeric_leftUserCal_y_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2048, 0, 0, 0 });
+            this->numeric_leftUserCal_y_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2047, 0, 0, 0 });
             // 
             // numeric_leftUserCal_y_minus
             // 
@@ -2942,7 +3015,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_leftUserCal_x_center->TabIndex = 44;
             this->numeric_leftUserCal_x_center->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
             this->numeric_leftUserCal_x_center->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
-            this->numeric_leftUserCal_x_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2048, 0, 0, 0 });
+            this->numeric_leftUserCal_x_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2047, 0, 0, 0 });
             // 
             // numeric_leftUserCal_x_minus
             // 
@@ -2968,11 +3041,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
             this->btn_refreshUserCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->btn_refreshUserCal->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
-            this->btn_refreshUserCal->Location = System::Drawing::Point(8, 359);
+            this->btn_refreshUserCal->Location = System::Drawing::Point(243, 344);
             this->btn_refreshUserCal->Name = L"btn_refreshUserCal";
-            this->btn_refreshUserCal->Size = System::Drawing::Size(87, 30);
+            this->btn_refreshUserCal->Size = System::Drawing::Size(93, 30);
             this->btn_refreshUserCal->TabIndex = 37;
-            this->btn_refreshUserCal->Text = L"Refresh";
+            this->btn_refreshUserCal->Text = L"Refresh All";
             this->btn_refreshUserCal->UseVisualStyleBackColor = false;
             this->btn_refreshUserCal->Click += gcnew System::EventHandler(this, &FormJoy::btn_refreshUserCal_Click);
             // 
@@ -2983,11 +3056,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 static_cast<System::Byte>(161)));
             this->checkBox_enableRightUserCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->checkBox_enableRightUserCal->Location = System::Drawing::Point(9, 111);
+            this->checkBox_enableRightUserCal->Location = System::Drawing::Point(8, 111);
             this->checkBox_enableRightUserCal->Margin = System::Windows::Forms::Padding(0);
             this->checkBox_enableRightUserCal->Name = L"checkBox_enableRightUserCal";
             this->checkBox_enableRightUserCal->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->checkBox_enableRightUserCal->Size = System::Drawing::Size(187, 22);
+            this->checkBox_enableRightUserCal->Size = System::Drawing::Size(189, 22);
             this->checkBox_enableRightUserCal->TabIndex = 49;
             this->checkBox_enableRightUserCal->Text = L"Enable Right Stick Cal";
             // 
@@ -3023,7 +3096,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_rightUserCal_y_center->TabIndex = 54;
             this->numeric_rightUserCal_y_center->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
             this->numeric_rightUserCal_y_center->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
-            this->numeric_rightUserCal_y_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2048, 0, 0, 0 });
+            this->numeric_rightUserCal_y_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2047, 0, 0, 0 });
             // 
             // numeric_rightUserCal_y_minus
             // 
@@ -3073,7 +3146,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_rightUserCal_x_center->TabIndex = 51;
             this->numeric_rightUserCal_x_center->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
             this->numeric_rightUserCal_x_center->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
-            this->numeric_rightUserCal_x_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2048, 0, 0, 0 });
+            this->numeric_rightUserCal_x_center->Value = System::Decimal(gcnew cli::array< System::Int32 >(4) { 2047, 0, 0, 0 });
             // 
             // numeric_rightUserCal_x_minus
             // 
@@ -3091,25 +3164,25 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->numeric_rightUserCal_x_minus->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
             this->numeric_rightUserCal_x_minus->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
             // 
-            // groupBox_leftStickUCal
+            // grpBox_leftStickUCal
             // 
-            this->groupBox_leftStickUCal->Controls->Add(this->lbl_userCalMinCenterMax);
-            this->groupBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_x_minus);
-            this->groupBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_x_center);
-            this->groupBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_x_plus);
-            this->groupBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_y_minus);
-            this->groupBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_y_center);
-            this->groupBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_y_plus);
-            this->groupBox_leftStickUCal->Controls->Add(this->checkBox_enableLeftUserCal);
-            this->groupBox_leftStickUCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-            this->groupBox_leftStickUCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
+            this->grpBox_leftStickUCal->Controls->Add(this->lbl_userCalMinCenterMax);
+            this->grpBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_x_minus);
+            this->grpBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_x_center);
+            this->grpBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_x_plus);
+            this->grpBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_y_minus);
+            this->grpBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_y_center);
+            this->grpBox_leftStickUCal->Controls->Add(this->numeric_leftUserCal_y_plus);
+            this->grpBox_leftStickUCal->Controls->Add(this->checkBox_enableLeftUserCal);
+            this->grpBox_leftStickUCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_leftStickUCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
                 static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->groupBox_leftStickUCal->Location = System::Drawing::Point(6, 26);
-            this->groupBox_leftStickUCal->Name = L"groupBox_leftStickUCal";
-            this->groupBox_leftStickUCal->Size = System::Drawing::Size(208, 144);
-            this->groupBox_leftStickUCal->TabIndex = 50;
-            this->groupBox_leftStickUCal->TabStop = false;
-            this->groupBox_leftStickUCal->Text = L"Left Analog Stick X/Y";
+            this->grpBox_leftStickUCal->Location = System::Drawing::Point(6, 187);
+            this->grpBox_leftStickUCal->Name = L"grpBox_leftStickUCal";
+            this->grpBox_leftStickUCal->Size = System::Drawing::Size(208, 144);
+            this->grpBox_leftStickUCal->TabIndex = 50;
+            this->grpBox_leftStickUCal->TabStop = false;
+            this->grpBox_leftStickUCal->Text = L"Left Analog Stick X/Y";
             // 
             // lbl_userCalMinCenterMax
             // 
@@ -3125,25 +3198,25 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->lbl_userCalMinCenterMax->Text = L"Minimum / Center / Maximum:";
             this->lbl_userCalMinCenterMax->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
             // 
-            // groupBox_rightStickUCal
+            // grpBox_rightStickUCal
             // 
-            this->groupBox_rightStickUCal->Controls->Add(this->lbl_userCalMinCenterMax2);
-            this->groupBox_rightStickUCal->Controls->Add(this->checkBox_enableRightUserCal);
-            this->groupBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_x_minus);
-            this->groupBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_y_plus);
-            this->groupBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_x_center);
-            this->groupBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_y_center);
-            this->groupBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_x_plus);
-            this->groupBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_y_minus);
-            this->groupBox_rightStickUCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-            this->groupBox_rightStickUCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
+            this->grpBox_rightStickUCal->Controls->Add(this->lbl_userCalMinCenterMax2);
+            this->grpBox_rightStickUCal->Controls->Add(this->checkBox_enableRightUserCal);
+            this->grpBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_x_minus);
+            this->grpBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_y_plus);
+            this->grpBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_x_center);
+            this->grpBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_y_center);
+            this->grpBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_x_plus);
+            this->grpBox_rightStickUCal->Controls->Add(this->numeric_rightUserCal_y_minus);
+            this->grpBox_rightStickUCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_rightStickUCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
                 static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->groupBox_rightStickUCal->Location = System::Drawing::Point(6, 190);
-            this->groupBox_rightStickUCal->Name = L"groupBox_rightStickUCal";
-            this->groupBox_rightStickUCal->Size = System::Drawing::Size(208, 144);
-            this->groupBox_rightStickUCal->TabIndex = 51;
-            this->groupBox_rightStickUCal->TabStop = false;
-            this->groupBox_rightStickUCal->Text = L"Right Analog Stick X/Y";
+            this->grpBox_rightStickUCal->Location = System::Drawing::Point(239, 187);
+            this->grpBox_rightStickUCal->Name = L"grpBox_rightStickUCal";
+            this->grpBox_rightStickUCal->Size = System::Drawing::Size(208, 144);
+            this->grpBox_rightStickUCal->TabIndex = 51;
+            this->grpBox_rightStickUCal->TabStop = false;
+            this->grpBox_rightStickUCal->Text = L"Right Analog Stick X/Y";
             // 
             // lbl_userCalMinCenterMax2
             // 
@@ -3160,25 +3233,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->lbl_userCalMinCenterMax2->Text = L"Minimum / Center / Maximum:";
             this->lbl_userCalMinCenterMax2->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
             // 
-            // grpBox_editUserStickCal
-            // 
-            this->grpBox_editUserStickCal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
-                static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
-            this->grpBox_editUserStickCal->Controls->Add(this->btn_writeUserCal);
-            this->grpBox_editUserStickCal->Controls->Add(this->btn_refreshUserCal);
-            this->grpBox_editUserStickCal->Controls->Add(this->groupBox_leftStickUCal);
-            this->grpBox_editUserStickCal->Controls->Add(this->groupBox_rightStickUCal);
-            this->grpBox_editUserStickCal->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-            this->grpBox_editUserStickCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
-                static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->grpBox_editUserStickCal->Location = System::Drawing::Point(954, 445);
-            this->grpBox_editUserStickCal->Margin = System::Windows::Forms::Padding(0, 0, 14, 0);
-            this->grpBox_editUserStickCal->Name = L"grpBox_editUserStickCal";
-            this->grpBox_editUserStickCal->Size = System::Drawing::Size(220, 399);
-            this->grpBox_editUserStickCal->TabIndex = 51;
-            this->grpBox_editUserStickCal->TabStop = false;
-            this->grpBox_editUserStickCal->Text = L"Edit Stick User Calibration";
-            // 
             // btn_writeUserCal
             // 
             this->btn_writeUserCal->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)),
@@ -3190,11 +3244,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->btn_writeUserCal->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
             this->btn_writeUserCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->btn_writeUserCal->Location = System::Drawing::Point(125, 359);
+            this->btn_writeUserCal->Location = System::Drawing::Point(350, 344);
             this->btn_writeUserCal->Name = L"btn_writeUserCal";
-            this->btn_writeUserCal->Size = System::Drawing::Size(87, 30);
+            this->btn_writeUserCal->Size = System::Drawing::Size(93, 30);
             this->btn_writeUserCal->TabIndex = 52;
-            this->btn_writeUserCal->Text = L"Write";
+            this->btn_writeUserCal->Text = L"Write Cal";
             this->btn_writeUserCal->UseVisualStyleBackColor = false;
             this->btn_writeUserCal->Click += gcnew System::EventHandler(this, &FormJoy::btn_writeUserCal_Click);
             // 
@@ -3219,13 +3273,134 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_IRSettings->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
             this->grpBox_IRSettings->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
                 static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->grpBox_IRSettings->Location = System::Drawing::Point(1183, 483);
+            this->grpBox_IRSettings->Location = System::Drawing::Point(954, 447);
             this->grpBox_IRSettings->Margin = System::Windows::Forms::Padding(0, 0, 14, 39);
             this->grpBox_IRSettings->Name = L"grpBox_IRSettings";
             this->grpBox_IRSettings->Size = System::Drawing::Size(483, 360);
             this->grpBox_IRSettings->TabIndex = 41;
             this->grpBox_IRSettings->TabStop = false;
             this->grpBox_IRSettings->Text = L"IR Camera Settings";
+            // 
+            // grpBox_IRInfraredLight
+            // 
+            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRBrightLeds);
+            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRDimLeds);
+            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRExFilter);
+            this->grpBox_IRInfraredLight->Controls->Add(this->trackBar_IRBrightLeds);
+            this->grpBox_IRInfraredLight->Controls->Add(this->trackBar_IRDimLeds);
+            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRStrobe);
+            this->grpBox_IRInfraredLight->Controls->Add(this->lbl_IRLed1Int);
+            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRFlashlight);
+            this->grpBox_IRInfraredLight->Controls->Add(this->lbl_IRLed2Int);
+            this->grpBox_IRInfraredLight->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_IRInfraredLight->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
+                static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->grpBox_IRInfraredLight->Location = System::Drawing::Point(269, 20);
+            this->grpBox_IRInfraredLight->Name = L"grpBox_IRInfraredLight";
+            this->grpBox_IRInfraredLight->Size = System::Drawing::Size(205, 212);
+            this->grpBox_IRInfraredLight->TabIndex = 5;
+            this->grpBox_IRInfraredLight->TabStop = false;
+            this->grpBox_IRInfraredLight->Text = L"Near-Infrared Light";
+            // 
+            // chkBox_IRExFilter
+            // 
+            this->chkBox_IRExFilter->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRExFilter->Checked = true;
+            this->chkBox_IRExFilter->CheckState = System::Windows::Forms::CheckState::Checked;
+            this->chkBox_IRExFilter->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRExFilter->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->chkBox_IRExFilter->Location = System::Drawing::Point(4, 183);
+            this->chkBox_IRExFilter->Name = L"chkBox_IRExFilter";
+            this->chkBox_IRExFilter->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRExFilter->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRExFilter->TabIndex = 38;
+            this->chkBox_IRExFilter->Text = L"External IR Filter";
+            // 
+            // trackBar_IRBrightLeds
+            // 
+            this->trackBar_IRBrightLeds->AutoSize = false;
+            this->trackBar_IRBrightLeds->LargeChange = 1;
+            this->trackBar_IRBrightLeds->Location = System::Drawing::Point(78, 43);
+            this->trackBar_IRBrightLeds->Margin = System::Windows::Forms::Padding(0);
+            this->trackBar_IRBrightLeds->Maximum = 15;
+            this->trackBar_IRBrightLeds->Name = L"trackBar_IRBrightLeds";
+            this->trackBar_IRBrightLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->trackBar_IRBrightLeds->Size = System::Drawing::Size(121, 28);
+            this->trackBar_IRBrightLeds->TabIndex = 39;
+            this->trackBar_IRBrightLeds->Value = 15;
+            this->trackBar_IRBrightLeds->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBarIRLedsIntensity_ValueChanged);
+            // 
+            // trackBar_IRDimLeds
+            // 
+            this->trackBar_IRDimLeds->AutoSize = false;
+            this->trackBar_IRDimLeds->LargeChange = 1;
+            this->trackBar_IRDimLeds->Location = System::Drawing::Point(78, 100);
+            this->trackBar_IRDimLeds->Margin = System::Windows::Forms::Padding(0);
+            this->trackBar_IRDimLeds->Maximum = 16;
+            this->trackBar_IRDimLeds->Name = L"trackBar_IRDimLeds";
+            this->trackBar_IRDimLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->trackBar_IRDimLeds->Size = System::Drawing::Size(121, 28);
+            this->trackBar_IRDimLeds->TabIndex = 40;
+            this->trackBar_IRDimLeds->Value = 16;
+            this->trackBar_IRDimLeds->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBarIRLedsIntensity_ValueChanged);
+            // 
+            // chkBox_IRStrobe
+            // 
+            this->chkBox_IRStrobe->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRStrobe->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRStrobe->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->chkBox_IRStrobe->Location = System::Drawing::Point(4, 158);
+            this->chkBox_IRStrobe->Name = L"chkBox_IRStrobe";
+            this->chkBox_IRStrobe->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRStrobe->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRStrobe->TabIndex = 44;
+            this->chkBox_IRStrobe->Text = L"Strobe Flash mode";
+            // 
+            // lbl_IRLed1Int
+            // 
+            this->lbl_IRLed1Int->AutoSize = true;
+            this->lbl_IRLed1Int->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_IRLed1Int->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_IRLed1Int->Location = System::Drawing::Point(21, 45);
+            this->lbl_IRLed1Int->Name = L"lbl_IRLed1Int";
+            this->lbl_IRLed1Int->Size = System::Drawing::Size(54, 13);
+            this->lbl_IRLed1Int->TabIndex = 41;
+            this->lbl_IRLed1Int->Text = L"Intensity:";
+            this->lbl_IRLed1Int->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
+            // 
+            // chkBox_IRFlashlight
+            // 
+            this->chkBox_IRFlashlight->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->chkBox_IRFlashlight->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->chkBox_IRFlashlight->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->chkBox_IRFlashlight->Location = System::Drawing::Point(4, 133);
+            this->chkBox_IRFlashlight->Name = L"chkBox_IRFlashlight";
+            this->chkBox_IRFlashlight->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->chkBox_IRFlashlight->Size = System::Drawing::Size(195, 21);
+            this->chkBox_IRFlashlight->TabIndex = 43;
+            this->chkBox_IRFlashlight->Text = L"Flashlight mode";
+            // 
+            // lbl_IRLed2Int
+            // 
+            this->lbl_IRLed2Int->AutoSize = true;
+            this->lbl_IRLed2Int->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_IRLed2Int->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_IRLed2Int->Location = System::Drawing::Point(21, 102);
+            this->lbl_IRLed2Int->Name = L"lbl_IRLed2Int";
+            this->lbl_IRLed2Int->Size = System::Drawing::Size(54, 13);
+            this->lbl_IRLed2Int->TabIndex = 42;
+            this->lbl_IRLed2Int->Text = L"Intensity:";
+            this->lbl_IRLed2Int->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
             // 
             // chkBox_IRAutoExposure
             // 
@@ -3367,126 +3542,359 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->chkBox_IRSelfie->TabIndex = 45;
             this->chkBox_IRSelfie->Text = L"Selfie mode\r\n(flip)";
             // 
-            // chkBox_IRStrobe
+            // grpBox_editCalModel
             // 
-            this->chkBox_IRStrobe->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
-            this->chkBox_IRStrobe->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-                static_cast<System::Byte>(161)));
-            this->chkBox_IRStrobe->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
-                static_cast<System::Int32>(static_cast<System::Byte>(251)));
-            this->chkBox_IRStrobe->Location = System::Drawing::Point(4, 158);
-            this->chkBox_IRStrobe->Name = L"chkBox_IRStrobe";
-            this->chkBox_IRStrobe->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->chkBox_IRStrobe->Size = System::Drawing::Size(195, 21);
-            this->chkBox_IRStrobe->TabIndex = 44;
-            this->chkBox_IRStrobe->Text = L"Strobe Flash mode";
-            // 
-            // chkBox_IRFlashlight
-            // 
-            this->chkBox_IRFlashlight->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
-            this->chkBox_IRFlashlight->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-                static_cast<System::Byte>(161)));
-            this->chkBox_IRFlashlight->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
-                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
-            this->chkBox_IRFlashlight->Location = System::Drawing::Point(4, 133);
-            this->chkBox_IRFlashlight->Name = L"chkBox_IRFlashlight";
-            this->chkBox_IRFlashlight->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->chkBox_IRFlashlight->Size = System::Drawing::Size(195, 21);
-            this->chkBox_IRFlashlight->TabIndex = 43;
-            this->chkBox_IRFlashlight->Text = L"Flashlight mode";
-            // 
-            // lbl_IRLed2Int
-            // 
-            this->lbl_IRLed2Int->AutoSize = true;
-            this->lbl_IRLed2Int->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-                static_cast<System::Byte>(161)));
-            this->lbl_IRLed2Int->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
-                static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->lbl_IRLed2Int->Location = System::Drawing::Point(21, 102);
-            this->lbl_IRLed2Int->Name = L"lbl_IRLed2Int";
-            this->lbl_IRLed2Int->Size = System::Drawing::Size(54, 13);
-            this->lbl_IRLed2Int->TabIndex = 42;
-            this->lbl_IRLed2Int->Text = L"Intensity:";
-            this->lbl_IRLed2Int->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
-            // 
-            // lbl_IRLed1Int
-            // 
-            this->lbl_IRLed1Int->AutoSize = true;
-            this->lbl_IRLed1Int->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-                static_cast<System::Byte>(161)));
-            this->lbl_IRLed1Int->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
-                static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->lbl_IRLed1Int->Location = System::Drawing::Point(21, 45);
-            this->lbl_IRLed1Int->Name = L"lbl_IRLed1Int";
-            this->lbl_IRLed1Int->Size = System::Drawing::Size(54, 13);
-            this->lbl_IRLed1Int->TabIndex = 41;
-            this->lbl_IRLed1Int->Text = L"Intensity:";
-            this->lbl_IRLed1Int->TextAlign = System::Drawing::ContentAlignment::MiddleLeft;
-            // 
-            // trackBar_IRDimLeds
-            // 
-            this->trackBar_IRDimLeds->AutoSize = false;
-            this->trackBar_IRDimLeds->LargeChange = 1;
-            this->trackBar_IRDimLeds->Location = System::Drawing::Point(78, 100);
-            this->trackBar_IRDimLeds->Margin = System::Windows::Forms::Padding(0);
-            this->trackBar_IRDimLeds->Maximum = 16;
-            this->trackBar_IRDimLeds->Name = L"trackBar_IRDimLeds";
-            this->trackBar_IRDimLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->trackBar_IRDimLeds->Size = System::Drawing::Size(121, 28);
-            this->trackBar_IRDimLeds->TabIndex = 40;
-            this->trackBar_IRDimLeds->Value = 16;
-            this->trackBar_IRDimLeds->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBarIRLedsIntensity_ValueChanged);
-            // 
-            // trackBar_IRBrightLeds
-            // 
-            this->trackBar_IRBrightLeds->AutoSize = false;
-            this->trackBar_IRBrightLeds->LargeChange = 1;
-            this->trackBar_IRBrightLeds->Location = System::Drawing::Point(78, 43);
-            this->trackBar_IRBrightLeds->Margin = System::Windows::Forms::Padding(0);
-            this->trackBar_IRBrightLeds->Maximum = 15;
-            this->trackBar_IRBrightLeds->Name = L"trackBar_IRBrightLeds";
-            this->trackBar_IRBrightLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->trackBar_IRBrightLeds->Size = System::Drawing::Size(121, 28);
-            this->trackBar_IRBrightLeds->TabIndex = 39;
-            this->trackBar_IRBrightLeds->Value = 15;
-            this->trackBar_IRBrightLeds->ValueChanged += gcnew System::EventHandler(this, &FormJoy::TrackBarIRLedsIntensity_ValueChanged);
-            // 
-            // chkBox_IRExFilter
-            // 
-            this->chkBox_IRExFilter->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
-            this->chkBox_IRExFilter->Checked = true;
-            this->chkBox_IRExFilter->CheckState = System::Windows::Forms::CheckState::Checked;
-            this->chkBox_IRExFilter->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
-                static_cast<System::Byte>(161)));
-            this->chkBox_IRExFilter->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
-                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
-            this->chkBox_IRExFilter->Location = System::Drawing::Point(4, 183);
-            this->chkBox_IRExFilter->Name = L"chkBox_IRExFilter";
-            this->chkBox_IRExFilter->RightToLeft = System::Windows::Forms::RightToLeft::No;
-            this->chkBox_IRExFilter->Size = System::Drawing::Size(195, 21);
-            this->chkBox_IRExFilter->TabIndex = 38;
-            this->chkBox_IRExFilter->Text = L"External IR Filter";
-            // 
-            // grpBox_IRInfraredLight
-            // 
-            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRBrightLeds);
-            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRDimLeds);
-            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRExFilter);
-            this->grpBox_IRInfraredLight->Controls->Add(this->trackBar_IRBrightLeds);
-            this->grpBox_IRInfraredLight->Controls->Add(this->trackBar_IRDimLeds);
-            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRStrobe);
-            this->grpBox_IRInfraredLight->Controls->Add(this->lbl_IRLed1Int);
-            this->grpBox_IRInfraredLight->Controls->Add(this->chkBox_IRFlashlight);
-            this->grpBox_IRInfraredLight->Controls->Add(this->lbl_IRLed2Int);
-            this->grpBox_IRInfraredLight->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
-            this->grpBox_IRInfraredLight->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
+            this->grpBox_editCalModel->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)),
+                static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->grpBox_editCalModel->Controls->Add(this->lbl_editStickDevHelp);
+            this->grpBox_editCalModel->Controls->Add(this->btn_writeUserCal);
+            this->grpBox_editCalModel->Controls->Add(this->btn_refreshUserCal);
+            this->grpBox_editCalModel->Controls->Add(this->grpBox_CalUserAcc);
+            this->grpBox_editCalModel->Controls->Add(this->grpBox_StickDevParam);
+            this->grpBox_editCalModel->Controls->Add(this->grpBox_rightStickUCal);
+            this->grpBox_editCalModel->Controls->Add(this->grpBox_leftStickUCal);
+            this->grpBox_editCalModel->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_editCalModel->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)),
                 static_cast<System::Int32>(static_cast<System::Byte>(255)), static_cast<System::Int32>(static_cast<System::Byte>(206)));
-            this->grpBox_IRInfraredLight->Location = System::Drawing::Point(269, 20);
-            this->grpBox_IRInfraredLight->Name = L"grpBox_IRInfraredLight";
-            this->grpBox_IRInfraredLight->Size = System::Drawing::Size(205, 212);
-            this->grpBox_IRInfraredLight->TabIndex = 5;
-            this->grpBox_IRInfraredLight->TabStop = false;
-            this->grpBox_IRInfraredLight->Text = L"Near-Infrared Light";
+            this->grpBox_editCalModel->Location = System::Drawing::Point(14, 663);
+            this->grpBox_editCalModel->Margin = System::Windows::Forms::Padding(0, 0, 14, 39);
+            this->grpBox_editCalModel->Name = L"grpBox_editCalModel";
+            this->grpBox_editCalModel->Padding = System::Windows::Forms::Padding(3, 4, 3, 4);
+            this->grpBox_editCalModel->Size = System::Drawing::Size(456, 389);
+            this->grpBox_editCalModel->TabIndex = 52;
+            this->grpBox_editCalModel->TabStop = false;
+            this->grpBox_editCalModel->Text = L"User Calibration && Stick Device Parameters";
+            // 
+            // lbl_editStickDevHelp
+            // 
+            this->lbl_editStickDevHelp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_editStickDevHelp->ForeColor = System::Drawing::Color::Tomato;
+            this->lbl_editStickDevHelp->Location = System::Drawing::Point(4, 338);
+            this->lbl_editStickDevHelp->Name = L"lbl_editStickDevHelp";
+            this->lbl_editStickDevHelp->Size = System::Drawing::Size(211, 44);
+            this->lbl_editStickDevHelp->TabIndex = 53;
+            this->lbl_editStickDevHelp->Text = L"Warning: The Stick Device Parameters are factory values. Change only when you hav"
+                L"e drifting problems.";
+            // 
+            // grpBox_CalUserAcc
+            // 
+            this->grpBox_CalUserAcc->Controls->Add(this->lbl_CalGyroHelp);
+            this->grpBox_CalUserAcc->Controls->Add(this->lbl_CalAccHelp);
+            this->grpBox_CalUserAcc->Controls->Add(this->numeric_CalEditAccX);
+            this->grpBox_CalUserAcc->Controls->Add(this->numeric_CalEditGyroX);
+            this->grpBox_CalUserAcc->Controls->Add(this->numeric_CalEditGyroY);
+            this->grpBox_CalUserAcc->Controls->Add(this->numeric_CalEditAccY);
+            this->grpBox_CalUserAcc->Controls->Add(this->numeric_CalEditGyroZ);
+            this->grpBox_CalUserAcc->Controls->Add(this->numeric_CalEditAccZ);
+            this->grpBox_CalUserAcc->Controls->Add(this->checkBox_enableSensorUserCal);
+            this->grpBox_CalUserAcc->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_CalUserAcc->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->grpBox_CalUserAcc->Location = System::Drawing::Point(6, 24);
+            this->grpBox_CalUserAcc->Name = L"grpBox_CalUserAcc";
+            this->grpBox_CalUserAcc->Size = System::Drawing::Size(208, 155);
+            this->grpBox_CalUserAcc->TabIndex = 50;
+            this->grpBox_CalUserAcc->TabStop = false;
+            this->grpBox_CalUserAcc->Text = L"Acc/Gyro Calibration";
+            // 
+            // lbl_CalGyroHelp
+            // 
+            this->lbl_CalGyroHelp->AutoSize = true;
+            this->lbl_CalGyroHelp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_CalGyroHelp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->lbl_CalGyroHelp->Location = System::Drawing::Point(10, 77);
+            this->lbl_CalGyroHelp->Margin = System::Windows::Forms::Padding(0, 0, 3, 0);
+            this->lbl_CalGyroHelp->Name = L"lbl_CalGyroHelp";
+            this->lbl_CalGyroHelp->Size = System::Drawing::Size(136, 13);
+            this->lbl_CalGyroHelp->TabIndex = 56;
+            this->lbl_CalGyroHelp->Text = L"Gyro Bias: X / Y / Z  (Int16)";
+            this->lbl_CalGyroHelp->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+            // 
+            // lbl_CalAccHelp
+            // 
+            this->lbl_CalAccHelp->AutoSize = true;
+            this->lbl_CalAccHelp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_CalAccHelp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->lbl_CalAccHelp->Location = System::Drawing::Point(9, 26);
+            this->lbl_CalAccHelp->Name = L"lbl_CalAccHelp";
+            this->lbl_CalAccHelp->Size = System::Drawing::Size(159, 13);
+            this->lbl_CalAccHelp->TabIndex = 49;
+            this->lbl_CalAccHelp->Text = L"Acc Scaler Bias: X / Y / Z (Int16)";
+            this->lbl_CalAccHelp->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+            // 
+            // numeric_CalEditAccX
+            // 
+            this->numeric_CalEditAccX->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_CalEditAccX->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_CalEditAccX->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_CalEditAccX->Hexadecimal = true;
+            this->numeric_CalEditAccX->Location = System::Drawing::Point(12, 44);
+            this->numeric_CalEditAccX->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 65535, 0, 0, 0 });
+            this->numeric_CalEditAccX->Name = L"numeric_CalEditAccX";
+            this->numeric_CalEditAccX->Size = System::Drawing::Size(53, 25);
+            this->numeric_CalEditAccX->TabIndex = 43;
+            this->numeric_CalEditAccX->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_CalEditAccX->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // numeric_CalEditGyroX
+            // 
+            this->numeric_CalEditGyroX->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_CalEditGyroX->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_CalEditGyroX->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_CalEditGyroX->Hexadecimal = true;
+            this->numeric_CalEditGyroX->Location = System::Drawing::Point(13, 95);
+            this->numeric_CalEditGyroX->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 65535, 0, 0, 0 });
+            this->numeric_CalEditGyroX->Name = L"numeric_CalEditGyroX";
+            this->numeric_CalEditGyroX->Size = System::Drawing::Size(53, 25);
+            this->numeric_CalEditGyroX->TabIndex = 50;
+            this->numeric_CalEditGyroX->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_CalEditGyroX->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // numeric_CalEditGyroY
+            // 
+            this->numeric_CalEditGyroY->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_CalEditGyroY->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_CalEditGyroY->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_CalEditGyroY->Hexadecimal = true;
+            this->numeric_CalEditGyroY->Location = System::Drawing::Point(78, 95);
+            this->numeric_CalEditGyroY->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 65535, 0, 0, 0 });
+            this->numeric_CalEditGyroY->Name = L"numeric_CalEditGyroY";
+            this->numeric_CalEditGyroY->Size = System::Drawing::Size(53, 25);
+            this->numeric_CalEditGyroY->TabIndex = 51;
+            this->numeric_CalEditGyroY->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_CalEditGyroY->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // numeric_CalEditAccY
+            // 
+            this->numeric_CalEditAccY->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_CalEditAccY->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_CalEditAccY->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_CalEditAccY->Hexadecimal = true;
+            this->numeric_CalEditAccY->Location = System::Drawing::Point(77, 44);
+            this->numeric_CalEditAccY->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 65535, 0, 0, 0 });
+            this->numeric_CalEditAccY->Name = L"numeric_CalEditAccY";
+            this->numeric_CalEditAccY->Size = System::Drawing::Size(53, 25);
+            this->numeric_CalEditAccY->TabIndex = 44;
+            this->numeric_CalEditAccY->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_CalEditAccY->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // numeric_CalEditGyroZ
+            // 
+            this->numeric_CalEditGyroZ->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_CalEditGyroZ->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_CalEditGyroZ->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_CalEditGyroZ->Hexadecimal = true;
+            this->numeric_CalEditGyroZ->Location = System::Drawing::Point(143, 95);
+            this->numeric_CalEditGyroZ->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 65535, 0, 0, 0 });
+            this->numeric_CalEditGyroZ->Name = L"numeric_CalEditGyroZ";
+            this->numeric_CalEditGyroZ->Size = System::Drawing::Size(53, 25);
+            this->numeric_CalEditGyroZ->TabIndex = 52;
+            this->numeric_CalEditGyroZ->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_CalEditGyroZ->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // numeric_CalEditAccZ
+            // 
+            this->numeric_CalEditAccZ->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_CalEditAccZ->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_CalEditAccZ->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_CalEditAccZ->Hexadecimal = true;
+            this->numeric_CalEditAccZ->Location = System::Drawing::Point(142, 44);
+            this->numeric_CalEditAccZ->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 65535, 0, 0, 0 });
+            this->numeric_CalEditAccZ->Name = L"numeric_CalEditAccZ";
+            this->numeric_CalEditAccZ->Size = System::Drawing::Size(53, 25);
+            this->numeric_CalEditAccZ->TabIndex = 45;
+            this->numeric_CalEditAccZ->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_CalEditAccZ->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // checkBox_enableSensorUserCal
+            // 
+            this->checkBox_enableSensorUserCal->CheckAlign = System::Drawing::ContentAlignment::MiddleRight;
+            this->checkBox_enableSensorUserCal->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F, System::Drawing::FontStyle::Regular,
+                System::Drawing::GraphicsUnit::Point, static_cast<System::Byte>(161)));
+            this->checkBox_enableSensorUserCal->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->checkBox_enableSensorUserCal->Location = System::Drawing::Point(8, 126);
+            this->checkBox_enableSensorUserCal->Margin = System::Windows::Forms::Padding(0);
+            this->checkBox_enableSensorUserCal->Name = L"checkBox_enableSensorUserCal";
+            this->checkBox_enableSensorUserCal->RightToLeft = System::Windows::Forms::RightToLeft::No;
+            this->checkBox_enableSensorUserCal->Size = System::Drawing::Size(189, 22);
+            this->checkBox_enableSensorUserCal->TabIndex = 3;
+            this->checkBox_enableSensorUserCal->Text = L"Enable 6-Axis Cal";
+            // 
+            // grpBox_StickDevParam
+            // 
+            this->grpBox_StickDevParam->Controls->Add(this->lbl_proStickHelp);
+            this->grpBox_StickDevParam->Controls->Add(this->lbl_mainStickHelp);
+            this->grpBox_StickDevParam->Controls->Add(this->numeric_StickParamRangeRatio2);
+            this->grpBox_StickDevParam->Controls->Add(this->numeric_StickParamDeadzone2);
+            this->grpBox_StickDevParam->Controls->Add(this->btn_writeStickParams);
+            this->grpBox_StickDevParam->Controls->Add(this->lbl_rangeReatio);
+            this->grpBox_StickDevParam->Controls->Add(this->numeric_StickParamRangeRatio);
+            this->grpBox_StickDevParam->Controls->Add(this->lbl_deadzone);
+            this->grpBox_StickDevParam->Controls->Add(this->numeric_StickParamDeadzone);
+            this->grpBox_StickDevParam->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->grpBox_StickDevParam->ForeColor = System::Drawing::Color::Tomato;
+            this->grpBox_StickDevParam->Location = System::Drawing::Point(240, 25);
+            this->grpBox_StickDevParam->Name = L"grpBox_StickDevParam";
+            this->grpBox_StickDevParam->Size = System::Drawing::Size(208, 154);
+            this->grpBox_StickDevParam->TabIndex = 51;
+            this->grpBox_StickDevParam->TabStop = false;
+            this->grpBox_StickDevParam->Text = L"Stick Device Parameters";
+            // 
+            // lbl_proStickHelp
+            // 
+            this->lbl_proStickHelp->AutoSize = true;
+            this->lbl_proStickHelp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_proStickHelp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->lbl_proStickHelp->Location = System::Drawing::Point(80, 80);
+            this->lbl_proStickHelp->Name = L"lbl_proStickHelp";
+            this->lbl_proStickHelp->Size = System::Drawing::Size(48, 26);
+            this->lbl_proStickHelp->TabIndex = 66;
+            this->lbl_proStickHelp->Text = L"Pro Con\r\nRight";
+            this->lbl_proStickHelp->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+            // 
+            // lbl_mainStickHelp
+            // 
+            this->lbl_mainStickHelp->AutoSize = true;
+            this->lbl_mainStickHelp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_mainStickHelp->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(251)),
+                static_cast<System::Int32>(static_cast<System::Byte>(251)), static_cast<System::Int32>(static_cast<System::Byte>(251)));
+            this->lbl_mainStickHelp->Location = System::Drawing::Point(88, 37);
+            this->lbl_mainStickHelp->Name = L"lbl_mainStickHelp";
+            this->lbl_mainStickHelp->Size = System::Drawing::Size(33, 26);
+            this->lbl_mainStickHelp->TabIndex = 65;
+            this->lbl_mainStickHelp->Text = L"Main\r\nStick";
+            this->lbl_mainStickHelp->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+            // 
+            // numeric_StickParamRangeRatio2
+            // 
+            this->numeric_StickParamRangeRatio2->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_StickParamRangeRatio2->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_StickParamRangeRatio2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_StickParamRangeRatio2->Hexadecimal = true;
+            this->numeric_StickParamRangeRatio2->Location = System::Drawing::Point(134, 81);
+            this->numeric_StickParamRangeRatio2->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 4095, 0, 0, 0 });
+            this->numeric_StickParamRangeRatio2->Name = L"numeric_StickParamRangeRatio2";
+            this->numeric_StickParamRangeRatio2->Size = System::Drawing::Size(62, 25);
+            this->numeric_StickParamRangeRatio2->TabIndex = 63;
+            this->numeric_StickParamRangeRatio2->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_StickParamRangeRatio2->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // numeric_StickParamDeadzone2
+            // 
+            this->numeric_StickParamDeadzone2->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_StickParamDeadzone2->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_StickParamDeadzone2->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_StickParamDeadzone2->Hexadecimal = true;
+            this->numeric_StickParamDeadzone2->Location = System::Drawing::Point(12, 81);
+            this->numeric_StickParamDeadzone2->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 4095, 0, 0, 0 });
+            this->numeric_StickParamDeadzone2->Name = L"numeric_StickParamDeadzone2";
+            this->numeric_StickParamDeadzone2->Size = System::Drawing::Size(62, 25);
+            this->numeric_StickParamDeadzone2->TabIndex = 61;
+            this->numeric_StickParamDeadzone2->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_StickParamDeadzone2->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // btn_writeStickParams
+            // 
+            this->btn_writeStickParams->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_writeStickParams->Enabled = false;
+            this->btn_writeStickParams->FlatAppearance->BorderColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->btn_writeStickParams->FlatStyle = System::Windows::Forms::FlatStyle::Flat;
+            this->btn_writeStickParams->Font = (gcnew System::Drawing::Font(L"Segoe UI Semibold", 10));
+            this->btn_writeStickParams->ForeColor = System::Drawing::Color::Tomato;
+            this->btn_writeStickParams->Location = System::Drawing::Point(49, 116);
+            this->btn_writeStickParams->Name = L"btn_writeStickParams";
+            this->btn_writeStickParams->Size = System::Drawing::Size(110, 30);
+            this->btn_writeStickParams->TabIndex = 52;
+            this->btn_writeStickParams->Text = L"Write Params";
+            this->btn_writeStickParams->UseVisualStyleBackColor = false;
+            this->btn_writeStickParams->Click += gcnew System::EventHandler(this, &FormJoy::btn_writeStickParams_Click);
+            // 
+            // lbl_rangeReatio
+            // 
+            this->lbl_rangeReatio->AutoSize = true;
+            this->lbl_rangeReatio->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_rangeReatio->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_rangeReatio->Location = System::Drawing::Point(130, 21);
+            this->lbl_rangeReatio->Name = L"lbl_rangeReatio";
+            this->lbl_rangeReatio->Size = System::Drawing::Size(70, 13);
+            this->lbl_rangeReatio->TabIndex = 60;
+            this->lbl_rangeReatio->Text = L"Range ratio:";
+            this->lbl_rangeReatio->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+            // 
+            // numeric_StickParamRangeRatio
+            // 
+            this->numeric_StickParamRangeRatio->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_StickParamRangeRatio->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_StickParamRangeRatio->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_StickParamRangeRatio->Hexadecimal = true;
+            this->numeric_StickParamRangeRatio->Location = System::Drawing::Point(134, 39);
+            this->numeric_StickParamRangeRatio->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 4095, 0, 0, 0 });
+            this->numeric_StickParamRangeRatio->Name = L"numeric_StickParamRangeRatio";
+            this->numeric_StickParamRangeRatio->Size = System::Drawing::Size(62, 25);
+            this->numeric_StickParamRangeRatio->TabIndex = 59;
+            this->numeric_StickParamRangeRatio->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_StickParamRangeRatio->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
+            // 
+            // lbl_deadzone
+            // 
+            this->lbl_deadzone->AutoSize = true;
+            this->lbl_deadzone->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->lbl_deadzone->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->lbl_deadzone->Location = System::Drawing::Point(8, 21);
+            this->lbl_deadzone->Name = L"lbl_deadzone";
+            this->lbl_deadzone->Size = System::Drawing::Size(62, 13);
+            this->lbl_deadzone->TabIndex = 58;
+            this->lbl_deadzone->Text = L"Deadzone:";
+            this->lbl_deadzone->TextAlign = System::Drawing::ContentAlignment::MiddleRight;
+            // 
+            // numeric_StickParamDeadzone
+            // 
+            this->numeric_StickParamDeadzone->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(85)),
+                static_cast<System::Int32>(static_cast<System::Byte>(85)), static_cast<System::Int32>(static_cast<System::Byte>(85)));
+            this->numeric_StickParamDeadzone->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9.75F));
+            this->numeric_StickParamDeadzone->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(188)), static_cast<System::Int32>(static_cast<System::Byte>(0)));
+            this->numeric_StickParamDeadzone->Hexadecimal = true;
+            this->numeric_StickParamDeadzone->Location = System::Drawing::Point(12, 39);
+            this->numeric_StickParamDeadzone->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) { 4095, 0, 0, 0 });
+            this->numeric_StickParamDeadzone->Name = L"numeric_StickParamDeadzone";
+            this->numeric_StickParamDeadzone->Size = System::Drawing::Size(62, 25);
+            this->numeric_StickParamDeadzone->TabIndex = 57;
+            this->numeric_StickParamDeadzone->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+            this->numeric_StickParamDeadzone->UpDownAlign = System::Windows::Forms::LeftRightAlignment::Left;
             // 
             // FormJoy
             // 
@@ -3496,9 +3904,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->AutoSizeMode = System::Windows::Forms::AutoSizeMode::GrowAndShrink;
             this->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
-            this->ClientSize = System::Drawing::Size(1925, 905);
+            this->ClientSize = System::Drawing::Size(1925, 1090);
+            this->Controls->Add(this->grpBox_editCalModel);
             this->Controls->Add(this->grpBox_IRSettings);
-            this->Controls->Add(this->grpBox_editUserStickCal);
             this->Controls->Add(this->grpBox_nfc);
             this->Controls->Add(this->grpBox_IR);
             this->Controls->Add(this->menuStrip1);
@@ -3597,21 +4005,35 @@ public ref class FormJoy : public System::Windows::Forms::Form
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_rightUserCal_x_plus))->EndInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_rightUserCal_x_center))->EndInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_rightUserCal_x_minus))->EndInit();
-            this->groupBox_leftStickUCal->ResumeLayout(false);
-            this->groupBox_leftStickUCal->PerformLayout();
-            this->groupBox_rightStickUCal->ResumeLayout(false);
-            this->groupBox_rightStickUCal->PerformLayout();
-            this->grpBox_editUserStickCal->ResumeLayout(false);
+            this->grpBox_leftStickUCal->ResumeLayout(false);
+            this->grpBox_leftStickUCal->PerformLayout();
+            this->grpBox_rightStickUCal->ResumeLayout(false);
+            this->grpBox_rightStickUCal->PerformLayout();
             this->grpBox_IRSettings->ResumeLayout(false);
             this->grpBox_IRSettings->PerformLayout();
+            this->grpBox_IRInfraredLight->ResumeLayout(false);
+            this->grpBox_IRInfraredLight->PerformLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRBrightLeds))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRDimLeds))->EndInit();
             this->grpBox_IRSettingsDenoise->ResumeLayout(false);
             this->grpBox_IRSettingsDenoise->PerformLayout();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseEdgeSmoothing))->EndInit();
             (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_IRDenoiseColorInterpolation))->EndInit();
-            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRDimLeds))->EndInit();
-            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->trackBar_IRBrightLeds))->EndInit();
-            this->grpBox_IRInfraredLight->ResumeLayout(false);
-            this->grpBox_IRInfraredLight->PerformLayout();
+            this->grpBox_editCalModel->ResumeLayout(false);
+            this->grpBox_CalUserAcc->ResumeLayout(false);
+            this->grpBox_CalUserAcc->PerformLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditAccX))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditGyroX))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditGyroY))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditAccY))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditGyroZ))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_CalEditAccZ))->EndInit();
+            this->grpBox_StickDevParam->ResumeLayout(false);
+            this->grpBox_StickDevParam->PerformLayout();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamRangeRatio2))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamDeadzone2))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamRangeRatio))->EndInit();
+            (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->numeric_StickParamDeadzone))->EndInit();
             this->ResumeLayout(false);
             this->PerformLayout();
 
@@ -4204,7 +4626,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
         if (option_is_on != 5) {
             reset_window_option(false);
             this->Controls->Add(this->grpBox_ButtonTest);
-            this->Controls->Add(this->grpBox_editUserStickCal);
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
@@ -4249,6 +4670,19 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
     }
 
+    private: System::Void editCalibrationToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+        if (option_is_on != 7) {
+            reset_window_option(false);
+            this->Controls->Add(this->grpBox_editCalModel);
+            this->lbl_editStickDevHelp->Size = System::Drawing::Size(211, 44);
+            this->grpBox_editCalModel->BringToFront();
+            option_is_on = 7;
+            this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
+        }
+        else
+            reset_window_option(true);
+    }
+
     private: System::Void reset_window_option(bool reset_all) {
         if (!check_connection_ok) {
             this->toolStripBtn_refresh->Enabled    = false;
@@ -4262,9 +4696,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->Controls->Remove(this->grpBox_ChangeSN);
         this->Controls->Remove(this->grpBox_VibPlayer);
         this->Controls->Remove(this->grpBox_ButtonTest);
-        this->Controls->Remove(this->grpBox_editUserStickCal);
         this->Controls->Remove(this->grpBox_IR);
         this->Controls->Remove(this->grpBox_IRSettings);
+        this->Controls->Remove(this->grpBox_editCalModel);
 
         this->Controls->Remove(this->grpBox_nfc);
         this->Controls->Remove(this->btn_enableExpertMode);
@@ -4272,12 +4706,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->Controls->Remove(this->grpBox_dev_param);
         this->Controls->Remove(this->grpBox_accGyroCal);
 
-        this->textBoxDbg_sent->Visible = false;
-        this->textBoxDbg_reply->Visible = false;
+        this->textBoxDbg_sent->Visible      = false;
+        this->textBoxDbg_reply->Visible     = false;
         this->textBoxDbg_reply_cmd->Visible = false;
 
-        groupBox_leftStickUCal->Enabled = false;
-        groupBox_rightStickUCal->Enabled = false;
+        grpBox_leftStickUCal->Enabled  = false;
+        grpBox_rightStickUCal->Enabled = false;
+        grpBox_CalUserAcc->Enabled     = false;
+        grpBox_StickDevParam->Enabled  = false;
 
         this->menuStrip1->Refresh();
         this->toolStrip1->Refresh();
@@ -5441,13 +5877,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Remove(this->grpBox_dev_param);
             this->Controls->Remove(this->grpBox_StickCal);
             this->Controls->Remove(this->grpBox_accGyroCal);
-            this->Controls->Remove(this->grpBox_editUserStickCal);
             this->Controls->Remove(this->grpBox_nfc);
-        }
-        else if (option_is_on == 6) {
-            enable_IRVideoPhoto = false;
-            this->Controls->Remove(this->grpBox_IR);
-            this->Controls->Remove(this->grpBox_IRSettings);
         }
 
         JCColorPicker->Show();
@@ -5481,7 +5911,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
-            this->Controls->Add(this->grpBox_editUserStickCal);
             this->Controls->Add(this->grpBox_nfc);
             this->lbl_nfcHelp->Size = System::Drawing::Size(203, 85);
             this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
@@ -5499,12 +5928,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             this->btn_runBtnTest->Text = L"Turn on";
             option_is_on = 5;
-            this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
-        }
-        else if (option_is_on == 6) {
-            this->Controls->Add(this->grpBox_IR);
-            this->Controls->Add(this->grpBox_IRSettings);
-            this->btn_getIRStream->Text = L"Stream";
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
         this->menuStrip1->Enabled = true;
@@ -5520,7 +5943,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Controls->Add(this->grpBox_StickCal);
             this->Controls->Add(this->grpBox_dev_param);
             this->Controls->Add(this->grpBox_accGyroCal);
-            this->Controls->Add(this->grpBox_editUserStickCal);
             this->Controls->Add(this->grpBox_nfc);
             this->lbl_nfcHelp->Size = System::Drawing::Size(203, 85);
             this->txtBox_nfcUid->Size = System::Drawing::Size(208, 53);
@@ -5538,12 +5960,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             this->btn_runBtnTest->Text = L"Turn on";
             option_is_on = 5;
-            this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
-        }
-        else if (option_is_on == 6) {
-            this->Controls->Add(this->grpBox_IR);
-            this->Controls->Add(this->grpBox_IRSettings);
-            this->btn_getIRStream->Text = L"Stream";
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
         }
         if (!JCColorPicker->GripsColorValue) {
@@ -6006,73 +6422,117 @@ public ref class FormJoy : public System::Windows::Forms::Form
                 L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
             return;
         }
-        u8 user_stick_cal[0x16];
-        u16 stick_cal_x_l[0x3];
-        u16 stick_cal_y_l[0x3];
-        u16 stick_cal_x_r[0x3];
-        u16 stick_cal_y_r[0x3];
-        memset(user_stick_cal, 0, 0x16);
-        memset(stick_cal_x_l, 0, sizeof(stick_cal_x_l));
-        memset(stick_cal_y_l, 0, sizeof(stick_cal_y_l));
-        memset(stick_cal_x_r, 0, sizeof(stick_cal_x_r));
-        memset(stick_cal_y_r, 0, sizeof(stick_cal_y_r));
+        u8 user_stick_cal[22];
+        u8 user_sensor_cal[26];
+        u8 stick_model_main_left[3];
+        u8 stick_model_pro_right[3];
+        u16 decoded_stick_pair[16];
+        memset(user_stick_cal,        0, sizeof(user_stick_cal));
+        memset(user_sensor_cal,       0, sizeof(user_sensor_cal));
+        memset(stick_model_main_left, 0, sizeof(stick_model_main_left));
+        memset(stick_model_pro_right, 0, sizeof(stick_model_pro_right));
+        memset(decoded_stick_pair,    0, sizeof(decoded_stick_pair));
 
-        get_spi_data(0x8010, 0x16, user_stick_cal);
+        get_spi_data(0x8010, sizeof(user_stick_cal), user_stick_cal);
+        Sleep(100);
+        get_spi_data(0x8026, sizeof(user_sensor_cal), user_sensor_cal);
+        Sleep(100);
+        get_spi_data(0x6089, sizeof(stick_model_main_left), stick_model_main_left);
+        //if (handle_ok == 3) {
+            Sleep(100);
+            get_spi_data(0x609B, sizeof(stick_model_pro_right), stick_model_pro_right);
+        //}
 
+        // Left stick user cal
         if (handle_ok != 2) {
             if (*(u16*)&user_stick_cal[0] == 0xA1B2) {
-                stick_cal_x_l[1] = (user_stick_cal[6] << 8) & 0xF00 | user_stick_cal[5];
-                stick_cal_y_l[1] = (user_stick_cal[7] << 4) | (user_stick_cal[6] >> 4);
-                stick_cal_x_l[0] = stick_cal_x_l[1] - ((user_stick_cal[9] << 8) & 0xF00 | user_stick_cal[8]);
-                stick_cal_y_l[0] = stick_cal_y_l[1] - ((user_stick_cal[10] << 4) | (user_stick_cal[9] >> 4));
-                stick_cal_x_l[2] = stick_cal_x_l[1] + ((user_stick_cal[3] << 8) & 0xF00 | user_stick_cal[2]);
-                stick_cal_y_l[2] = stick_cal_y_l[1] + ((user_stick_cal[4] << 4) | (user_stick_cal[3] >> 4));
+                // Center X,Y
+                decode_stick_params(decoded_stick_pair + 2, user_stick_cal + 5);
+                // -Axis X,Y Offset
+                decode_stick_params(decoded_stick_pair,     user_stick_cal + 8);
+                // +Axis X,Y Offset
+                decode_stick_params(decoded_stick_pair + 4, user_stick_cal + 2);
 
-                this->numeric_leftUserCal_x_minus->Value  = stick_cal_x_l[0];
-                this->numeric_leftUserCal_x_center->Value = stick_cal_x_l[1];
-                this->numeric_leftUserCal_x_plus->Value   = stick_cal_x_l[2];
+                this->numeric_leftUserCal_x_minus->Value  = decoded_stick_pair[2] - decoded_stick_pair[0];
+                this->numeric_leftUserCal_x_center->Value = decoded_stick_pair[2];
+                this->numeric_leftUserCal_x_plus->Value   = decoded_stick_pair[2] + decoded_stick_pair[4];
 
-                this->numeric_leftUserCal_y_minus->Value  = stick_cal_y_l[0];
-                this->numeric_leftUserCal_y_center->Value = stick_cal_y_l[1];
-                this->numeric_leftUserCal_y_plus->Value   = stick_cal_y_l[2];
+                this->numeric_leftUserCal_y_minus->Value  = decoded_stick_pair[3] - decoded_stick_pair[1];
+                this->numeric_leftUserCal_y_center->Value = decoded_stick_pair[3];
+                this->numeric_leftUserCal_y_plus->Value   = decoded_stick_pair[3] + decoded_stick_pair[5];
 
                 this->checkBox_enableLeftUserCal->Checked = true;
             }
             else
                 this->checkBox_enableLeftUserCal->Checked = false;
 
-            groupBox_leftStickUCal->Enabled = true;
+            grpBox_leftStickUCal->Enabled = true;
         }
         else
-            groupBox_leftStickUCal->Enabled = false;
-
+            grpBox_leftStickUCal->Enabled = false;
+        // Right stick user cal
         if (handle_ok != 1) {
             if (*(u16*)&user_stick_cal[0xB] == 0xA1B2) {
-                stick_cal_x_r[1] = (user_stick_cal[14] << 8) & 0xF00 | user_stick_cal[13];
-                stick_cal_y_r[1] = (user_stick_cal[15] << 4) | (user_stick_cal[14] >> 4);
-                stick_cal_x_r[0] = stick_cal_x_r[1] - ((user_stick_cal[17] << 8) & 0xF00 | user_stick_cal[16]);
-                stick_cal_y_r[0] = stick_cal_y_r[1] - ((user_stick_cal[18] << 4) | (user_stick_cal[17] >> 4));
-                stick_cal_x_r[2] = stick_cal_x_r[1] + ((user_stick_cal[20] << 8) & 0xF00 | user_stick_cal[19]);
-                stick_cal_y_r[2] = stick_cal_y_r[1] + ((user_stick_cal[21] << 4) | (user_stick_cal[20] >> 4));
+                // Center X,Y
+                decode_stick_params(decoded_stick_pair + 8, user_stick_cal + 13);
+                // -Axis X,Y Offset
+                decode_stick_params(decoded_stick_pair + 6, user_stick_cal + 16);
+                // +Axis X,Y Offset
+                decode_stick_params(decoded_stick_pair + 10, user_stick_cal + 19);
 
-                this->numeric_rightUserCal_x_minus->Value  = stick_cal_x_r[0];
-                this->numeric_rightUserCal_x_center->Value = stick_cal_x_r[1];
-                this->numeric_rightUserCal_x_plus->Value   = stick_cal_x_r[2];
+                this->numeric_rightUserCal_x_minus->Value  = decoded_stick_pair[8] - decoded_stick_pair[6];
+                this->numeric_rightUserCal_x_center->Value = decoded_stick_pair[8];
+                this->numeric_rightUserCal_x_plus->Value   = decoded_stick_pair[8] + decoded_stick_pair[10];
 
-                this->numeric_rightUserCal_y_minus->Value  = stick_cal_y_r[0];
-                this->numeric_rightUserCal_y_center->Value = stick_cal_y_r[1];
-                this->numeric_rightUserCal_y_plus->Value   = stick_cal_y_r[2];
+                this->numeric_rightUserCal_y_minus->Value  = decoded_stick_pair[9] - decoded_stick_pair[7];
+                this->numeric_rightUserCal_y_center->Value = decoded_stick_pair[9];
+                this->numeric_rightUserCal_y_plus->Value   = decoded_stick_pair[9] + decoded_stick_pair[11];
 
                 this->checkBox_enableRightUserCal->Checked = true;
             }
             else
                 this->checkBox_enableRightUserCal->Checked = false;
 
-            groupBox_rightStickUCal->Enabled = true;
+            grpBox_rightStickUCal->Enabled = true;
         }
         else
-            groupBox_rightStickUCal->Enabled = false;
+            grpBox_rightStickUCal->Enabled = false;
 
+        // Acc/Gyro user cal
+        if (*(u16*)&user_sensor_cal[0] == 0xA1B2) {
+            this->numeric_CalEditAccX->Value = *(u16*)&user_sensor_cal[2];
+            this->numeric_CalEditAccY->Value = *(u16*)&user_sensor_cal[4];
+            this->numeric_CalEditAccZ->Value = *(u16*)&user_sensor_cal[6];
+
+            this->numeric_CalEditGyroX->Value = *(u16*)&user_sensor_cal[14];
+            this->numeric_CalEditGyroY->Value = *(u16*)&user_sensor_cal[16];
+            this->numeric_CalEditGyroZ->Value = *(u16*)&user_sensor_cal[18];
+
+            this->checkBox_enableSensorUserCal->Checked = true;
+        }
+        else
+            this->checkBox_enableSensorUserCal->Checked = false;
+        grpBox_CalUserAcc->Enabled = true;
+
+        // Stick device parameters. These come from factory.
+        decode_stick_params(decoded_stick_pair + 12, stick_model_main_left);
+        this->numeric_StickParamDeadzone->Value   = decoded_stick_pair[12];
+        this->numeric_StickParamRangeRatio->Value = decoded_stick_pair[13];
+        this->numeric_StickParamDeadzone2->Enabled   = false;
+        this->numeric_StickParamRangeRatio2->Enabled = false;
+        this->lbl_proStickHelp->Enabled              = false;
+        //if (handle_ok == 3) {
+            decode_stick_params(decoded_stick_pair + 14, stick_model_pro_right);
+            this->numeric_StickParamDeadzone2->Value   = decoded_stick_pair[14];
+            this->numeric_StickParamRangeRatio2->Value = decoded_stick_pair[15];
+            this->numeric_StickParamDeadzone2->Enabled   = true;
+            this->numeric_StickParamRangeRatio2->Enabled = true;
+            this->lbl_proStickHelp->Enabled              = true;
+        //}
+        grpBox_StickDevParam->Enabled = true;
+        
+        // Enable write buttons
+        this->btn_writeStickParams->Enabled = true;
         this->btn_writeUserCal->Enabled = true;
     }
 
@@ -6088,28 +6548,26 @@ public ref class FormJoy : public System::Windows::Forms::Form
         if (MessageBox::Show(L"Are you sure you want to continue?",
             L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes) {
             u8 user_stick_cal[22];
-            memset(user_stick_cal, 0, sizeof(user_stick_cal));
+            u8 user_sensor_cal[26];
+            u16 decoded_stick_pair[2];
+            memset(user_stick_cal,     0, sizeof(user_stick_cal));
+            memset(user_sensor_cal,    0, sizeof(user_sensor_cal));
+            memset(decoded_stick_pair, 0, sizeof(decoded_stick_pair));
 
             if (handle_ok != 2 && this->checkBox_enableLeftUserCal->Checked) {
                 *(u16*)&user_stick_cal[0] = 0xA1B2;
-                // X Axis
-                u16 temp_plus = (u16)this->numeric_leftUserCal_x_plus->Value - (u16)this->numeric_leftUserCal_x_center->Value;
-                u16 temp_minus = (u16)this->numeric_leftUserCal_x_center->Value - (u16)this->numeric_leftUserCal_x_minus->Value;
-                user_stick_cal[2] = temp_plus & 0xFF;
-                user_stick_cal[3] = (temp_plus & 0xF00) >> 8;
-                user_stick_cal[8] = temp_minus & 0xFF;
-                user_stick_cal[9] = (temp_minus & 0xF00) >> 8;
-                user_stick_cal[5] = (u16)this->numeric_leftUserCal_x_center->Value & 0xFF;
-                user_stick_cal[6] = ((u16)this->numeric_leftUserCal_x_center->Value & 0xF00) >> 8;
-                // Y Axis
-                temp_plus = (u16)this->numeric_leftUserCal_y_plus->Value - (u16)this->numeric_leftUserCal_y_center->Value;
-                temp_minus = (u16)this->numeric_leftUserCal_y_center->Value - (u16)this->numeric_leftUserCal_y_minus->Value;
-                user_stick_cal[3] |= (temp_plus & 0xF) << 4;
-                user_stick_cal[4] = (temp_plus & 0xFF0) >> 4;
-                user_stick_cal[9] |= (temp_minus & 0xF) << 4;
-                user_stick_cal[10] = (temp_minus & 0xFF0) >> 4;
-                user_stick_cal[6] |= ((u16)this->numeric_leftUserCal_y_center->Value & 0xF) << 4;
-                user_stick_cal[7] = ((u16)this->numeric_leftUserCal_y_center->Value & 0xFF0) >> 4;
+                // Center X,Y
+                decoded_stick_pair[0] = (u16)this->numeric_leftUserCal_x_center->Value;
+                decoded_stick_pair[1] = (u16)this->numeric_leftUserCal_y_center->Value;
+                encode_stick_params(user_stick_cal + 5, decoded_stick_pair);
+                // +Axis X,Y
+                decoded_stick_pair[0] = (u16)this->numeric_leftUserCal_x_plus->Value - (u16)this->numeric_leftUserCal_x_center->Value;
+                decoded_stick_pair[1] = (u16)this->numeric_leftUserCal_y_plus->Value - (u16)this->numeric_leftUserCal_y_center->Value;
+                encode_stick_params(user_stick_cal + 2, decoded_stick_pair);
+                // -Axis X,Y
+                decoded_stick_pair[0] = (u16)this->numeric_leftUserCal_x_center->Value - (u16)this->numeric_leftUserCal_x_minus->Value;
+                decoded_stick_pair[1] = (u16)this->numeric_leftUserCal_y_center->Value - (u16)this->numeric_leftUserCal_y_minus->Value;
+                encode_stick_params(user_stick_cal + 8, decoded_stick_pair);
             }
             else {
                 // Erase left stick user cal
@@ -6117,37 +6575,92 @@ public ref class FormJoy : public System::Windows::Forms::Form
             }
             if (handle_ok != 1 && this->checkBox_enableRightUserCal->Checked) {
                 *(u16*)&user_stick_cal[11] = 0xA1B2;
-                // X Axis
-                u16 temp_plus = (u16)this->numeric_rightUserCal_x_plus->Value - (u16)this->numeric_rightUserCal_x_center->Value;
-                u16 temp_minus = (u16)this->numeric_rightUserCal_x_center->Value - (u16)this->numeric_rightUserCal_x_minus->Value;
-                user_stick_cal[19] = temp_plus & 0xFF;
-                user_stick_cal[20] = (temp_plus & 0xF00) >> 8;
-                user_stick_cal[16] = temp_minus & 0xFF;
-                user_stick_cal[17] = (temp_minus & 0xF00) >> 8;
-                user_stick_cal[13] = (u16)this->numeric_rightUserCal_x_center->Value & 0xFF;
-                user_stick_cal[14] = ((u16)this->numeric_rightUserCal_x_center->Value & 0xF00) >> 8;
-                // Y Axis
-                temp_plus = (u16)this->numeric_rightUserCal_y_plus->Value - (u16)this->numeric_rightUserCal_y_center->Value;
-                temp_minus = (u16)this->numeric_rightUserCal_y_center->Value - (u16)this->numeric_rightUserCal_y_minus->Value;
-                user_stick_cal[20] |= (temp_plus & 0xF) << 4;
-                user_stick_cal[21] = (temp_plus & 0xFF0) >> 4;
-                user_stick_cal[17] |= (temp_minus & 0xF) << 4;
-                user_stick_cal[18] = (temp_minus & 0xFF0) >> 4;
-                user_stick_cal[14] |= ((u16)this->numeric_rightUserCal_y_center->Value & 0xF) << 4;
-                user_stick_cal[15] = ((u16)this->numeric_rightUserCal_y_center->Value & 0xFF0) >> 4;
+                // Center X,Y
+                decoded_stick_pair[0] = (u16)this->numeric_rightUserCal_x_center->Value;
+                decoded_stick_pair[1] = (u16)this->numeric_rightUserCal_y_center->Value;
+                encode_stick_params(user_stick_cal + 13, decoded_stick_pair);
+                // +Axis X,Y
+                decoded_stick_pair[0] = (u16)this->numeric_rightUserCal_x_plus->Value - (u16)this->numeric_rightUserCal_x_center->Value;
+                decoded_stick_pair[1] = (u16)this->numeric_rightUserCal_y_plus->Value - (u16)this->numeric_rightUserCal_y_center->Value;
+                encode_stick_params(user_stick_cal + 19, decoded_stick_pair);
+                // -Axis X,Y
+                decoded_stick_pair[0] = (u16)this->numeric_rightUserCal_x_center->Value - (u16)this->numeric_rightUserCal_x_minus->Value;
+                decoded_stick_pair[1] = (u16)this->numeric_rightUserCal_y_center->Value - (u16)this->numeric_rightUserCal_y_minus->Value;
+                encode_stick_params(user_stick_cal + 16, decoded_stick_pair);
             }
             else {
                 // Erase right stick user cal
                 memset(&user_stick_cal[11], 0xFF, 11);
             }
 
+            if (this->checkBox_enableSensorUserCal->Checked) {
+                *(u16*)&user_sensor_cal[0] = 0xA1B2;
+                *(u16*)&user_sensor_cal[2] = (u16)this->numeric_CalEditAccX->Value;
+                *(u16*)&user_sensor_cal[4] = (u16)this->numeric_CalEditAccY->Value;
+                *(u16*)&user_sensor_cal[6] = (u16)this->numeric_CalEditAccZ->Value;
+
+                *(u16*)&user_sensor_cal[14] = (u16)this->numeric_CalEditGyroX->Value;
+                *(u16*)&user_sensor_cal[16] = (u16)this->numeric_CalEditGyroY->Value;
+                *(u16*)&user_sensor_cal[18] = (u16)this->numeric_CalEditGyroZ->Value;
+            }
+            else {
+                // Erase user sensor cal
+                memset(user_sensor_cal, 0xFF, sizeof(user_sensor_cal));
+            }
+
             int res = write_spi_data(0x8010, sizeof(user_stick_cal), user_stick_cal);
+            if (res == 0) {
+                Sleep(100);
+                res = write_spi_data(0x8026, sizeof(user_sensor_cal), user_sensor_cal);
+            }
             if (res == 0)
                 MessageBox::Show(L"The user calibration was written to SPI!", L"CTCaer's Joy-Con Toolkit - Write Success!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
             else
                 MessageBox::Show(L"Failed to write user calibration to SPI!\n\nPlease try again..", L"CTCaer's Joy-Con Toolkit - Write Failed!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
         }
 
+    }
+
+
+    private: System::Void btn_writeStickParams_Click(System::Object^  sender, System::EventArgs^  e) {
+        if (!device_connection()) {
+            MessageBox::Show(L"The device was disconnected!\n\n" +
+                L"Press a button on the controller to connect\nand try again!",
+                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+            return;
+        }
+        if (MessageBox::Show(L"Warning!\n\nThese are stick device parameters coming from factory.\n\nAre you sure you want to continue?",
+            L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes) {
+            u8 stick_model_main_left[3];
+            u8 stick_model_pro_right[3];
+            u16 decoded_stick_pair[4];
+
+            memset(stick_model_main_left, 0, sizeof(stick_model_main_left));
+            memset(stick_model_pro_right, 0, sizeof(stick_model_pro_right));
+            memset(decoded_stick_pair, 0, sizeof(decoded_stick_pair));
+
+            // Joy-Con's Main stick or Pro's Left Stick
+            decoded_stick_pair[0] = (u16)this->numeric_StickParamDeadzone->Value;
+            decoded_stick_pair[1] = (u16)this->numeric_StickParamRangeRatio->Value;
+            encode_stick_params(stick_model_main_left, decoded_stick_pair);
+
+            // Pro's Right Stick
+            if (handle_ok == 3) {
+                decoded_stick_pair[2] = (u16)this->numeric_StickParamDeadzone2->Value;
+                decoded_stick_pair[3] = (u16)this->numeric_StickParamRangeRatio2->Value;
+                encode_stick_params(stick_model_pro_right, decoded_stick_pair + 2);
+            }
+
+            int res = write_spi_data(0x6089, sizeof(stick_model_main_left), stick_model_main_left);
+            if (res == 0 && handle_ok == 3) {
+            Sleep(100);
+            res = write_spi_data(0x609B, sizeof(stick_model_pro_right), stick_model_pro_right);
+            }
+            if (res == 0)
+                MessageBox::Show(L"The Stick Device Parameters were written to SPI!", L"CTCaer's Joy-Con Toolkit - Write Success!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+            else
+                MessageBox::Show(L"Failed to Stick Device Parameters to SPI!\n\nPlease try again..", L"CTCaer's Joy-Con Toolkit - Write Failed!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        }
     }
 };
 }
