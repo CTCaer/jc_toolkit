@@ -4046,12 +4046,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     private: System::Void full_refresh(bool check_connection) {
         if (check_connection) {
-            if (!device_connection()) {
-                MessageBox::Show(L"The device was disconnected!\n\n" +
-                    L"Press a button on the controller to connect\nand try again!",
-                    L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+            if (check_if_connected())
                 return;
-            }
+
             this->toolStripBtn_Disconnect->Enabled = true;
             this->toolStripLabel_temp->Enabled     = true;
             this->toolStripLabel_batt->Enabled     = true;
@@ -4108,12 +4105,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_writeColorsToSpi_Click(System::Object^ sender, System::EventArgs^ e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try to write the colors again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         set_led_busy();
         if (MessageBox::Show(L"Don't forget to make a backup first!\n" +
             L"You can also find retail colors at the bottom of the colors dialog for each type.\n\n" +
@@ -4163,12 +4157,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_makeSPIBackup_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try to backup your SPI flash again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         this->menuStrip1->Enabled = false;
         this->toolStrip1->Enabled = false;
 
@@ -4724,12 +4715,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_dbgSendCmd_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\n" +
-                L"and try to send the custom command again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
 
         msclr::interop::marshal_context context;
         unsigned char test[44];
@@ -5062,12 +5050,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_restore_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\n" +
-                L"and try to restore again!", L"CTCaer's Joy-Con Toolkit - Connection Error!",
-                MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
         this->menuStrip1->Enabled = false;
         this->toolStrip1->Enabled = false;
         set_led_busy();
@@ -5434,12 +5418,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_changeSN_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\n" +
-                L"and try to change the S/N again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         if (handle_ok != 3) {
             if (MessageBox::Show(L"This will change your Serial Number!\n\nMake a backup first!\n\n" +
                 L"Are you sure you want to continue?", L"Warning!",
@@ -5502,11 +5483,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_restoreSN_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+        if (check_if_connected())
             return;
-        }
+
         if (handle_ok != 3) {
             if (MessageBox::Show(L"Do you really want to restore it from the S/N backup inside your controller\'s SPI?\n\nYou can also choose to restore it from a SPI backup you previously made, through the main Restore option.",
                 L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes) {
@@ -5548,11 +5527,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void pictureBoxBattery_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+        if (check_if_connected())
             return;
-        }
+
         if (MessageBox::Show(L"HOORAY!!\n\nYou found the easter egg!\n\nMake sure you have a good signal and get the device near your ear.\n\nThen press OK to hear the tune!\n\nIf the tune is slow or choppy:\n1. Close the app\n2. Press the sync button once to turn off the device\n3. Get close to your BT adapter and maintain LoS\n4. Press any other button and run the app again.",
             L"Easter egg!", MessageBoxButtons::OKCancel, MessageBoxIcon::Information) == System::Windows::Forms::DialogResult::OK)
         {
@@ -5566,11 +5543,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void toolStripLabel_batt_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
+        if (check_if_connected())
             return;
-        }
+
         if (MessageBox::Show(L"HOORAY!!\n\nYou found another easter egg!\n\nMake sure you have a good signal and get the device near your ear.\n\nThen press OK to hear the tune!\n\nIf the tune is slow or choppy:\n1. Close the app\n2. Press the sync button once to turn off the device\n3. Get close to your BT adapter and maintain LoS\n4. Press any other button and run the app again.",
             L"Easter egg 2!", MessageBoxButtons::OKCancel, MessageBoxIcon::Information) == System::Windows::Forms::DialogResult::OK)
         {
@@ -5692,11 +5667,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_vibPlay_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try to replay the HD Rumble file!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         int vib_loop_times = 0;
         if ((vib_file_type == 2 || vib_file_type == 3 || vib_file_type == 4) && !vib_converted) {
             u8 vib_off = 0;
@@ -5796,12 +5769,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_runBtnTest_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\nPress a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
-
+        if (check_if_connected())
             return;
-        }
 
         if (!enable_button_test) {
             this->btn_runBtnTest->Text = L"Turn off";
@@ -6304,12 +6273,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
     }
 
     private: System::Void btn_getImage_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try to backup your SPI flash again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         int res;
 
         this->btn_getIRStream->Enabled = false;
@@ -6327,12 +6293,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     
     private: System::Void btn_getVideo_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         int res;
 
         this->btn_getIRImage->Enabled = false;
@@ -6368,12 +6331,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
 
     private: System::Void btn_NFC_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
 
         if (enable_NFCScanning) {
             this->btn_NFC->Text = "Scan";
@@ -6416,12 +6375,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
 
     private: System::Void btn_refreshUserCal_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         u8 user_stick_cal[22];
         u8 user_sensor_cal[26];
         u8 stick_model_main_left[3];
@@ -6538,12 +6494,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
 
     private: System::Void btn_writeUserCal_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
 
         if (MessageBox::Show(L"Are you sure you want to continue?",
             L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes) {
@@ -6623,12 +6575,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
 
     private: System::Void btn_writeStickParams_Click(System::Object^  sender, System::EventArgs^  e) {
-        if (!device_connection()) {
-            MessageBox::Show(L"The device was disconnected!\n\n" +
-                L"Press a button on the controller to connect\nand try again!",
-                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+        if (check_if_connected())
             return;
-        }
+
         if (MessageBox::Show(L"Warning!\n\nThese are stick device parameters coming from factory.\n\nAre you sure you want to continue?",
             L"Warning!", MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes) {
             u8 stick_model_main_left[3];
@@ -6661,6 +6610,18 @@ public ref class FormJoy : public System::Windows::Forms::Form
             else
                 MessageBox::Show(L"Failed to Stick Device Parameters to SPI!\n\nPlease try again..", L"CTCaer's Joy-Con Toolkit - Write Failed!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
         }
+    }
+
+
+    private: System::Boolean check_if_connected() {
+        if (!device_connection()) {
+            MessageBox::Show(L"The device was disconnected!\n\n" +
+                L"Press a button on the controller to re-connect\nand try again!",
+                L"CTCaer's Joy-Con Toolkit - Connection Error!", MessageBoxButtons::OK, MessageBoxIcon::Stop);
+            return true;
+        }
+        else
+            return false;
     }
 };
 }
