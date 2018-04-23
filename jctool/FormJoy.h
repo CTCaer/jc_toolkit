@@ -3570,9 +3570,9 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->lbl_editStickDevHelp->Font = (gcnew System::Drawing::Font(L"Segoe UI", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
                 static_cast<System::Byte>(161)));
             this->lbl_editStickDevHelp->ForeColor = System::Drawing::Color::Tomato;
-            this->lbl_editStickDevHelp->Location = System::Drawing::Point(4, 338);
+            this->lbl_editStickDevHelp->Location = System::Drawing::Point(4, 336);
             this->lbl_editStickDevHelp->Name = L"lbl_editStickDevHelp";
-            this->lbl_editStickDevHelp->Size = System::Drawing::Size(211, 44);
+            this->lbl_editStickDevHelp->Size = System::Drawing::Size(211, 46);
             this->lbl_editStickDevHelp->TabIndex = 53;
             this->lbl_editStickDevHelp->Text = L"Warning: The Stick Device Parameters are factory values. Change only when you hav"
                 L"e drifting problems.";
@@ -3944,7 +3944,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->Name = L"FormJoy";
             this->SizeGripStyle = System::Windows::Forms::SizeGripStyle::Hide;
             this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
-            this->Text = L"Joy-Con Toolkit v5.0.0";
+            this->Text = L"Joy-Con Toolkit v5.2.0";
             this->FormClosing += gcnew System::Windows::Forms::FormClosingEventHandler(this, &FormJoy::Form1_FormClosing);
             this->SizeChanged += gcnew System::EventHandler(this, &FormJoy::fixToolstripOverlap);
             this->grpBox_Color->ResumeLayout(false);
@@ -4665,7 +4665,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         if (option_is_on != 7) {
             reset_window_option(false);
             this->Controls->Add(this->grpBox_editCalModel);
-            this->lbl_editStickDevHelp->Size = System::Drawing::Size(211, 44);
+            this->lbl_editStickDevHelp->Size = System::Drawing::Size(211, 46);
             this->grpBox_editCalModel->BringToFront();
             option_is_on = 7;
             this->AutoScaleDimensions = System::Drawing::SizeF(96, 96);
@@ -6394,10 +6394,10 @@ public ref class FormJoy : public System::Windows::Forms::Form
         get_spi_data(0x8026, sizeof(user_sensor_cal), user_sensor_cal);
         Sleep(100);
         get_spi_data(0x6089, sizeof(stick_model_main_left), stick_model_main_left);
-        //if (handle_ok == 3) {
+        if (handle_ok == 3) {
             Sleep(100);
             get_spi_data(0x609B, sizeof(stick_model_pro_right), stick_model_pro_right);
-        //}
+        }
 
         // Left stick user cal
         if (handle_ok != 2) {
@@ -6477,14 +6477,14 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->numeric_StickParamDeadzone2->Enabled   = false;
         this->numeric_StickParamRangeRatio2->Enabled = false;
         this->lbl_proStickHelp->Enabled              = false;
-        //if (handle_ok == 3) {
+        if (handle_ok == 3) {
             decode_stick_params(decoded_stick_pair + 14, stick_model_pro_right);
             this->numeric_StickParamDeadzone2->Value   = decoded_stick_pair[14];
             this->numeric_StickParamRangeRatio2->Value = decoded_stick_pair[15];
             this->numeric_StickParamDeadzone2->Enabled   = true;
             this->numeric_StickParamRangeRatio2->Enabled = true;
             this->lbl_proStickHelp->Enabled              = true;
-        //}
+        }
         grpBox_StickDevParam->Enabled = true;
         
         // Enable write buttons
@@ -6602,8 +6602,8 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             int res = write_spi_data(0x6089, sizeof(stick_model_main_left), stick_model_main_left);
             if (res == 0 && handle_ok == 3) {
-            Sleep(100);
-            res = write_spi_data(0x609B, sizeof(stick_model_pro_right), stick_model_pro_right);
+                Sleep(100);
+                res = write_spi_data(0x609B, sizeof(stick_model_pro_right), stick_model_pro_right);
             }
             if (res == 0)
                 MessageBox::Show(L"The Stick Device Parameters were written to SPI!", L"CTCaer's Joy-Con Toolkit - Write Success!", MessageBoxButtons::OK, MessageBoxIcon::Asterisk);
