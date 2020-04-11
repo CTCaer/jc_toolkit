@@ -21,6 +21,17 @@ using namespace CppWinFormJoy;
 
 bool enable_traffic_dump = false;
 
+int  handle_ok;
+bool enable_button_test;
+bool enable_IRVideoPhoto;
+bool enable_IRAutoExposure;
+bool enable_NFCScanning;
+bool cancel_spi_dump;
+bool check_connection_ok;
+
+u8 timming_byte;
+u8 ir_max_frag_no;
+
 hid_device *handle;
 hid_device *handle_l;
 

@@ -10,6 +10,8 @@
 #include "overrides.h"
 #include "luts.h"
 
+#include "jctool_api.hpp"
+
 namespace CppWinFormJoy {
     using namespace System::ComponentModel;
     using namespace System::Drawing;
@@ -4429,32 +4431,13 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         get_battery(batt_info);
 
-        int batt_percent = 0;
-        int batt = ((u8)batt_info[0] & 0xF0) >> 4;
-        
-        // Calculate aproximate battery percent from regulated voltage
-        u16 batt_volt = (u8)batt_info[1] + ((u8)batt_info[2] << 8);
-        if (batt_volt < 0x560)
-            batt_percent = 1;
-        else if (batt_volt > 0x55F && batt_volt < 0x5A0) {
-            batt_percent = ((batt_volt - 0x60) & 0xFF) / 7.0f + 1;
-        }
-        else if (batt_volt > 0x59F && batt_volt < 0x5E0) {
-            batt_percent = ((batt_volt - 0xA0) & 0xFF) / 2.625f + 11;
-        }
-        else if (batt_volt > 0x5DF && batt_volt < 0x618) {
-            batt_percent = (batt_volt - 0x5E0) / 1.8965f + 36;
-        }
-        else if (batt_volt > 0x617 && batt_volt < 0x658) {
-            batt_percent = ((batt_volt - 0x18) & 0xFF) / 1.8529f + 66;
-        }
-        else if (batt_volt > 0x657)
-            batt_percent = 100;
+        BatteryData battery_data = parseBatteryData(batt_info);
 
-        this->toolStripLabel_batt->Text = String::Format(" {0:f2}V - {1:D}%", (batt_volt * 2.5) / 1000, batt_percent);
+        this->toolStripLabel_batt->Text = String::Format(" {0:f2}V - {1:D}%", battery_data.voltage, battery_data
+.percent);
 
         // Update Battery icon from input report value.
-        switch (batt) {
+        switch (battery_data.report) {
             case 0:
                 this->toolStripBtn_batt->Image =
                     (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"batt_0")));

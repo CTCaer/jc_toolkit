@@ -11,14 +11,14 @@
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>jctool</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>jctool</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CLRSupport>true</CLRSupport>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
@@ -44,6 +44,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
       <DebugInformationFormat>None</DebugInformationFormat>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -79,6 +80,7 @@
   <ItemGroup>
     <ClCompile Include="jctool.cpp" />
     <ClCompile Include="hid.c" />
+    <ClCompile Include="jctool_api.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hidapi_log.h" />
@@ -87,6 +89,8 @@
     <ClInclude Include="FormJoy.h">
       <FileType>CppForm</FileType>
     </ClInclude>
+    <ClInclude Include="jctool_api.hpp" />
+    <ClInclude Include="jctool_types.h" />
     <ClInclude Include="luts.h" />
     <ClInclude Include="tune.h" />
     <ClInclude Include="Overrides.h">

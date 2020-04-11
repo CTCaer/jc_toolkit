@@ -21,6 +21,9 @@
     <ClCompile Include="jctool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="jctool_api.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hidapi.h">
@@ -48,6 +51,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hidapi_log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jctool_api.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jctool_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
