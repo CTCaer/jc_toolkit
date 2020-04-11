@@ -4496,14 +4496,13 @@ public ref class FormJoy : public System::Windows::Forms::Form
         unsigned char temp_info[2];
         memset(temp_info, 0, sizeof(temp_info));
         get_temperature(temp_info);
-        // Convert reading to Celsius according to datasheet
-        float temperature_c = 25.0f + uint16_to_int16(temp_info[1] << 8 | temp_info[0]) * 0.0625f;
-        float temperature_f = temperature_c * 1.8f + 32;
+
+        TemperatureData temp_data = parseTemperatureData(temp_info);
 
         if (temp_celsius)
-            this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2103 ", temperature_c);
+            this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2103 ", temp_data.celsius);
         else
-            this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2109 ", temperature_f);
+            this->toolStripLabel_temp->Text = String::Format(L"{0:f1}\u2109 ", temp_data.farenheight);
     }
 
     private: System::Void Form1_FormClosing(System::Object^  sender, FormClosingEventArgs^ e)

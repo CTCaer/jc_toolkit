@@ -7,6 +7,11 @@ struct BatteryData {
     float voltage;
 };
 
+struct TemperatureData {
+    float celsius;
+    float farenheight;
+};
+
 BatteryData parseBatteryData(const unsigned char* batt_data);
 	
-float parseTemperatureCelsius(const unsigned char* temp_data);
+TemperatureData parseTemperatureData(const unsigned char* temp_data);

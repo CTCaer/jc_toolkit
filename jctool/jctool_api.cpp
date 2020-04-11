@@ -28,7 +28,8 @@ BatteryData parseBatteryData(const unsigned char* batt_data) {
     return {batt_percent, batt, (batt_volt * 2.5f) / 1000};
 }
 
-float getTemperatureCelsius(const unsigned char* temp_data){
+TemperatureData parseTemperatureData(const unsigned char* temp_data){
     // Convert reading to Celsius according to datasheet
-    return 25.0f + uint16_to_int16(temp_data[1] << 8 | temp_data[0]) * 0.0625f;
+    float celsius = 25.0f + uint16_to_int16(temp_data[1] << 8 | temp_data[0]) * 0.0625f;
+    return {celsius, celsius*1.8f + 32};
 }
