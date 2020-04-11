@@ -6,16 +6,24 @@
 #include <memory>
 #include <string>
 // #define NOMINMAX
+#ifdef WIN32
 #include <Windows.h>
+#endif
 
 #include "jctool.h"
 #include "ir_sensor.h"
 #include "tune.h"
+
+#ifndef __jctool_cpp_API__
 #include "FormJoy.h"
+#endif
+
 #include "hidapi.h"
 #include "hidapi_log.h"
 
+#ifndef __jctool_cpp_API__
 using namespace CppWinFormJoy;
+#endif
 
 #pragma comment(lib, "SetupAPI")
 
@@ -32,7 +40,10 @@ bool check_connection_ok;
 u8 timming_byte;
 u8 ir_max_frag_no;
 
+#ifndef __jctool_cpp_API__
 hid_device *handle;
+#endif
+
 hid_device *handle_l;
 
 s16 uint16_to_int16(u16 a) {
@@ -121,8 +132,11 @@ void AnalogStickCalc(
     }
 }
 
-
+#ifndef __jctool_cpp_API__
 int set_led_busy() {
+#else
+int set_led_busy(controller_hid_handle_t handle) {
+#endif
     int res;
     u8 buf[49];
     memset(buf, 0, sizeof(buf));
@@ -156,8 +170,13 @@ int set_led_busy() {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 std::string get_sn(u32 offset, const u16 read_len) {
+#else
+std::string get_sn(controller_hid_handle_t handle) {
+    static const u32 offset = 0x6001;
+    static const u16 read_len = 0xF;
+#endif
     int res;
     int error_reading = 0;
     u8 buf[49];
@@ -203,8 +222,11 @@ std::string get_sn(u32 offset, const u16 read_len) {
     return test;
 }
 
-
+#ifndef __jctool_cpp_API__
 int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
+#else
+int get_spi_data(controller_hid_handle_t handle, u32 offset, const u16 read_len, u8 * test_buf) {
+#endif
     int res;
     u8 buf[49];
     int error_reading = 0;
@@ -244,8 +266,11 @@ int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
+#else
+int write_spi_data(controller_hid_handle_t handle, u32 offset, const u16 write_len, u8* test_buf) {
+#endif
     int res;
     u8 buf[49];
     int error_writing = 0;
@@ -281,8 +306,11 @@ int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int get_device_info(u8* test_buf) {
+#else
+int get_device_info(controller_hid_handle_t handle, u8* test_buf) {
+#endif
     int res;
     u8 buf[49];
     int error_reading = 0;
@@ -317,8 +345,11 @@ int get_device_info(u8* test_buf) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int get_battery(u8* test_buf) {
+#else
+int get_battery(controller_handle_t handle, u8* test_buf) {
+#endif
     int res;
     u8 buf[49];
     int error_reading = 0;
@@ -353,8 +384,11 @@ int get_battery(u8* test_buf) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int get_temperature(u8* test_buf) {
+#else
+int get_temperature(controller_handle_t handle, u8* test_buf) {
+#endif
     int res;
     u8 buf[49];
     int error_reading = 0;
@@ -450,19 +484,25 @@ int get_temperature(u8* test_buf) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int dump_spi(const char *dev_name) {
+#else
+int dump_spi(controller_hid_handle_t handle, const char *dev_name) {
+#endif
     std::string file_dev_name = dev_name;
     int error_reading = 0;
-
+#ifndef __jctool_cpp_API__
     String^ filename_sys = gcnew String(file_dev_name.c_str());
+#endif
     file_dev_name = "./" + file_dev_name;
 
     FILE *f;
     errno_t err;
 
     if ((err = fopen_s(&f, file_dev_name.c_str(), "wb")) != 0) {
+#ifndef __jctool_cpp_API__
         MessageBox::Show(L"Cannot open file " + filename_sys + L" for writing!\n\nError: " + err, L"Error opening file!", MessageBoxButtons::OK ,MessageBoxIcon::Exclamation);
+#endif
         
         return 1;
     }
@@ -477,8 +517,12 @@ int dump_spi(const char *dev_name) {
         std::stringstream offset_label;
         offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << offset/1024.0f;
         offset_label << "KB of 512KB";
+#ifndef __jctool_cpp_API__
         FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
         Application::DoEvents();
+#else
+        // TODO: Report progress through some callback function.
+#endif
 
         while(1) {
             memset(buf, 0, sizeof(buf));
@@ -519,8 +563,11 @@ int dump_spi(const char *dev_name) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int send_rumble() {
+#else
+int send_rumble(controller_hid_handle_t handle) {
+#endif
     int res;
     u8 buf[49];
     u8 buf2[49];
@@ -628,14 +675,23 @@ int send_rumble() {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int send_custom_command(u8* arg) {
+#else
+int send_custom_command(controller_hid_handle_t handle, u8* arg){
+#endif
     int res_write;
     int res;
     int byte_seperator = 1;
+#ifndef __jctool_cpp_API__
     String^ input_report_cmd;
     String^ input_report_sys;
     String^ output_report_sys;
+#else
+    std::ostringstream input_report_cmd;
+    std::ostringstream input_report_sys;
+    std::ostringstream output_report_sys;
+#endif
     u8 buf_cmd[49];
     u8 buf_reply[0x170];
     memset(buf_cmd, 0, sizeof(buf_cmd));
@@ -655,17 +711,29 @@ int send_custom_command(u8* arg) {
     // subcmd x21 crc byte
     if (arg[5] == 0x21)
         arg[43] = mcu_crc8_calc(arg + 7, 36);
-
+#ifndef __jctool_cpp_API__
     output_report_sys = String::Format(L"Cmd:  {0:X2}   Subcmd: {1:X2}\r\n", buf_cmd[0], buf_cmd[10]);
+#else
+    // TODO: Implement else
+    //output_report_sys << "Cmd: " << std::setbase(hex) << buf_cmd[0]
+#endif
     if (buf_cmd[0] == 0x01 || buf_cmd[0] == 0x10 || buf_cmd[0] == 0x11) {
         for (int i = 6; i < 44; i++) {
             buf_cmd[5 + i] = arg[i];
+#ifndef __jctool_cpp_API__
             output_report_sys += String::Format(L"{0:X2} ", buf_cmd[5 + i]);
             if (byte_seperator == 4)
                 output_report_sys += L" ";
+#else
+            // TODO: Implement else
+#endif
             if (byte_seperator == 8) {
                 byte_seperator = 0;
+#ifndef __jctool_cpp_API__
                 output_report_sys += L"\r\n";
+#else
+                // TODO: Implement else
+#endif
             }
             byte_seperator++;
         }
@@ -674,23 +742,38 @@ int send_custom_command(u8* arg) {
     else {
         for (int i = 6; i < 44; i++) {
             buf_cmd[i - 5] = arg[i];
+#ifndef __jctool_cpp_API__
             output_report_sys += String::Format(L"{0:X2} ", buf_cmd[i - 5]);
             if (byte_seperator == 4)
                 output_report_sys += L" ";
+#else
+            // TODO: Implement else
+#endif
             if (byte_seperator == 8) {
                 byte_seperator = 0;
+#ifndef __jctool_cpp_API__
                 output_report_sys += L"\r\n";
+#else
+                // TODO: Implement else
+#endif
             }
             byte_seperator++;
         }
     }
+#ifndef __jctool_cpp_API__
     FormJoy::myform1->textBoxDbg_sent->Text = output_report_sys;
+#else
+    // TODO: Implement else
+#endif
 
     //Packet size header + subcommand and uint8 argument
     res_write = hid_write(handle, buf_cmd, sizeof(buf_cmd));
-
+#ifndef __jctool_cpp_API__
     if (res_write < 0)
         input_report_sys += L"hid_write failed!\r\n\r\n";
+#else
+    // TODO: Implement else
+#endif
     int retries = 0;
     while (1) {
         res = hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 64);
@@ -709,42 +792,67 @@ int send_custom_command(u8* arg) {
     byte_seperator = 1;
     if (res > 12) {
         if (buf_reply[0] == 0x21 || buf_reply[0] == 0x30 || buf_reply[0] == 0x33 || buf_reply[0] == 0x31 || buf_reply[0] == 0x3F) {
+#ifndef __jctool_cpp_API__
             input_report_cmd += String::Format(L"\r\nInput report: 0x{0:X2}\r\n", buf_reply[0]);
             input_report_sys += String::Format(L"Subcmd Reply:\r\n", buf_reply[0]);
+#else
+            // TODO: Implement else
+#endif
             int len = 49;
             if (buf_reply[0] == 0x33 || buf_reply[0] == 0x31)
                 len = 362;
             for (int i = 1; i < 13; i++) {
+#ifndef __jctool_cpp_API__
                 input_report_cmd += String::Format(L"{0:X2} ", buf_reply[i]);
                 if (byte_seperator == 4)
                     input_report_cmd += L" ";
+#else
+                // TODO: Implement else
+#endif
                 if (byte_seperator == 8) {
                     byte_seperator = 0;
+#ifndef __jctool_cpp_API__
                     input_report_cmd += L"\r\n";
+#else
+                    // TODO: Implement else
+#endif
                 }
                 byte_seperator++;
             }
             byte_seperator = 1;
             for (int i = 13; i < len; i++) {
+#ifndef __jctool_cpp_API__
                 input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
                 if (byte_seperator == 4)
                     input_report_sys += L" ";
+#else
+                // TODO: Implement else
+#endif
                 if (byte_seperator == 8) {
                     byte_seperator = 0;
+#ifndef __jctool_cpp_API__
                     input_report_sys += L"\r\n";
+#else
+                    // TODO: Implement else
+#endif
                 }
                 byte_seperator++;
             }
             int crc_check_ok = 0;
             if (arg[5] == 0x21) {
                 crc_check_ok = (buf_reply[48] == mcu_crc8_calc(buf_reply + 0xF, 33));
+#ifndef __jctool_cpp_API__
                 if (crc_check_ok)
                     input_report_sys += L"(CRC OK)";
                 else
                     input_report_sys += L"(Wrong CRC)";
+#else
+                // TODO: Implement else
+#endif
             }
         }
         else {
+#ifndef __jctool_cpp_API__
             input_report_sys += String::Format(L"ID: {0:X2} Subcmd reply:\r\n", buf_reply[0]);
             for (int i = 13; i < res; i++) {
                 input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
@@ -756,22 +864,37 @@ int send_custom_command(u8* arg) {
                 }
                 byte_seperator++;
             }
+#else
+            // TODO: Implement else
+#endif
         }
     }
     else if (res > 0 && res <= 12) {
+#ifndef __jctool_cpp_API__
         for (int i = 0; i < res; i++)
             input_report_sys += String::Format(L"{0:X2} ", buf_reply[i]);
+#else
+        // TODO: Implement else
+#endif
     }
     else {
+#ifndef __jctool_cpp_API__
         input_report_sys += L"No reply";
+#else
+        // TODO: Implement else
+#endif
     }
+#ifndef __jctool_cpp_API__
     FormJoy::myform1->textBoxDbg_reply->Text = input_report_sys;
     FormJoy::myform1->textBoxDbg_reply_cmd->Text = input_report_cmd;
+#else
+    // TODO: Implement else
+#endif
 
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int button_test() {
     int res;
     int limit_output = 0;
@@ -1103,9 +1226,15 @@ int button_test() {
 
     return 0;
 }
+#else
+// TODO: Implement else
+#endif
 
-
+#ifndef __jctool_cpp_API__
 int play_tune(int tune_no) {
+#else
+int play_tune(controller_hid_handle_t handle, int tune_no) {
+#endif
     int res;
     u8 buf[49];
     u8 buf2[49];
@@ -1151,8 +1280,11 @@ int play_tune(int tune_no) {
         memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
         res = hid_write(handle, buf, sizeof(buf));
         // Joy-con does not reply when Output Report is 0x10
-
+#ifndef __jctool_cpp_API__
         Application::DoEvents();
+#else
+    // TODO: Implement else
+#endif
     }
 
     // Disable vibration
@@ -1189,8 +1321,11 @@ int play_tune(int tune_no) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
+#else
+int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
+#endif
     int res;
     u8 buf[49];
     u8 buf2[49];
@@ -1216,6 +1351,7 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
+#ifndef __jctool_cpp_API__
             if (file_type == 1) {
                 hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0A + i];
                 hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0B + i];
@@ -1229,10 +1365,17 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
                 hdr->rumble_l[2] = FormJoy::myform1->vib_file_converted[0x0E + i];
                 hdr->rumble_l[3] = FormJoy::myform1->vib_file_converted[0x0F + i];
             }
+#else
+                // TODO: Implement else
+#endif
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
             res = hid_write(handle, buf, sizeof(*hdr));
+#ifndef __jctool_cpp_API__
             Application::DoEvents();
+#else
+            // TODO: Implement else
+#endif
         }
     }
     else if (file_type == 3 || file_type == 4) {
@@ -1250,15 +1393,22 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
-            
+#ifndef __jctool_cpp_API__
             hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
             hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
             hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
             hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+#else
+            // TODO: Implement else
+#endif
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
             
             res = hid_write(handle, buf, sizeof(*hdr));
+#ifndef __jctool_cpp_API__
             Application::DoEvents();
+#else
+            // TODO: Implement else
+#endif
         }
         for (int j = 0; j < 1 + loop_times; j++) {
             for (int i = loop_start * 4; i < loop_end * 4; i = i + 4) {
@@ -1269,15 +1419,22 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
                 hdr->cmd = 0x10;
                 hdr->timer = timming_byte & 0xF;
                 timming_byte++;
-                
+#ifndef __jctool_cpp_API__
                 hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
                 hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
                 hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
                 hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+#else
+                // TODO: Implement else
+#endif
                 memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
                 res = hid_write(handle, buf, sizeof(*hdr));
+#ifndef __jctool_cpp_API__
                 Application::DoEvents();
+#else
+                // TODO: Implement else
+#endif
             }
             Sleep(sample_rate);
             // Disable vibration
@@ -1303,15 +1460,22 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
-            
+#ifndef __jctool_cpp_API__
             hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
             hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
             hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
             hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+#else
+            // TODO: Implement else
+#endif
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
             res = hid_write(handle, buf, sizeof(*hdr));
+#ifndef __jctool_cpp_API__
             Application::DoEvents();
+#else
+            // TODO: Implement else
+#endif
         }
     }
 
@@ -1360,11 +1524,15 @@ int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_st
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int ir_sensor_auto_exposure(int white_pixels_percent) {
+#else
+int ir_sensor_auto_exposure(controller_handle_t handle, int white_pixels_percent) {
+#endif
     int res;
     u8 buf[49];
     u16 new_exposure = 0;
+#ifndef __jctool_cpp_API__
     int old_exposure = (u16)FormJoy::myform1->numeric_IRExposure->Value;
 
     // Calculate new exposure;
@@ -1376,6 +1544,9 @@ int ir_sensor_auto_exposure(int white_pixels_percent) {
     old_exposure = CLAMP(old_exposure, 0, 600);
     FormJoy::myform1->numeric_IRExposure->Value = old_exposure;
     new_exposure = old_exposure * 31200 / 1000;
+#else
+    // TODO: Implement else
+#endif
 
     memset(buf, 0, sizeof(buf));
     auto hdr = (brcm_hdr *)buf;
@@ -1402,13 +1573,20 @@ int ir_sensor_auto_exposure(int white_pixels_percent) {
     return res;
 }
 
-
+#ifndef __jctool_cpp_API__
 int get_raw_ir_image(u8 show_status) {
+#else
+int get_raw_ir_image(controller_hid_handle_t handle, u8 show_status) {
+#endif
     std::stringstream ir_status;
 
     int elapsed_time = 0;
     int elapsed_time2 = 0;
+#ifndef __jctool_cpp_API__
     System::Diagnostics::Stopwatch^ sw = System::Diagnostics::Stopwatch::StartNew();
+#else
+    // TODO: Implement else
+#endif
 
     u8 buf[49];
     u8 buf_reply[0x170];
@@ -1488,15 +1666,22 @@ int get_raw_ir_image(u8 show_status) {
 
                 //debug
                // printf("%02X Frag: Copy\n", got_frag_no);
-
+#ifndef __jctool_cpp_API__
                 FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
                 elapsed_time = sw->ElapsedMilliseconds;
+#else
+    // TODO: Implement else
+#endif
 
                 // Check if final fragment. Draw the frame.
                 if (got_frag_no == ir_max_frag_no) {
                     // Update Viewport
+#ifndef __jctool_cpp_API__
                     elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
                     FormJoy::myform1->setIRPictureWindow(buf_image, true);
+#else
+    // TODO: Implement else
+#endif
 
                     //debug
                     //printf("%02X Frag: Draw -------\n", got_frag_no);
@@ -1509,15 +1694,23 @@ int get_raw_ir_image(u8 show_status) {
                     noise_level = (float)(*(u16*)&buf_reply[57]) / ((float)(*(u16*)&buf_reply[55]) + 1.0f);
                     white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
                     avg_intensity_percent = (int)((buf_reply[53] * 100) / 255);
+#ifndef __jctool_cpp_API__
                     FormJoy::myform1->lbl_IRHelp->Text = String::Format("Amb Noise: {0:f2},  Int: {1:D}%,  FPS: {2:D} ({3:D}ms)\nEXFilter: {4:D},  White Px: {5:D}%,  EXF Int: {6:D}",
                         noise_level, avg_intensity_percent, (int)(1000 / elapsed_time2), elapsed_time2, *(u16*)&buf_reply[57], white_pixels_percent, buf_reply[54]);
 
                     elapsed_time2 = sw->ElapsedMilliseconds;
+#else
+                    // TODO: Implement else
+#endif
 
                     if (initialization)
                         initialization--;
                 }
+#ifndef __jctool_cpp_API__
                 Application::DoEvents();
+#else
+                // TODO: Implement else
+#endif
             }
             // Repeat/Missed fragment
             else if (got_frag_no  || previous_frag_no) {
@@ -1621,10 +1814,13 @@ int get_raw_ir_image(u8 show_status) {
                 ir_status << std::setfill(' ') << std::setw(3);
                 ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(ir_max_frag_no + 1) * 100.0f;
                 ir_status << "% - ";
-
+#ifndef __jctool_cpp_API__
                 FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
                 elapsed_time = sw->ElapsedMilliseconds;
                 Application::DoEvents();
+#else
+                // TODO: Implement else
+#endif
             }
             
             // Streaming start
@@ -1640,10 +1836,13 @@ int get_raw_ir_image(u8 show_status) {
 
                 //debug
                 //printf("%02X Frag: 0 %02X\n", buf_reply[52], previous_frag_no);
-
+#ifndef __jctool_cpp_API__
                 FormJoy::myform1->lbl_IRStatus->Text = (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
                 elapsed_time = sw->ElapsedMilliseconds;
                 Application::DoEvents();
+#else
+    // TODO: Implement else
+#endif
 
                 previous_frag_no = 0;
             }
@@ -1679,8 +1878,11 @@ int get_raw_ir_image(u8 show_status) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int ir_sensor(ir_image_config &ir_cfg) {
+#else
+int ir_sensor(controller_hid_handle_t handle, ir_image_config &ir_cfg) {
+#endif
     int res;
     u8 buf[0x170];
     static int output_buffer_length = 49;
@@ -2111,8 +2313,11 @@ stepf:
     return res_get;
 }
 
-
+#ifndef __jctool_cpp_API__
 int get_ir_registers(int start_reg, int reg_group) {
+#else
+int get_ir_registers(controller_hid_handle_t handle, int start_reg, int reg_group) {
+#endif
     int res;
     u8 buf[0x170];
     static int output_buffer_length = 49;
@@ -2179,8 +2384,11 @@ int get_ir_registers(int start_reg, int reg_group) {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int ir_sensor_config_live(ir_image_config &ir_cfg) {
+#else
+int ir_sensor_config_live(controller_handle_t handle, ir_image_config &ir_cfg) {
+#endif
     int res;
     u8 buf[49];
 
@@ -2248,8 +2456,11 @@ int ir_sensor_config_live(ir_image_config &ir_cfg) {
     return res;
 }
 
-
+#ifndef __jctool_cpp_API__
 int nfc_tag_info() {
+#else
+int nfc_tag_info(controller_hid_handle_t handle) {
+#endif
     /////////////////////////////////////////////////////
     // Kudos to Eric Betts (https://github.com/bettse) //
     // for nfc comm starters                           //
@@ -2507,6 +2718,7 @@ int nfc_tag_info() {
                         //}
                         //printf(" | ");
                         //FormJoy::myform1->txtBox_nfcUid->Text = String::Format("{0:d},{1:d},{2:d},{3:d},{4:d}, Type: {5:d}, {6:d}\r\nUID: ", buf[57], buf[58], buf[59], buf[60], buf[61], buf[62], buf[63]);
+#ifndef __jctool_cpp_API__
                         FormJoy::myform1->txtBox_nfcUid->Text = String::Format("Type: {0:s}\r\nUID:  ", buf[62] == 0x2 ? "NTAG" : "MIFARE");
                         for (int i = 0; i < buf[64]; i++) {
                             if (i < buf[64] - 1) {
@@ -2520,12 +2732,19 @@ int nfc_tag_info() {
                         }
                         //printf("\n");
                         Application::DoEvents();
+#else
+    // TODO: Implement else
+#endif
                         goto step7;
                     }
                 }
                 retries++;
                 if (retries > 4 || res == 0) {
+#ifndef __jctool_cpp_API__
                     Application::DoEvents();
+#else
+                    // TODO: Implement else
+#endif
                     break;
                 }
             }
@@ -2623,8 +2842,11 @@ int nfc_tag_info() {
     return 0;
 }
 
-
+#ifndef __jctool_cpp_API__
 int silence_input_report() {
+#else
+int silence_input_report(controller_hid_handle_t handle) {
+#endif
     int res;
     u8 buf[49];
     int error_reading = 0;
@@ -2777,9 +2999,13 @@ int test_chamber() {
     //Add your testing code.
 
     return 0;
-    }
+}
 
+#ifndef __jctool_cpp_API__
 int device_connection(){
+#else
+int device_connection(controller_hid_handle_t& handle){
+#endif
     if (check_connection_ok) {
         handle_ok = 0;
         // Joy-Con (L)
@@ -2823,8 +3049,12 @@ int device_connection(){
     return handle_ok;
 }
 
+#ifndef __jctool_cpp_API__
 [STAThread]
 int Main(array<String^>^ args) {
+#else
+int jctool_main(int argc, char** args) {
+#endif
     /*
     BOOL chk = AllocConsole();
     if (chk) {
@@ -2845,7 +3075,11 @@ int Main(array<String^>^ args) {
             return 1;
     }
     // Enable debugging
+#ifndef __jctool_cpp_API__
     if (args->Length > 0) {
+#else
+    if (argc > 0) {
+#endif
         if (args[0] == "-d")
             enable_traffic_dump = true; // Enable hid_write/read logging to text file
         else if (args[0] == "-f")
@@ -2855,11 +3089,14 @@ int Main(array<String^>^ args) {
     timming_byte = 0x0;
 
     //test_chamber();
-
+#ifndef __jctool_cpp_API__
     Application::EnableVisualStyles();
     Application::SetCompatibleTextRenderingDefault(false);
 
     CppWinFormJoy::FormJoy^  myform1 = gcnew FormJoy();
+#else
+    // TODO: Implement else
+#endif
 
     /*
     //usb test
@@ -2876,8 +3113,11 @@ int Main(array<String^>^ args) {
     }
     hid_exit();
     */
-
+#ifndef __jctool_cpp_API__
     Application::Run(myform1);
+#else
+    test_chamber();
+#endif
 
     return 0;
 }

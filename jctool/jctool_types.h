@@ -89,3 +89,19 @@ struct ir_image_config {
 };
 
 #pragma pack(pop)
+
+#if __jctool_cpp_API__
+using controller_hid_handle_t = void*;
+#endif
+
+struct BatteryData {
+    int percent;
+    int report;
+    float voltage;
+};
+
+struct TemperatureData {
+    float celsius;
+    float farenheight;
+};
+

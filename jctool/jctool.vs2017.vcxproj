@@ -80,7 +80,6 @@
   <ItemGroup>
     <ClCompile Include="jctool.cpp" />
     <ClCompile Include="hid.c" />
-    <ClCompile Include="jctool_api.cpp" />
     <ClCompile Include="jctool_api_ui.cpp" />
   </ItemGroup>
   <ItemGroup>
