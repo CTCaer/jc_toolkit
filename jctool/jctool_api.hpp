@@ -1,6 +1,8 @@
 #pragma once
 #include "jctool_types.h"
 
+using ControllerHIDHandle= void*;
+
 struct BatteryData {
     int percent;
     int report;

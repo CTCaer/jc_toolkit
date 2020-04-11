@@ -21,6 +21,9 @@
     <ClCompile Include="jctool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="jctool_api_ui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="jctool_api.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

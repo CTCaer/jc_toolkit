@@ -1,3 +1,9 @@
+/**
+ * Code extracted from the orginal UI framework source (CppWinForm.)
+ * Goal: Eliminate dependency to the original UI framework so that useful code
+ * that was once only accessible by the original UI is now accessible through
+ * an API.
+ */
 #include "jctool_api.hpp"
 #include "jctool.h"
 #include "hidapi.h"
