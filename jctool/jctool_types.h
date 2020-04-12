@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "hidapi.h"
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -91,7 +92,7 @@ struct ir_image_config {
 #pragma pack(pop)
 
 #if __jctool_cpp_API__
-using controller_hid_handle_t = void*;
+using controller_hid_handle_t = hid_device*;
 #endif
 
 struct BatteryData {

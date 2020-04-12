@@ -12,6 +12,8 @@
 
 #include "jctool_api.hpp"
 
+using namespace System;
+
 namespace CppWinFormJoy {
     using namespace System::ComponentModel;
     using namespace System::Drawing;

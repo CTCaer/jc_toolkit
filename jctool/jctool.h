@@ -2,8 +2,6 @@
 #include <string>
 #include "jctool_types.h"
 
-using namespace System;
-
 template <typename T> T CLAMP(const T& value, const T& low, const T& high)
 {
     return value < low ? low : (value > high ? high : value);
@@ -12,7 +10,7 @@ template <typename T> T CLAMP(const T& value, const T& low, const T& high)
 s16 uint16_to_int16(u16 a);
 void decode_stick_params(u16 *decoded_stick_params, u8 *encoded_stick_params);
 void encode_stick_params(u8 *encoded_stick_params, u16 *decoded_stick_params);
-#ifndef __jctool_cpp_API___
+#ifndef __jctool_cpp_API__
 std::string get_sn(u32 offset, const u16 read_len);
 int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf);
 int write_spi_data(u32 offset, const u16 write_len, u8* test_buf);
@@ -54,6 +52,15 @@ int nfc_tag_info(controller_hid_handle_t handle);
 int silence_input_report(controller_hid_handle_t handle);
 int ir_sensor(controller_hid_handle_t handle, ir_image_config &ir_cfg);
 int ir_sensor_config_live(controller_hid_handle_t handle, ir_image_config &ir_cfg);
+
+namespace JCToolkit {
+    namespace Helpers {
+        void loadBatteryImages();
+    }
+    namespace UI {
+        void show();
+    }
+}
 #endif
 
 extern int  handle_ok;

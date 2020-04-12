@@ -5,6 +5,9 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 // #define NOMINMAX
 #ifdef WIN32
 #include <Windows.h>
@@ -16,6 +19,9 @@
 
 #ifndef __jctool_cpp_API__
 #include "FormJoy.h"
+#else
+#include "imgui.h"
+#include "ImGuiInterface.hpp"
 #endif
 
 #include "hidapi.h"
@@ -42,6 +48,7 @@ u8 ir_max_frag_no;
 
 #ifndef __jctool_cpp_API__
 hid_device *handle;
+using namespace System;
 #endif
 
 hid_device *handle_l;
@@ -348,7 +355,7 @@ int get_device_info(controller_hid_handle_t handle, u8* test_buf) {
 #ifndef __jctool_cpp_API__
 int get_battery(u8* test_buf) {
 #else
-int get_battery(controller_handle_t handle, u8* test_buf) {
+int get_battery(controller_hid_handle_t handle, u8* test_buf) {
 #endif
     int res;
     u8 buf[49];
@@ -387,7 +394,7 @@ int get_battery(controller_handle_t handle, u8* test_buf) {
 #ifndef __jctool_cpp_API__
 int get_temperature(u8* test_buf) {
 #else
-int get_temperature(controller_handle_t handle, u8* test_buf) {
+int get_temperature(controller_hid_handle_t handle, u8* test_buf) {
 #endif
     int res;
     u8 buf[49];
@@ -1527,7 +1534,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sampl
 #ifndef __jctool_cpp_API__
 int ir_sensor_auto_exposure(int white_pixels_percent) {
 #else
-int ir_sensor_auto_exposure(controller_handle_t handle, int white_pixels_percent) {
+int ir_sensor_auto_exposure(controller_hid_handle_t handle, int white_pixels_percent) {
 #endif
     int res;
     u8 buf[49];
@@ -1646,7 +1653,11 @@ int get_raw_ir_image(controller_hid_handle_t handle, u8 show_status) {
                 // TODO: Fix placement, so it doesn't drop next fragment.
                 if (enable_IRAutoExposure && initialization < 2 && got_frag_no == 0){
                     white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
+#ifndef __jctool_cpp_API__
                     ir_sensor_auto_exposure(white_pixels_percent);
+#else
+                    ir_sensor_auto_exposure(handle, white_pixels_percent);
+#endif
                 }
 
                 // Status percentage
@@ -2261,9 +2272,15 @@ step8:
 step9:
     // Stream or Capture images from NIR Camera
     if (enable_IRVideoPhoto)
+#ifndef __jctool_cpp_API__
         res_get = get_raw_ir_image(2);
     else
         res_get = get_raw_ir_image(1);
+#else
+        res_get = get_raw_ir_image(handle, 2);
+    else
+        res_get = get_raw_ir_image(handle, 1);
+#endif
 
     //////
     // TODO: Should we send subcmd x21 with 'x230102' to disable IR mode before disabling MCU?
@@ -2387,7 +2404,7 @@ int get_ir_registers(controller_hid_handle_t handle, int start_reg, int reg_grou
 #ifndef __jctool_cpp_API__
 int ir_sensor_config_live(ir_image_config &ir_cfg) {
 #else
-int ir_sensor_config_live(controller_handle_t handle, ir_image_config &ir_cfg) {
+int ir_sensor_config_live(controller_hid_handle_t handle, ir_image_config &ir_cfg) {
 #endif
     int res;
     u8 buf[49];
@@ -3003,10 +3020,10 @@ int test_chamber() {
 
 #ifndef __jctool_cpp_API__
 int device_connection(){
+    if (check_connection_ok) {
 #else
 int device_connection(controller_hid_handle_t& handle){
 #endif
-    if (check_connection_ok) {
         handle_ok = 0;
         // Joy-Con (L)
         if (handle = hid_open(0x57e, 0x2006, nullptr)) {
@@ -3027,7 +3044,9 @@ int device_connection(controller_hid_handle_t& handle){
         else {
             return 0;
         }
+#ifndef __jctool_cpp_API__
     }
+#endif
     /*
     //usb test
     if (!handle_ok) {
@@ -3049,11 +3068,12 @@ int device_connection(controller_hid_handle_t& handle){
     return handle_ok;
 }
 
+#ifndef __jctool_API_ONLY__
 #ifndef __jctool_cpp_API__
 [STAThread]
 int Main(array<String^>^ args) {
 #else
-int jctool_main(int argc, char** args) {
+int main(int argc, char** args) {
 #endif
     /*
     BOOL chk = AllocConsole();
@@ -3062,6 +3082,7 @@ int jctool_main(int argc, char** args) {
     }
     */
     check_connection_ok = true;
+#ifndef __jctool_cpp_API__
     while (!device_connection()) {
         if (MessageBox::Show(
             L"The device is not paired or the device was disconnected!\n\n" +
@@ -3074,6 +3095,7 @@ int jctool_main(int argc, char** args) {
             MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
             return 1;
     }
+#endif
     // Enable debugging
 #ifndef __jctool_cpp_API__
     if (args->Length > 0) {
@@ -3116,8 +3138,11 @@ int jctool_main(int argc, char** args) {
 #ifndef __jctool_cpp_API__
     Application::Run(myform1);
 #else
-    test_chamber();
+    ImGuiMain(JCToolkit::UI::show, [](){
+        JCToolkit::Helpers::loadBatteryImages();
+    });
 #endif
 
     return 0;
 }
+#endif
