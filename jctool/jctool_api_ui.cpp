@@ -14,8 +14,10 @@
 #include "hidapi.h"
 
 #include "imgui.h"
+#ifdef __jctool_cpp_API__
 #include "ImageLoad/ImageLoad.hpp"
 #include "Controller.hpp"
+#endif
 
 BatteryData parseBatteryData(const unsigned char* batt_data) {
     int batt_percent = 0;
