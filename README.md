@@ -8,7 +8,7 @@ TODOS:
   - Port UI using ImGui as a UI framework.
 
 
-Alpha API with ImGui Screen shot:
+**Alpha API** with ImGui Screen shot:
 
 ![](./ui2_screen_cap.png)
 
