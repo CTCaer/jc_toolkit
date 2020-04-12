@@ -134,16 +134,10 @@ namespace JCToolkit {
 
         void show(){
             static Controller default_controller;
-            if(!ImGui::Begin("JC Toolkit")){
-                ImGui::End();
-            } else {
-                // Try to establish a connection with a controller.
-                if(ImGui::Button("Try Connection Attempt"))
-                    default_controller.connection();
-                showControllerInfo(default_controller);
-
-                ImGui::End();
-            }
+            // Try to establish a connection with a controller.
+            if(ImGui::Button("Try Connection Attempt"))
+                default_controller.connection();
+            showControllerInfo(default_controller);
         }
     }
 }

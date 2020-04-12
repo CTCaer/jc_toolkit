@@ -3138,9 +3138,41 @@ int main(int argc, char** args) {
 #ifndef __jctool_cpp_API__
     Application::Run(myform1);
 #else
-    ImGuiMain(JCToolkit::UI::show, [](){
-        JCToolkit::Helpers::loadBatteryImages();
-    });
+    // Every UI frame call happens in the lambda function below.
+    auto imgui_calls = []() {
+        static bool window_still_open = true;
+
+        ImGui::SetNextWindowPos({}, ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
+
+        if(!ImGui::Begin("JC Toolkit", &window_still_open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)){
+            ImGui::End();
+        } else {
+            JCToolkit::UI::show();
+            ImGui::End();
+        }
+
+        if (!window_still_open)
+            return -1;
+        return 0;
+    };
+
+    ImGuiMain(
+        {
+            "Joy-Con Toolkit", // The window title.
+            640, // The window width.
+            480 // The window height.
+        },
+        imgui_calls,
+        [](){ // This function object gets called once after the graphics framework (open gl) is initialized.
+            JCToolkit::Helpers::loadBatteryImages();
+            auto framebg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
+            framebg_color.w = 1.0f;
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, framebg_color);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, {}); // No rounding
+        },
+        (ImGuiInitFlags)0
+    );
 #endif
 
     return 0;

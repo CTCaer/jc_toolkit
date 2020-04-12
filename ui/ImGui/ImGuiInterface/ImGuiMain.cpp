@@ -48,7 +48,8 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-int ImGuiMain(ImGuiCallsCB imgui_calls, void (*on_graphics_init)())
+GLFWwindow* window = nullptr;
+int ImGuiMain(WindowInit window_init, ImGuiCallsCB imgui_calls, void (*on_graphics_init)(), ImGuiInitFlags init_flags)
 {
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -71,9 +72,11 @@ int ImGuiMain(ImGuiCallsCB imgui_calls, void (*on_graphics_init)())
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
-
+    if((init_flags & NoWindowDecoration) == NoWindowDecoration)
+        // Do not display the close/maximize widgets.
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+    window = glfwCreateWindow(window_init.width, window_init.height, window_init.title, NULL, NULL);
     if (window == NULL)
         return 1;
     glfwMakeContextCurrent(window);
@@ -134,7 +137,7 @@ int ImGuiMain(ImGuiCallsCB imgui_calls, void (*on_graphics_init)())
     //IM_ASSERT(font != NULL);
 
     // Our state
-    bool show_demo_window = true;
+    bool show_demo_window = (init_flags & ShowDemoWindow) == ShowDemoWindow;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -154,30 +157,31 @@ int ImGuiMain(ImGuiCallsCB imgui_calls, void (*on_graphics_init)())
         ImGui::NewFrame();
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
+        if (show_demo_window){
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
+            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+            {
+                static float f = 0.0f;
+                static int counter = 0;
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+                ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+                ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+                ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+                ImGui::Checkbox("Another Window", &show_another_window);
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+                ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+                ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
+                if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                    counter++;
+                ImGui::SameLine();
+                ImGui::Text("counter = %d", counter);
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+                ImGui::End();
+            }
         }
 
         // 3. Show another simple window.
@@ -192,7 +196,8 @@ int ImGuiMain(ImGuiCallsCB imgui_calls, void (*on_graphics_init)())
 
         // Call imgui_calls()
         if (imgui_calls)
-            imgui_calls();
+            if (imgui_calls() < 0)
+                glfwSetWindowShouldClose(window, 1);
 
         // Rendering
         ImGui::Render();
