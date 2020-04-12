@@ -1,3 +1,6 @@
+/**
+ * 2020 Jonathan Mendez
+ */
 #include <iostream>
 #include <string>
 

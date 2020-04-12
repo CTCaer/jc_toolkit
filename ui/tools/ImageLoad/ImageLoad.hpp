@@ -1,3 +1,7 @@
+/**
+ * 2020 Jonathan Mendez
+ */
+
 #pragma once
 #ifdef ImageLoadASYNC
 #include <thread>
