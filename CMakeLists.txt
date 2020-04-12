@@ -1,7 +1,5 @@
 project(JCToolKit)
 
-add_subdirectory(ui)
-
 add_compile_definitions(
     __jctool_cpp_API__
     BATTERY_INDICATORS_PATH="${PROJECT_SOURCE_DIR}/jctool/original_res/batt_"
@@ -18,14 +16,22 @@ set(SOURCES
     jctool/Controller.cpp
 )
 
-add_executable(JCToolkit
-    ${SOURCES}
-)
+if (JCTOOL_API_ONLY)
+    add_compile_definitions(__jctool_API_ONLY__)
+    add_library(JCToolkit
+        ${SOURCES}
+    )
+else()
+    add_subdirectory(ui)
+    add_executable(JCToolkit
+        ${SOURCES}
+    )
+    target_link_libraries(JCToolkit
+        ImGui
+        Tools
+    )
+endif()
 
-target_link_libraries(JCToolkit
-    ImGui
-    Tools
-)
 
 target_include_directories(JCToolkit PRIVATE
     jctool
