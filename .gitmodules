@@ -1,0 +1,6 @@
+[submodule "hidapi"]
+	path = hidapi
+	url = https://github.com/libusb/hidapi
+[submodule "ui/ImGui/imgui"]
+	path = ui/ImGui/imgui
+	url = https://github.com/ocornut/imgui
