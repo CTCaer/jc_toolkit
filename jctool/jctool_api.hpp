@@ -61,3 +61,60 @@ VIBFileMetadata getVIBFileMetadata(ByteArray vib_loaded_file) {
     //vib_file_type = (VIBType)0; // Unknown (Invalid)
     return {}; // Return a struct of all null values.
 }
+
+template<typename ByteArray>
+void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, int hf_amp, int lf_freq, int hf_freq, int lf_gain, int hf_gain, int lf_pitch, int hf_pitch) {
+    VIBFileMetadata metadata = getVIBFileMetadata(vib_data);
+    if (metadata.vib_file_type == VIBRaw)
+        // No need to convert.
+        return;
+
+    u8 vib_off = 0;
+    if (metadata.vib_file_type == 3)
+        vib_off = 8;
+    if (metadata.vib_file_type == 4)
+        vib_off = 12;
+    //Convert to RAW vibration, apply EQ and clamp inside safe values
+    //vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
+
+    //Convert to raw
+    for (u32 i = 0; i < (metadata.samples * 4); i = i + 4)
+    {
+        //Apply amp eq
+        u8 tempLA = (lf_amp == 10 ? vib_data[0xC + vib_off + i] : (u8)CLAMP((float)vib_data[0xC + vib_off + i] * lf_gain, 0.0f, 255.0f));
+        u8 tempHA = (hf_amp == 10 ? vib_data[0xE + vib_off + i] : (u8)CLAMP((float)vib_data[0xE + vib_off + i] * hf_gain, 0.0f, 255.0f));
+
+        //Apply safe limit. The sum of LF and HF amplitudes should be lower than 1.0
+        float apply_safe_limit = (float)tempLA / 255.0f + tempHA / 255.0f;
+        //u8 tempLA = (apply_safe_limit > 1.0f ? (u8)((float)this->vib_file_converted[0xC + i] * (0.55559999f / apply_safe_limit)) : (u8)((float)this->vib_file_converted[0xC + i] * 0.55559999f));
+        tempLA = (apply_safe_limit > 1.0f ? (u8)((float)tempLA * (1.0f / apply_safe_limit)) : tempLA);
+        tempHA = (apply_safe_limit > 1.0f ? (u8)((float)tempHA * (1.0f / apply_safe_limit)) : tempHA);
+
+        //Apply eq and convert frequencies to raw range
+        u8 tempLF = (lf_freq == 10 ? vib_data[0xD + vib_off + i] : (u8)CLAMP((float)vib_data[0xD + vib_off + i] * lf_pitch, 0.0f, 191.0f)) - 0x40;
+        u16 tempHF = ((hf_freq == 10 ? vib_data[0xF + vib_off + i] : (u8)CLAMP((float)vib_data[0xF + vib_off + i] * hf_pitch, 0.0f, 223.0f)) - 0x60) * 4;
+
+        //Encode amplitudes with the look up table and direct encode frequencies
+        int j;
+        float temp = tempLA / 255.0f;
+        for (j = 1; j < 101; j++) {
+            if (temp < lut_joy_amp.amp_float[j]) {
+                j--;
+                break;
+            }
+        }
+        vib_out[0xE + vib_off + i] = ((lut_joy_amp.la[j] >> 8) & 0xFF) + tempLF;
+        vib_out[0xF + vib_off + i] = lut_joy_amp.la[j] & 0xFF;
+
+        temp = tempHA / 255.0f;
+        for (j = 1; j < 101; j++) {
+            if (temp < lut_joy_amp.amp_float[j]) {
+                j--;
+                break;
+            }
+        }
+        vib_out[0xC + vib_off + i] = tempHF & 0xFF;
+        vib_out[0xD + vib_off + i] = ((tempHF >> 8) & 0xFF) + lut_joy_amp.ha[j];
+
+    }
+}

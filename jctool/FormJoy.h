@@ -5542,7 +5542,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
     }
 
-    private: System::Void btn_loadVib_Click(System::Object^  sender, System::EventArgs^  e) {
+    private: System::Void btn_loadVib_Click(System::Object^ sender, System::EventArgs^ e) {
         Stream^ fileStream;
 
         OpenFileDialog^ openFileDialog1 = gcnew OpenFileDialog;
@@ -5551,7 +5551,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         openFileDialog1->FilterIndex = 1;
         openFileDialog1->RestoreDirectory = true;
         if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK && (fileStream = openFileDialog1->OpenFile()) != nullptr)
-        {    
+        {
             vib_converted = 0;
             this->label_hdrumble_filename->Text = openFileDialog1->SafeFileName;
             this->label_vib_loaded->Text = L"";
@@ -5617,55 +5617,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         int vib_loop_times = 0;
         if ((vib_file_type == 2 || vib_file_type == 3 || vib_file_type == 4) && !vib_converted) {
-            u8 vib_off = 0;
-            if (vib_file_type == 3)
-                vib_off = 8;
-            if (vib_file_type == 4)
-                vib_off = 12;
             //Convert to RAW vibration, apply EQ and clamp inside safe values
             this->btn_vibPlay->Text = L"Loading...";
-            //vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
 
-            //Convert to raw
-            for (u32 i = 0; i < (vib_samples * 4); i = i + 4)
-            {
-                //Apply amp eq
-                u8 tempLA = (this->trackBar_lf_amp->Value == 10 ? this->vib_loaded_file[0xC + vib_off + i] : (u8)CLAMP((float)this->vib_loaded_file[0xC + vib_off + i] * lf_gain, 0.0f, 255.0f));
-                u8 tempHA = (this->trackBar_hf_amp->Value == 10 ? this->vib_loaded_file[0xE + vib_off + i] : (u8)CLAMP((float)this->vib_loaded_file[0xE + vib_off + i] * hf_gain, 0.0f, 255.0f));
+            convertVIBBinaryToRaw(this->vib_loaded_file, this->vib_file_converted, this->trackBar_lf_amp->Value, this->trackBar_hf_amp->Value, this->trackBar_lf_freq->Value, this->trackBar_hf_freq->Value, lf_gain, hf_gain, lf_pitch, hf_pitch);
 
-                //Apply safe limit. The sum of LF and HF amplitudes should be lower than 1.0
-                float apply_safe_limit = (float)tempLA / 255.0f + tempHA / 255.0f;
-                //u8 tempLA = (apply_safe_limit > 1.0f ? (u8)((float)this->vib_file_converted[0xC + i] * (0.55559999f / apply_safe_limit)) : (u8)((float)this->vib_file_converted[0xC + i] * 0.55559999f));
-                tempLA = (apply_safe_limit > 1.0f ? (u8)((float)tempLA    * (1.0f / apply_safe_limit)) : tempLA);
-                tempHA = (apply_safe_limit > 1.0f ? (u8)((float)tempHA * (1.0f / apply_safe_limit)) : tempHA);
-
-                //Apply eq and convert frequencies to raw range
-                u8 tempLF = (this->trackBar_lf_freq->Value == 10 ? this->vib_loaded_file[0xD + vib_off + i] : (u8)CLAMP((float)this->vib_loaded_file[0xD + vib_off + i] * lf_pitch, 0.0f, 191.0f)) - 0x40;
-                u16 tempHF = ((this->trackBar_hf_freq->Value == 10 ? this->vib_loaded_file[0xF + vib_off + i] : (u8)CLAMP((float)this->vib_loaded_file[0xF + vib_off + i] * hf_pitch, 0.0f, 223.0f)) - 0x60) * 4;
-
-                //Encode amplitudes with the look up table and direct encode frequencies
-                int j;
-                float temp = tempLA / 255.0f;
-                for (j = 1; j < 101; j++) {
-                    if (temp < lut_joy_amp.amp_float[j]) {
-                        j--;
-                        break;
-                    }
-                }
-                this->vib_file_converted[0xE + vib_off + i] = ((lut_joy_amp.la[j] >> 8) & 0xFF) + tempLF;
-                this->vib_file_converted[0xF + vib_off + i] = lut_joy_amp.la[j] & 0xFF;
-
-                temp = tempHA / 255.0f;
-                for (j = 1; j < 101; j++) {
-                    if (temp < lut_joy_amp.amp_float[j]) {
-                        j--;
-                        break;
-                    }
-                }
-                this->vib_file_converted[0xC + vib_off + i] = tempHF & 0xFF;
-                this->vib_file_converted[0xD + vib_off + i] = ((tempHF >> 8) & 0xFF) + lut_joy_amp.ha[j];
-
-            }
             vib_converted = 1;
         }
 
