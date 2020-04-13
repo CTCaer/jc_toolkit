@@ -5566,7 +5566,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->vib_file_converted = ms->ToArray();
             fileStream->Close();
 
-            VIBFileMetadata vib_metadata = getVIBFileMetadata(this->vib_loaded_file);
+            VIBMetadata vib_metadata = getVIBMetadata(this->vib_loaded_file);
             vib_file_type = (VIBType)vib_metadata.vib_file_type;
             vib_sample_rate = vib_metadata.sample_rate;
             vib_samples = vib_metadata.samples;

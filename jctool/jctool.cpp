@@ -1331,7 +1331,7 @@ int play_tune(controller_hid_handle_t handle, int tune_no) {
 #ifndef __jctool_cpp_API__
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
 #else
-int play_hd_rumble_file(controller_hid_handle_t handle, VIBData rumble_data) {
+int play_hd_rumble_file(controller_hid_handle_t handle, RumbleData& rumble_data) {
     int file_type = rumble_data.metadata.vib_file_type;
     u16 sample_rate = rumble_data.metadata.sample_rate;
     int samples = rumble_data.metadata.samples;
@@ -1368,9 +1368,9 @@ int play_hd_rumble_file(controller_hid_handle_t handle, VIBData rumble_data) {
 
             auto use_rumble_data
 #ifndef __jctool_cpp_API__
-            =  (file_type == 1) ? FormJoy::myform1->vib_loaded_file : FormJoy::myform1->vib_converted_file;
+            =  (file_type == 1) ? FormJoy::myform1->vib_loaded_file : FormJoy::myform1->vib_file_converted;
 #else
-            = rumble_data.data;
+            = &*rumble_data.data;
 #endif
             if (file_type == 1) {
                 hdr->rumble_l[0] = use_rumble_data[0x0A + i];
@@ -1415,7 +1415,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, VIBData rumble_data) {
 #ifndef __jctool_cpp_API__
             = FormJoy::myform1->vib_loaded_file;
 #else
-            = rumble_data.data;
+            = &*rumble_data.data;
 #endif
             hdr->rumble_l[0] = use_rumble_data[0x0C + vib_off + i];
             hdr->rumble_l[1] = use_rumble_data[0x0D + vib_off + i];
@@ -1445,7 +1445,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, VIBData rumble_data) {
 #ifndef __jctool_cpp_API__
                 = FormJoy::myform1->vib_loaded_file;
 #else
-                = rumble_data.data;
+                = &*rumble_data.data;
 #endif
                 hdr->rumble_l[0] = use_rumble_data[0x0C + vib_off + i];
                 hdr->rumble_l[1] = use_rumble_data[0x0D + vib_off + i];
@@ -1489,7 +1489,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, VIBData rumble_data) {
 #ifndef __jctool_cpp_API__
             = FormJoy::myform1->vib_loaded_file;
 #else
-            = rumble_data.data;
+            = &*rumble_data.data;
 #endif
             hdr->rumble_l[0] = use_rumble_data[0x0C + vib_off + i];
             hdr->rumble_l[1] = use_rumble_data[0x0D + vib_off + i];

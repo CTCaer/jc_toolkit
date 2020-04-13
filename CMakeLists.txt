@@ -1,5 +1,7 @@
 project(JCToolKit)
 
+set(CMAKE_CXX_STANDARD 17)
+
 add_compile_definitions(
     __jctool_cpp_API__
     BATTERY_INDICATORS_PATH="${PROJECT_SOURCE_DIR}/jctool/original_res/batt_"

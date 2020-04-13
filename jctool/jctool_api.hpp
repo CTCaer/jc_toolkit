@@ -6,7 +6,7 @@ BatteryData parseBatteryData(const unsigned char* batt_data);
 TemperatureData parseTemperatureData(const unsigned char* temp_data);
 
 template<typename ByteArray>
-VIBFileMetadata getVIBFileMetadata(ByteArray vib_loaded_file) {
+VIBMetadata getVIBMetadata(ByteArray vib_loaded_file) {
     u8 file_magic[] = { 0x52, 0x52, 0x41, 0x57, 0x4, 0xC, 0x3, 0x10 };
 
     VIBType vib_file_type = VIBInvalid;
@@ -64,7 +64,7 @@ VIBFileMetadata getVIBFileMetadata(ByteArray vib_loaded_file) {
 
 template<typename ByteArray>
 void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, int hf_amp, int lf_freq, int hf_freq, int lf_gain, int hf_gain, int lf_pitch, int hf_pitch) {
-    VIBFileMetadata metadata = getVIBFileMetadata(vib_data);
+    VIBMetadata metadata = getVIBMetadata(vib_data);
     if (metadata.vib_file_type == VIBRaw)
         // No need to convert.
         return;

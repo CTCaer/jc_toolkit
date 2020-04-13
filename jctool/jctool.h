@@ -40,7 +40,7 @@ int dump_spi(controller_hid_handle_t handle, const char *dev_name);
 int send_rumble(controller_hid_handle_t handle);
 int send_custom_command(controller_hid_handle_t handle, u8* arg);
 int play_tune(controller_hid_handle_t handle, int tune_no);
-int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times);
+int play_hd_rumble_file(controller_hid_handle_t handle, RumbleData& rumble_data);
 int device_connection(controller_hid_handle_t& handle);
 int button_test(controller_hid_handle_t handle);
 int set_led_busy(controller_hid_handle_t handle);

@@ -4,10 +4,19 @@
  * that was once only accessible by the original UI is now accessible through
  * an API.
  */
+#include <filesystem>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <iterator>
 #include <vector>
+#include <memory>
+
+// Open a file dialog window
+#ifdef WIN32
+#include "Windows.h"
+#include "commdlg.h"
+#endif
 
 #include "jctool_api.hpp"
 #include "jctool.h"
@@ -73,15 +82,17 @@ namespace JCToolkit {
             }
         }
     }
+    Controller default_controller;
+    RumbleData default_rumble_data;
     namespace UI {
         /**
          * UI Port from jctool/FormJoy.h
          */
         void showDeviceInfo(const unsigned char* device_info){
             ImGui::Text("Device Info");
-            ImGui::Text("Firmware: %X.%2X", device_info[0], device_info[1]);
+            ImGui::Text("Firmware: %X.%02X", device_info[0], device_info[1]);
             ImGui::Text(
-                "MAC: %2X:%2X:%2X:%2X:%2X:%2X",
+                "MAC: %02X:%02X:%02X:%02X:%02X:%02X",
                 device_info[4], device_info[5], device_info[6],
                 device_info[7], device_info[8], device_info[9]
             );
@@ -134,12 +145,105 @@ namespace JCToolkit {
             ImGui::Text("S/N: %s", controller.getSerialNumber().c_str());
         }
 
+        void showRumblePlayer(RumbleData& rumble_data) {
+            if(ImGui::Button("Load Rumble Data")){
+                char file_name_buf[FILENAME_MAX];
+#ifdef WIN32
+                OPENFILENAME ofn;
+                ZeroMemory(&ofn, sizeof(ofn));
+                HWND hwnd = GetActiveWindow();
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = hwnd;
+                ofn.lpstrFile = file_name_buf;
+                // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+                // use the contents of szFile to initialize itself.
+                ofn.lpstrFile[0] = '\0';
+                ofn.nMaxFile = sizeof(file_name_buf);
+                ofn.lpstrFilter = "HD Rumble\0*.bnvib;*.jcvib\0\0";
+                ofn.nFilterIndex = 1;
+                ofn.lpstrFileTitle = NULL;
+                ofn.nMaxFileTitle = 0;
+                ofn.lpstrInitialDir = NULL;
+                ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+                if(GetOpenFileName(&ofn)) {
+#endif
+                    std::ifstream rumble_fstream = std::ifstream(file_name_buf, std::ios_base::binary);
+                    if(!rumble_fstream.bad()){
+                        RumbleData new_rumble_data;
+                        // Calculate the size of the file.
+                        size_t rumble_data_size = std::filesystem::file_size(file_name_buf);
+                        char* read_buf = new char[rumble_data_size];
+                        rumble_fstream.read(read_buf, rumble_data_size);
+
+                        new_rumble_data.from_file = file_name_buf;
+                        new_rumble_data.metadata = getVIBMetadata(read_buf);
+                        new_rumble_data.data.reset(reinterpret_cast<u8*>(read_buf), [](u8* p){
+                            delete[] p;
+                        }); // Allocate enough space for the rumble data.
+
+                        rumble_data = new_rumble_data;
+                    }
+                }
+            }
+            if(rumble_data.data == nullptr)
+                ImGui::Text("There is no rumble data loaded.");
+            else {
+                const char* type_label;
+                bool loop = false;
+                switch(rumble_data.metadata.vib_file_type){
+                    case VIBRaw:
+                    type_label = "Raw";
+                    break;
+                    case VIBBinary:
+                    type_label = "Binary";
+                    break;
+                    case VIBBinaryLoop:
+                    type_label = "Binary loop";
+                    loop = true;
+                    break;
+                    case VIBBinaryLoopAndWait:
+                    type_label = "Binary loop and wait";
+                    loop = true;
+                    break;
+                    case VIBInvalid:
+                    type_label = "Invalid";
+                    break;
+                }
+                ImGui::Text(
+                    "File: %s\n"
+                    "Rumble data type: %s\n"
+                    "Sample rate: %u\n"
+                    "Samples: %d",
+                    std::filesystem::path(rumble_data.from_file).filename().generic_string().c_str(),
+                    type_label,
+                    rumble_data.metadata.sample_rate,
+                    rumble_data.metadata.samples
+                );
+                if(loop){
+                    ImGui::SameLine();
+                    ImGui::Text(
+                        "Start: %u\n"
+                        "End: %u\n"
+                        "Wait: %u\n"
+                        "Repeat: %u",
+                        rumble_data.metadata.loop_start,
+                        rumble_data.metadata.loop_end,
+                        rumble_data.metadata.loop_wait,
+                        rumble_data.metadata.loop_times
+                    );
+                }
+                if(default_controller.getHandle() && ImGui::Button("Play")){
+                    play_hd_rumble_file(default_controller.getHandle(), rumble_data);
+                }
+            }
+        }
+
         void show(){
-            static Controller default_controller;
             // Try to establish a connection with a controller.
             if(ImGui::Button("Try Connection Attempt"))
                 default_controller.connection();
             showControllerInfo(default_controller);
+            showRumblePlayer(default_rumble_data);
         }
     }
 }

@@ -29,6 +29,7 @@ public:
     inline Type getType() { return this->controller_type; }
     inline const unsigned char* getDeviceInfo() { return this->device_data; }
     inline const std::string getSerialNumber() { return this->serial_number; }
+    inline const controller_hid_handle_t getHandle() { return this->handle; }
 private:
     unsigned char device_data[10] = {}; // Initialize to nulls.
     // The serial number of the controller.

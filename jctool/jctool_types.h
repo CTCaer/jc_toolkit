@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <cstdint>
 #include "hidapi.h"
 
@@ -91,15 +92,6 @@ struct ir_image_config {
 
 #pragma pack(pop)
 
-#if __jctool_cpp_API__
-using controller_hid_handle_t = hid_device*;
-
-struct VIBData {
-    VIBFileMetadata metadata;
-    std::shared_ptr<u8[]> data;
-};
-#endif
-
 struct BatteryData {
     int percent;
     int report;
@@ -120,7 +112,7 @@ enum VIBType : unsigned char {
     VIBBinaryLoopAndWait
 };
 
-struct VIBFileMetadata {
+struct VIBMetadata {
     VIBType vib_file_type;
     u16 sample_rate;
     u32 samples;
@@ -129,3 +121,13 @@ struct VIBFileMetadata {
     u32 loop_wait;
     int loop_times;
 };
+
+#if __jctool_cpp_API__
+using controller_hid_handle_t = hid_device*;
+
+struct RumbleData {
+    std::string from_file;
+    VIBMetadata metadata;
+    std::shared_ptr<u8> data;
+};
+#endif
