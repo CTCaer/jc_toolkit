@@ -93,6 +93,11 @@ struct ir_image_config {
 
 #if __jctool_cpp_API__
 using controller_hid_handle_t = hid_device*;
+
+struct VIBData {
+    VIBFileMetadata metadata;
+    std::shared_ptr<u8[]> data;
+};
 #endif
 
 struct BatteryData {
@@ -122,4 +127,5 @@ struct VIBFileMetadata {
     u32 loop_start;
     u32 loop_end;
     u32 loop_wait;
+    int loop_times;
 };
