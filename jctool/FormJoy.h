@@ -5544,7 +5544,6 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
     private: System::Void btn_loadVib_Click(System::Object^  sender, System::EventArgs^  e) {
         Stream^ fileStream;
-        array<byte>^ file_magic = { 0x52, 0x52, 0x41, 0x57, 0x4, 0xC, 0x3, 0x10};
 
         OpenFileDialog^ openFileDialog1 = gcnew OpenFileDialog;
         openFileDialog1->InitialDirectory = System::IO::Path::Combine(System::IO::Path::GetDirectoryName(Application::ExecutablePath), "RumbleDirectory");
@@ -5567,85 +5566,47 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->vib_file_converted = ms->ToArray();
             fileStream->Close();
 
-            //check for vib_file_type
-            if (this->vib_loaded_file[0] == file_magic[0]) {
-                for (int i = 1; i < 4; i++) {
-                    if (this->vib_loaded_file[i] == file_magic[i]) {
-                        vib_file_type = 1;
-                        this->groupBox_vib_eq->Visible = true;
-                        this->groupBox_vib_eq->Enabled = false;
-                    }
-                    else {
-                        vib_file_type = 0;
-                        this->groupBox_vib_eq->Visible = false;
+            VIBFileMetadata vib_metadata = getVIBFileMetadata(this->vib_loaded_file);
+            vib_file_type = (VIBType)vib_metadata.vib_file_type;
+            vib_sample_rate = vib_metadata.sample_rate;
+            vib_samples = vib_metadata.samples;
+            vib_loop_start = vib_metadata.loop_start;
+            vib_loop_end = vib_metadata.loop_end;
+            vib_loop_wait = vib_metadata.loop_wait;
 
-                        break;
-                    }
-                }
-                if (vib_file_type == 1) {
-                    this->label_vib_loaded->Text = L"Type: Raw HD Rumble";
-                    this->btn_vibPlay->Enabled = true;
-                    vib_sample_rate = (this->vib_loaded_file[0x4] << 8) + this->vib_loaded_file[0x5];
-                    vib_samples = (this->vib_loaded_file[0x6] << 24) + (this->vib_loaded_file[0x7] << 16) + (this->vib_loaded_file[0x8] << 8) + this->vib_loaded_file[0x9];
-                    this->label_samplerate->Text = L"Sample rate: " + vib_sample_rate + L"ms";
-                    this->label_samples->Text = L"Samples: " + vib_samples + L" (" + (vib_sample_rate * vib_samples) / 1000.0f + L"s)";
-                }
-                else {
-                    this->label_vib_loaded->Text = L"Type: Unknown format";
-                    this->btn_vibPlay->Enabled = false;
-                }
+            switch (vib_metadata.vib_file_type) {
+            case VIBRaw:
+                this->label_vib_loaded->Text = L"Type: Raw HD Rumble";
+                break;
+            case VIBBinary:
+                this->label_vib_loaded->Text = L"Type: Binary HD Rumble";
+                break;
+            case VIBBinaryLoop:
+                this->label_vib_loaded->Text = L"Type: Loop Binary HD Rumble";
+                break;
+            case VIBBinaryLoopAndWait:
+                this->label_vib_loaded->Text = L"Type: Loop and Wait Binary";
+                break;
+            case VIBInvalid:
+            default:
+                this->label_vib_loaded->Text = L"Type: Unknown format";
+                break;
             }
-            else if (this->vib_loaded_file[4] == file_magic[6]) {
-                if (this->vib_loaded_file[0] == file_magic[4]) {
-                    vib_file_type = 2;
-                    this->groupBox_vib_eq->Visible = true;
-                    this->groupBox_vib_eq->Enabled = true;
-                    this->label_vib_loaded->Text = L"Type: Binary HD Rumble";
-                    u32 vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
-                    vib_sample_rate = 1000 / (this->vib_loaded_file[0x6] + (this->vib_loaded_file[0x7] << 8));
-                    vib_samples = vib_size / 4;
-                    this->label_samplerate->Text = L"Sample rate: " + vib_sample_rate + L"ms";
-                    this->label_samples->Text = L"Samples: " + vib_samples + L" (" + (vib_sample_rate * vib_samples) / 1000.0f + L"s)";
-                }
-                else if (this->vib_file_converted[0] == file_magic[5]) {
-                    vib_file_type = 3;
-                    this->label_vib_loaded->Text = L"Type: Loop Binary HD Rumble";
-                    this->groupBox_vib_eq->Visible = true;
-                    this->groupBox_vib_eq->Enabled = true;
-                    u32 vib_size = this->vib_loaded_file[0x10] + (this->vib_loaded_file[0x11] << 8) + (this->vib_loaded_file[0x12] << 16) + (this->vib_loaded_file[0x13] << 24);
-                    vib_sample_rate = 1000 / (this->vib_loaded_file[0x6] + (this->vib_loaded_file[0x7] << 8));
-                    vib_samples = vib_size / 4;
-                    vib_loop_start = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
-                    vib_loop_end = this->vib_loaded_file[0xC] + (this->vib_loaded_file[0xD] << 8) + (this->vib_loaded_file[0xE] << 16) + (this->vib_loaded_file[0xF] << 24);
-                    this->label_samplerate->Text = L"Sample rate: " + vib_sample_rate + L"ms";
-                    this->label_samples->Text = L"Samples: " + vib_samples + L" (" + (vib_sample_rate * vib_samples) / 1000.0f + L"s)";
-                    this->label_loop_times->Visible = true;
-                    this->textBox_vib_loop_times->Visible = true;
-                }
-                else if (this->vib_file_converted[0] == file_magic[7]) {
-                    vib_file_type = 4;
-                    this->label_vib_loaded->Text = L"Type: Loop and Wait Binary";
-                    this->groupBox_vib_eq->Visible = true;
-                    this->groupBox_vib_eq->Enabled = true;
-                    u32 vib_size = this->vib_loaded_file[0x14] + (this->vib_loaded_file[0x15] << 8) + (this->vib_loaded_file[0x16] << 16) + (this->vib_loaded_file[0x17] << 24);
-                    vib_sample_rate = 1000 / (this->vib_loaded_file[0x6] + (this->vib_loaded_file[0x7] << 8));
-                    vib_samples = vib_size / 4;
-                    vib_loop_start = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
-                    vib_loop_end = this->vib_loaded_file[0xC] + (this->vib_loaded_file[0xD] << 8) + (this->vib_loaded_file[0xE] << 16) + (this->vib_loaded_file[0xF] << 24);
-                    vib_loop_wait = this->vib_loaded_file[0x10] + (this->vib_loaded_file[0x11] << 8) + (this->vib_loaded_file[0x12] << 16) + (this->vib_loaded_file[0x13] << 24);
-                    this->label_samplerate->Text = L"Sample rate: " + vib_sample_rate + L"ms";
-                    this->label_samples->Text = L"Samples: " + vib_samples + L" (" + (vib_sample_rate * vib_samples) / 1000.0f + L"s)";
-                    this->label_loop_times->Visible = true;
-                    this->textBox_vib_loop_times->Visible = true;
-                }
+
+            if (vib_metadata.vib_file_type != VIBInvalid) {
+                this->groupBox_vib_eq->Visible = true;
+                this->groupBox_vib_eq->Enabled = true;
+                this->label_samplerate->Text = L"Sample rate: " + vib_sample_rate + L"ms";
+                this->label_samples->Text = L"Samples: " + vib_samples + L" (" + (vib_sample_rate * vib_samples) / 1000.0f + L"s)";
+                this->label_loop_times->Visible = true;
+                this->textBox_vib_loop_times->Visible = true;
                 this->btn_vibPlay->Enabled = true;
             }
             else {
-                vib_file_type = 0;
-                this->label_vib_loaded->Text = L"Type: Unknown format";
-                this->btn_vibPlay->Enabled = false;
                 this->groupBox_vib_eq->Visible = false;
+                this->btn_vibPlay->Enabled = false;
             }
+
             this->btn_vibResetEQ->PerformClick();
         }
     }

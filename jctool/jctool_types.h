@@ -106,3 +106,20 @@ struct TemperatureData {
     float farenheight;
 };
 
+
+enum VIBType : unsigned char {
+    VIBInvalid,
+    VIBRaw,
+    VIBBinary,
+    VIBBinaryLoop,
+    VIBBinaryLoopAndWait
+};
+
+struct VIBFileMetadata {
+    VIBType vib_file_type;
+    u16 sample_rate;
+    u32 samples;
+    u32 loop_start;
+    u32 loop_end;
+    u32 loop_wait;
+};
