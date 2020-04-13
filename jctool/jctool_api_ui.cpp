@@ -37,16 +37,16 @@ BatteryData parseBatteryData(const unsigned char* batt_data) {
     if (batt_volt < 0x560)
         batt_percent = 1;
     else if (batt_volt > 0x55F && batt_volt < 0x5A0) {
-        batt_percent = ((batt_volt - 0x60) & 0xFF) / 7.0f + 1;
+        batt_percent = static_cast<int>(((batt_volt - 0x60) & 0xFF) / 7.0f) + 1;
     }
     else if (batt_volt > 0x59F && batt_volt < 0x5E0) {
-        batt_percent = ((batt_volt - 0xA0) & 0xFF) / 2.625f + 11;
+        batt_percent = static_cast<int>(((batt_volt - 0xA0) & 0xFF) / 2.625f) + 11;
     }
     else if (batt_volt > 0x5DF && batt_volt < 0x618) {
-        batt_percent = (batt_volt - 0x5E0) / 1.8965f + 36;
+        batt_percent = static_cast<int>((batt_volt - 0x5E0) / 1.8965f) + 36;
     }
     else if (batt_volt > 0x617 && batt_volt < 0x658) {
-        batt_percent = ((batt_volt - 0x18) & 0xFF) / 1.8529f + 66;
+        batt_percent = static_cast<int>(((batt_volt - 0x18) & 0xFF) / 1.8529f) + 66;
     }
     else if (batt_volt > 0x657)
         batt_percent = 100;
@@ -136,7 +136,13 @@ namespace JCToolkit {
                 ImGui::Text("Invalid reading.");
             else{
                 ImageResource& battery_img = Assets::battery_indicators[battery_report];
-                ImGui::Image(reinterpret_cast<ImTextureID>(battery_img.getRID()), ImVec2(battery_img.getWidth(), battery_img.getHeight()));
+                ImGui::Image(
+                    reinterpret_cast<ImTextureID>(battery_img.getRID()),
+                    ImVec2(
+                        static_cast<float>(battery_img.getWidth()),
+                        static_cast<float>(battery_img.getHeight())
+                    )
+                );
                 ImGui::Text("%.2fV - %d", controller.batteryGetVoltage(), controller.batteryGetPercentage());
             }
 
