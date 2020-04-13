@@ -1331,7 +1331,14 @@ int play_tune(controller_hid_handle_t handle, int tune_no) {
 #ifndef __jctool_cpp_API__
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
 #else
-int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
+int play_hd_rumble_file(controller_hid_handle_t handle, VIBData rumble_data) {
+    int file_type = rumble_data.metadata.vib_file_type;
+    u16 sample_rate = rumble_data.metadata.sample_rate;
+    int samples = rumble_data.metadata.samples;
+    int loop_start = rumble_data.metadata.loop_start;
+    int loop_end = rumble_data.metadata.loop_end;
+    int loop_wait = rumble_data.metadata.loop_wait;
+    int loop_times = rumble_data.metadata.loop_times;
 #endif
     int res;
     u8 buf[49];
@@ -1358,23 +1365,26 @@ int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sampl
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
+
+            auto use_rumble_data
 #ifndef __jctool_cpp_API__
+            =  (file_type == 1) ? FormJoy::myform1->vib_loaded_file : FormJoy::myform1->vib_converted_file;
+#else
+            = rumble_data.data;
+#endif
             if (file_type == 1) {
-                hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0A + i];
-                hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0B + i];
-                hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0C + i];
-                hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0D + i];
+                hdr->rumble_l[0] = use_rumble_data[0x0A + i];
+                hdr->rumble_l[1] = use_rumble_data[0x0B + i];
+                hdr->rumble_l[2] = use_rumble_data[0x0C + i];
+                hdr->rumble_l[3] = use_rumble_data[0x0D + i];
             }
             //file_type is simple bnvib
             else {
-                hdr->rumble_l[0] = FormJoy::myform1->vib_file_converted[0x0C + i];
-                hdr->rumble_l[1] = FormJoy::myform1->vib_file_converted[0x0D + i];
-                hdr->rumble_l[2] = FormJoy::myform1->vib_file_converted[0x0E + i];
-                hdr->rumble_l[3] = FormJoy::myform1->vib_file_converted[0x0F + i];
+                hdr->rumble_l[0] = use_rumble_data[0x0C + i];
+                hdr->rumble_l[1] = use_rumble_data[0x0D + i];
+                hdr->rumble_l[2] = use_rumble_data[0x0E + i];
+                hdr->rumble_l[3] = use_rumble_data[0x0F + i];
             }
-#else
-                // TODO: Implement else
-#endif
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
             res = hid_write(handle, buf, sizeof(*hdr));
@@ -1400,14 +1410,18 @@ int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sampl
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
+
+            auto use_rumble_data
 #ifndef __jctool_cpp_API__
-            hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
-            hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
-            hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
-            hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+            = FormJoy::myform1->vib_loaded_file;
 #else
-            // TODO: Implement else
+            = rumble_data.data;
 #endif
+            hdr->rumble_l[0] = use_rumble_data[0x0C + vib_off + i];
+            hdr->rumble_l[1] = use_rumble_data[0x0D + vib_off + i];
+            hdr->rumble_l[2] = use_rumble_data[0x0E + vib_off + i];
+            hdr->rumble_l[3] = use_rumble_data[0x0F + vib_off + i];
+
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
             
             res = hid_write(handle, buf, sizeof(*hdr));
@@ -1426,14 +1440,18 @@ int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sampl
                 hdr->cmd = 0x10;
                 hdr->timer = timming_byte & 0xF;
                 timming_byte++;
+
+                auto use_rumble_data
 #ifndef __jctool_cpp_API__
-                hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
-                hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
-                hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
-                hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+                = FormJoy::myform1->vib_loaded_file;
 #else
-                // TODO: Implement else
+                = rumble_data.data;
 #endif
+                hdr->rumble_l[0] = use_rumble_data[0x0C + vib_off + i];
+                hdr->rumble_l[1] = use_rumble_data[0x0D + vib_off + i];
+                hdr->rumble_l[2] = use_rumble_data[0x0E + vib_off + i];
+                hdr->rumble_l[3] = use_rumble_data[0x0F + vib_off + i];
+
                 memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
                 res = hid_write(handle, buf, sizeof(*hdr));
@@ -1467,14 +1485,17 @@ int play_hd_rumble_file(controller_hid_handle_t handle, int file_type, u16 sampl
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
+            auto use_rumble_data
 #ifndef __jctool_cpp_API__
-            hdr->rumble_l[0] = FormJoy::myform1->vib_loaded_file[0x0C + vib_off + i];
-            hdr->rumble_l[1] = FormJoy::myform1->vib_loaded_file[0x0D + vib_off + i];
-            hdr->rumble_l[2] = FormJoy::myform1->vib_loaded_file[0x0E + vib_off + i];
-            hdr->rumble_l[3] = FormJoy::myform1->vib_loaded_file[0x0F + vib_off + i];
+            = FormJoy::myform1->vib_loaded_file;
 #else
-            // TODO: Implement else
+            = rumble_data.data;
 #endif
+            hdr->rumble_l[0] = use_rumble_data[0x0C + vib_off + i];
+            hdr->rumble_l[1] = use_rumble_data[0x0D + vib_off + i];
+            hdr->rumble_l[2] = use_rumble_data[0x0E + vib_off + i];
+            hdr->rumble_l[3] = use_rumble_data[0x0F + vib_off + i];
+
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
             res = hid_write(handle, buf, sizeof(*hdr));
