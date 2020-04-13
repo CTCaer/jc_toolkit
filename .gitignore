@@ -289,3 +289,6 @@ __pycache__/
 
 .vscode
 build-vscode
+
+out
+CMakeSettings.json

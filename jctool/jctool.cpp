@@ -25,7 +25,6 @@
 #endif
 
 #include "hidapi.h"
-#include "hidapi_log.h"
 
 #ifndef __jctool_cpp_API__
 using namespace CppWinFormJoy;

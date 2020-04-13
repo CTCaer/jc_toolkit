@@ -10,10 +10,18 @@ add_compile_definitions(
     BATTERY_INDICATORS_EXT=".png"
 )
 
+if (WIN32)
+    set(HIDAPI_SOURCE hidapi/windows/hid.c)
+endif()
+
+if(CMAKE_SYSTEM_NAME EQUAL Linux)
+    set(HIDAPI_SOURCE hidapi/linux/hid.c)
+endif()
+
 set(SOURCES
     jctool/jctool.cpp
-    jctool/hid.c
-    
+    ${HIDAPI_SOURCE}
+
     jctool/jctool_api_ui.cpp
     jctool/Controller.cpp
 )
@@ -37,6 +45,7 @@ endif()
 
 target_include_directories(JCToolkit PRIVATE
     jctool
+    hidapi/hidapi
     ui/ImGui/imgui
     ui/ImGui/ImGuiInterface
     ui/tools
