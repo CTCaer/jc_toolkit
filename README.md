@@ -3,8 +3,8 @@ The OG Joy-Con Toolkit is now accessible as an API.
 The goal is to eliminate the dependency to CppWinForm UI framework and expose an API for our fellow joy-con hackers. Feel free to create a pull request if you want to contribute to the API.
 
 TODOS:
-  - Linux support
-    - Access hid devices.
+  - Linux support (In Progress)
+    - Access hid devices (Need to test).
   - Port UI using ImGui as a UI framework.
 
 
