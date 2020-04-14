@@ -3,7 +3,9 @@ project(ImGui)
 ##############################
 # Export ImGui as a library. #
 ##############################
-add_compile_options("-D IMGUI_IMPL_OPENGL_LOADER_GL3W")
+add_compile_options(
+    -DIMGUI_IMPL_OPENGL_LOADER_GL3W
+)
 add_library(ImGui
     # Add ImGui source files.
     imgui/imgui.cpp

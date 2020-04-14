@@ -26,6 +26,10 @@
 #ifdef __jctool_cpp_API__
 #include "ImageLoad/ImageLoad.hpp"
 #include "Controller.hpp"
+#define BATTERY_INDICATORS_PATH "${PROJECT_SOURCE_DIR}/jctool/original_res/batt_"
+#define BATTERY_INDICATORS_COUNT 10
+#define BATTERY_INDICATOR_NAMES "0 0_chr 25 25_chr 50 50_chr 75 75_chr 100 100_chr"
+#define BATTERY_INDICATORS_EXT ".png"
 #endif
 
 BatteryData parseBatteryData(const unsigned char* batt_data) {
