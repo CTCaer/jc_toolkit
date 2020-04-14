@@ -172,6 +172,8 @@ namespace JCToolkit {
                 ofn.lpstrInitialDir = NULL;
                 ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
                 if(GetOpenFileName(&ofn)) {
+#elif defined(linux)
+                if(false) { // TODO: linux file open.
 #endif
                     std::ifstream rumble_fstream = std::ifstream(file_name_buf, std::ios_base::binary);
                     if(!rumble_fstream.bad()){

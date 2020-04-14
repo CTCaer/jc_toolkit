@@ -3,6 +3,10 @@
 #include "jctool.h"
 #include "jctool_api.hpp"
 
+#ifdef linux
+#include <cstring> // memset linux
+#endif
+
 /**
  * Updates the battery information with the value read from the controller.
  */
@@ -25,7 +29,11 @@ void Controller::updateTemperatureData(){
 void Controller::connection(){
     int handle_ok = 0;
     if((handle_ok = device_connection(this->handle)) == 0) // TODO: , this->hid_serial_number)) == 0)
+#ifdef linux
+        memcpy(this->device_data, "NONE", 5);
+#else
         memcpy_s(this->device_data, 10, "NONE", 5);
+#endif
     else {
         get_device_info(this->handle, reinterpret_cast<unsigned char*>(this->device_data));
         this->updateBatteryData();

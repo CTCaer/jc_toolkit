@@ -2,11 +2,6 @@
 #include <string>
 #include "jctool_types.h"
 
-template <typename T> T CLAMP(const T& value, const T& low, const T& high)
-{
-    return value < low ? low : (value > high ? high : value);
-}
-
 s16 uint16_to_int16(u16 a);
 void decode_stick_params(u16 *decoded_stick_params, u8 *encoded_stick_params);
 void encode_stick_params(u8 *encoded_stick_params, u16 *decoded_stick_params);

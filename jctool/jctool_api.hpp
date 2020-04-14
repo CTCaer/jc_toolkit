@@ -1,5 +1,8 @@
 #pragma once
 #include "jctool_types.h"
+#include "jctool.h"
+#include "jctool_helpers.hpp"
+#include "luts.h"
 
 BatteryData parseBatteryData(const unsigned char* batt_data);
 	

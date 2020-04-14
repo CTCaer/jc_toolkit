@@ -42,7 +42,7 @@ public:
     /**
      * Get the resource handle of the image on the gpu.
      */
-    inline ImageRID ImageResource::getRID() {
+    inline ImageRID getRID() {
         return this->rid;
     }
 };
