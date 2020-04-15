@@ -15,20 +15,17 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="hid.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="jctool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="jctool_api_ui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\hidapi\windows\hid.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="hidapi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="jctool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -57,6 +54,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="jctool_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\hidapi\hidapi\hidapi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

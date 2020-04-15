@@ -33,6 +33,9 @@ const auto min = [](auto a, auto b){
 #else
 #include "imgui.h"
 #include "ImGuiInterface.hpp"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "ImageLoad/stb/stb_image_write.h"
+#include "jctool_api.hpp"
 #endif
 
 #include "hidapi.h"
@@ -1727,6 +1730,13 @@ int get_raw_ir_image(controller_hid_handle_t handle, u8 show_status) {
                     FormJoy::myform1->setIRPictureWindow(buf_image, true);
 #else
     // TODO: Implement else
+                    u8* rgb_pixels_buf = new u8[320*240*3];
+                    stbi_write_bmp("jctoolapi_test_ir_raw.bmp", 320, 240, 1, buf_image);
+                    for(int i=0; i < 4; i++){ // For all 4 colorized options.
+                        colorizefrom8BitsPP(buf_image, rgb_pixels_buf, 320, 240, 3, i);
+                        stbi_write_png(std::string("jctoolapi_test_ir_colorized" + std::to_string(i) + ".png").c_str(), 320, 240, 3, rgb_pixels_buf, 320*3);
+                    }
+                    delete [] rgb_pixels_buf;
 #endif
 
                     //debug

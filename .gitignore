@@ -288,7 +288,8 @@ __pycache__/
 *.xsd.cs
 
 .vscode
-build-vscode
+build*
+imgui.ini
 
 out
 CMakeSettings.json

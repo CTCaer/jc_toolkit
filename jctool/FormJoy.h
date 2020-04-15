@@ -2743,7 +2743,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->chkBox_IRDimLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
             this->chkBox_IRDimLeds->Size = System::Drawing::Size(195, 21);
             this->chkBox_IRDimLeds->TabIndex = 27;
-            this->chkBox_IRDimLeds->Text = L"Near/Wide  (130°)  Leds 3/4";
+            this->chkBox_IRDimLeds->Text = L"Near/Wide  (130ï¿½)  Leds 3/4";
             // 
             // chkBox_IRBrightLeds
             // 
@@ -2759,7 +2759,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->chkBox_IRBrightLeds->RightToLeft = System::Windows::Forms::RightToLeft::No;
             this->chkBox_IRBrightLeds->Size = System::Drawing::Size(195, 21);
             this->chkBox_IRBrightLeds->TabIndex = 26;
-            this->chkBox_IRBrightLeds->Text = L"Far/Narrow   (75°)  Leds 1/2";
+            this->chkBox_IRBrightLeds->Text = L"Far/Narrow   (75ï¿½)  Leds 1/2";
             // 
             // grpBox_IRRes
             // 
@@ -5977,7 +5977,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         this->lbl_IRStatus->Text = "Status: Configuring";
         Application::DoEvents();
 
-        // The IR camera lens has a FoV of 123°. The IR filter is a NIR 850nm wavelength pass filter.
+        // The IR camera lens has a FoV of 123ï¿½. The IR filter is a NIR 850nm wavelength pass filter.
 
         // Resolution config register and no of packets expected
         // The sensor supports a max of Binning [4 x 2] and max Skipping [4 x 4]
@@ -6015,11 +6015,11 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         // Enable IR Leds. Only the following configurations are supported.
         if (this->chkBox_IRBrightLeds->Checked == true && this->chkBox_IRDimLeds->Checked == true)
-            ir_new_config.ir_leds = 0b000000; // Both Far/Narrow 75° and Near/Wide 130° Led groups are enabled.
+            ir_new_config.ir_leds = 0b000000; // Both Far/Narrow 75ï¿½ and Near/Wide 130ï¿½ Led groups are enabled.
         else if (this->chkBox_IRBrightLeds->Checked == true && this->chkBox_IRDimLeds->Checked == false)
-            ir_new_config.ir_leds = 0b100000; // Only Far/Narrow 75° Led group is enabled.
+            ir_new_config.ir_leds = 0b100000; // Only Far/Narrow 75ï¿½ Led group is enabled.
         else if (this->chkBox_IRBrightLeds->Checked == false && this->chkBox_IRDimLeds->Checked == true)
-            ir_new_config.ir_leds = 0b010000; // Only Near/Wide 130° Led group is enabled.
+            ir_new_config.ir_leds = 0b010000; // Only Near/Wide 130ï¿½ Led group is enabled.
         else if (this->chkBox_IRBrightLeds->Checked == false && this->chkBox_IRDimLeds->Checked == false)
             ir_new_config.ir_leds = 0b110000; // Both groups disabled
 
@@ -6067,40 +6067,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         // Initialize camera
         if (startNewConfig) {
             // Configure the IR camera and take a photo or stream.
-            res = ir_sensor(ir_new_config);
-
-            // Get error
-            switch (res) {
-            case 1:
-                error_msg = "1ID31";
-                break;
-            case 2:
-                error_msg = "2MCUON";
-                break;
-            case 3:
-                error_msg = "3MCUONBUSY";
-                break;
-            case 4:
-                error_msg = "4MCUMODESET";
-                break;
-            case 5:
-                error_msg = "5MCUSETBUSY";
-                break;
-            case 6:
-                error_msg = "6IRMODESET";
-                break;
-            case 7:
-                error_msg = "7IRSETBUSY";
-                break;
-            case 8:
-                error_msg = "8IRCFG";
-                break;
-            case 9:
-                error_msg = "9IRFCFG";
-                break;
-            default:
-                break;
-            }
+            res = irSensor(ir_new_config, error_msg);
             if (res > 0)
                 this->lbl_IRStatus->Text = "Status: Error " + error_msg + "!";
         }
@@ -6120,41 +6087,17 @@ public ref class FormJoy : public System::Windows::Forms::Form
         // Skip slow SetPixel(). Reduce latency pixel set latency from 842us -> 260ns.
         System::Drawing::Imaging::BitmapData^ bmd = MyImage->LockBits(System::Drawing::Rectangle(0, 0, ir_image_width, ir_image_height), System::Drawing::Imaging::ImageLockMode::ReadOnly, MyImage->PixelFormat);
         int PixelSize = 3;
-
-        for (int y = 0; y < ir_image_height; y++) {
-            byte* row = (byte *)bmd->Scan0.ToPointer() + (y * bmd->Stride);
-            for (int x = 0; x < ir_image_width; x++) {
-                // Ironbow Palette
-                if (this->radioBtn_IRColorHeat->Checked) {
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * PixelSize + 2] = (iron_palette[buf_image[x + buf_pos]] >> 16)&0xFF;
-                    row[x * PixelSize + 1] = (iron_palette[buf_image[x + buf_pos]] >> 8) & 0xFF;
-                    row[x * PixelSize]     =  iron_palette[buf_image[x + buf_pos]] & 0xFF;
-                }
-                // Greyscale
-                else if (this->radioBtn_IRColorGrey->Checked) {
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * PixelSize + 2] = buf_image[x + buf_pos];
-                    row[x * PixelSize + 1] = buf_image[x + buf_pos];
-                    row[x * PixelSize]     = buf_image[x + buf_pos];
-                }
-                // Night vision
-                else if (this->radioBtn_IRColorGreen->Checked) {
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * PixelSize + 2] = 0;
-                    row[x * PixelSize + 1] = buf_image[x + buf_pos];
-                    row[x * PixelSize]     = 0;
-                }
-                // Red vision
-                else {
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * PixelSize + 2] = buf_image[x + buf_pos];
-                    row[x * PixelSize + 1] = 0;
-                    row[x * PixelSize]     = 0;
-                }
-            }
-            buf_pos += ir_image_width;
+        int col = 3;
+        if (this->radioBtn_IRColorHeat->Checked) {
+            col = 2;
         }
+        else if (this->radioBtn_IRColorGrey->Checked) {
+            col = 0;
+        }
+        else if (this->radioBtn_IRColorGreen->Checked) {
+            col = 1;
+        }
+        colorizefrom8BitsPP(buf_image, (u8*)bmd->Scan0.ToPointer(), ir_image_width, ir_image_height, 3, col);
         MyImage->UnlockBits(bmd);
 
         Image^ rotatedImage = dynamic_cast<Image^>(MyImage);

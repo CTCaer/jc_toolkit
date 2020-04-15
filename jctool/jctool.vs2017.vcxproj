@@ -36,6 +36,7 @@
     <LinkIncremental>false</LinkIncremental>
     <EnableManagedIncrementalBuild>false</EnableManagedIncrementalBuild>
     <EmbedManifest>true</EmbedManifest>
+    <IncludePath>C:\Users\ninja\source\repos\joycon-lab\JCToolkit\jc_toolkit\hidapi\hidapi;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -78,11 +79,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\hidapi\windows\hid.c" />
     <ClCompile Include="jctool.cpp" />
-    <ClCompile Include="hid.c" />
     <ClCompile Include="jctool_api_ui.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\hidapi\hidapi\hidapi.h" />
     <ClInclude Include="hidapi_log.h" />
     <ClInclude Include="ir_sensor.h" />
     <ClInclude Include="jctool.h" />
@@ -97,9 +99,6 @@
       <DependentUpon>FormJoy.h</DependentUpon>
     </ClInclude>
     <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="hidapi.h" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FormJoy.resx">

@@ -8,6 +8,52 @@ BatteryData parseBatteryData(const unsigned char* batt_data);
 	
 TemperatureData parseTemperatureData(const unsigned char* temp_data);
 
+void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_width, int ir_image_height, int bytes_pp_out, int col_fil);
+
+template<typename ErrMsgStr>
+int irSensor(ir_image_config ir_img_cfg, ErrMsgStr& error_msg
+#ifndef __jctool_cpp_API__
+){
+    int res = ir_sensor(ir_img_cfg);
+#else
+, controller_hid_handle_t handle) {
+    int res = ir_sensor(handle, ir_img_cfg);
+#endif
+    // Get error
+    switch (res) {
+    case 1:
+        error_msg = "1ID31";
+        break;
+    case 2:
+        error_msg = "2MCUON";
+        break;
+    case 3:
+        error_msg = "3MCUONBUSY";
+        break;
+    case 4:
+        error_msg = "4MCUMODESET";
+        break;
+    case 5:
+        error_msg = "5MCUSETBUSY";
+        break;
+    case 6:
+        error_msg = "6IRMODESET";
+        break;
+    case 7:
+        error_msg = "7IRSETBUSY";
+        break;
+    case 8:
+        error_msg = "8IRCFG";
+        break;
+    case 9:
+        error_msg = "9IRFCFG";
+        break;
+    default:
+        break;
+    }
+    return res;
+}
+
 template<typename ByteArray>
 VIBMetadata getVIBMetadata(ByteArray vib_loaded_file) {
     u8 file_magic[] = { 0x52, 0x52, 0x41, 0x57, 0x4, 0xC, 0x3, 0x10 };
