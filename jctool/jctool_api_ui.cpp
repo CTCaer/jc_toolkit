@@ -66,16 +66,9 @@ TemperatureData parseTemperatureData(const unsigned char* temp_data){
     return {celsius, celsius*1.8f + 32};
 }
 
-enum IRColor {
-    IRGreyscale,
-    IRNightVision,
-    IRIronbow,
-    IRInfrared
-};
-
 void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_height, int ir_image_width, int bytes_pp_out, int col_fil){
     int buf_pos = 0;
-    
+
     for (int y = 0; y < ir_image_height; y++) {
         byte* row = (byte *)pixel_data_out + (y * bytes_pp_out * ir_image_width);
         for (int x = 0; x < ir_image_width; x++) {
@@ -132,6 +125,8 @@ namespace JCToolkit {
                 Assets::battery_indicators[i].load(std::string(BATTERY_INDICATORS_PATH) + vec[i] + BATTERY_INDICATORS_EXT);
             }
         }
+
+
     }
     Controller default_controller;
     RumbleData default_rumble_data;
@@ -151,8 +146,8 @@ namespace JCToolkit {
         }
 
         void showControllerInfo(Controller& controller){
-            auto device_info = controller.getDeviceInfo();
-            auto controller_type = controller.getType();
+            auto device_info = controller.deviceInfo();
+            auto controller_type = controller.type();
 
             if(controller_type == Controller::Type::None) {
                 ImGui::Text("No controller is connected.");
@@ -181,7 +176,7 @@ namespace JCToolkit {
             }
 
             ImGui::Text("Controller Type: %s", controller_type_label);
-            int battery_report = controller.batteryGetReport();
+            int battery_report = controller.batteryReport();
             ImGui::Text("Battery");
             if(battery_report < 0)
                 ImGui::Text("Invalid reading.");
@@ -194,12 +189,12 @@ namespace JCToolkit {
                         static_cast<float>(battery_img.getHeight())
                     )
                 );
-                ImGui::Text("%.2fV - %d", controller.batteryGetVoltage(), controller.batteryGetPercentage());
+                ImGui::Text("%.2fV - %d", controller.batteryVoltage(), controller.batteryPercentage());
             }
 
-            ImGui::Text("Temperature: %.2fF / %.2fC ", controller.temperatureGetFarenheight(), controller.temperatureGetCelsius());
+            ImGui::Text("Temperature: %.2fF / %.2fC ", controller.temperatureF(), controller.temperatureC());
 
-            ImGui::Text("S/N: %s", controller.getSerialNumber().c_str());
+            ImGui::Text("S/N: %s", controller.serialNumber().c_str());
         }
 
         void showRumblePlayer(RumbleData& rumble_data) {
@@ -291,125 +286,35 @@ namespace JCToolkit {
                         rumble_data.metadata.loop_times
                     );
                 }
-                if(default_controller.getHandle() && ImGui::Button("Play")){
-                    play_hd_rumble_file(default_controller.getHandle(), rumble_data);
+                if(default_controller.handle() && ImGui::Button("Play")){
+                    play_hd_rumble_file(default_controller.handle(), rumble_data);
                 }
             }
         }
         
         void showIRCamera(Controller& controller) {
-            // Resolution and Color Filter
-            static int res_selected = 0;
-            static std::pair<ImVec2, const char*> resolutions[] = {
-                {{240, 320}, "240 x 320"},
-                {{120, 160}, "120 x 160"},
-                {{60, 80}, "60 x 80"},
-                {{30, 40}, "30 x 40"}
-            };
-            static int col_fil_selected = 0;
             static const char* col_fils[] = {
                 "Greyscale",
                 "Night Vision",
                 "Ironbow",
                 "Infrared"
             };
-
-            // Near IR Light Settings
-            static u8 narrow_ir_intensity = ~u8(0);
-            static u8 wide_ir_intensity = ~u8(0);
-            static bool use_narrow_ir = true;
-            static bool use_wide_ir = true;
-            static bool use_flashlight = false;
-            static bool use_strobe_flash = false;
-            static bool use_ext_ir_filter = true;
-
-            // Exposure Settings
+            static auto& resolutions = Controller::IRSensor::resolutions;
+            
             static u16 exposure_amt = 300;
-            static bool auto_exposure = false;
-
-            // Denoise Settings
-            static bool use_denoise = true;
             static int denoise_edge_smooth = 35;
             static int denoise_color_intrpl = 68; // Color Interpolation
 
-            // More
-            static bool flip_capture = false;
-            static int ir_reg = 0; // IR Register
-            static int ir_reg_val = 0; // IR Register Value
-            static u8 digital_gain = 1;
+            // The controller's ir config
+            ir_image_config& ir_config_0 = controller.ir_sensor.config;
 
             /* Stream/Capture */ {
                 ImGui::BeginGroup();
-                ImGui::Image(0, resolutions[res_selected].first);
+                auto& size = std::get<2>(resolutions[controller.ir_sensor.res_idx_selected]);
+                ImGui::Image(0, {(float)size.width, (float)size.height});
                 if(ImGui::Button("Capture")) {
-                    ir_image_config ir_config = {};
-                    /* IR Configuration */ {
-                        // Resolution config
-                        switch(res_selected){
-                            case 0: // 320 x 240
-                                ir_config.ir_res_reg = 0b00000000;
-                                ir_max_frag_no = 0xff;
-                                break;
-                            case 1: // 160 x 120
-                                ir_config.ir_res_reg = 0b1010000;
-                                ir_max_frag_no = 0x3f;
-                                break;
-                            case 2: // 80 x 60
-                                ir_config.ir_res_reg = 0b01100100;
-                                ir_max_frag_no = 0x0f;
-                                break;
-                            case 3: // 40 x 30
-                                ir_config.ir_res_reg = 0b01101001;
-                                ir_max_frag_no = 0x03;
-                                break;
-                        }
-
-                        // IR led config
-                        ir_config.ir_leds = ((!use_wide_ir << 1) | (!use_narrow_ir)) << 4;
-                        // IR led effects
-                        if(use_flashlight)
-                            ir_config.ir_leds |= 0b01;
-                        if(use_strobe_flash)
-                            ir_config.ir_leds |= 0b10000000;
-
-                        // IR leds intensity
-                        ir_config.ir_leds_intensity = ((u8)wide_ir_intensity << 8) | (u8)narrow_ir_intensity;
-
-                        // External light filter
-                        if (use_ext_ir_filter && !use_strobe_flash)
-                            ir_config.ir_ex_light_filter = 0x03;
-                        else
-                            ir_config.ir_ex_light_filter = 0x00;
-                        
-                        // Flip the image
-                        if(flip_capture)
-                            ir_config.ir_flip = 0x02;
-                        else
-                            ir_config.ir_flip = 0x00;
-
-                        // Exposure time.
-                        ir_config.ir_exposure = (u16)(exposure_amt * 31200 / 1000);
-                        if(!auto_exposure && enable_IRVideoPhoto){
-                            enable_IRAutoExposure = false;
-                            ir_config.ir_digital_gain = (u8)digital_gain;
-                        } else {
-                            enable_IRAutoExposure = true;
-                            ir_config.ir_digital_gain = 1;
-                        }
-
-                        // De-noise
-                        if(use_denoise)
-                            ir_config.ir_denoise = 0x01 << 16;
-                        else
-                            ir_config.ir_denoise = 0x00 << 16;
-                        ir_config.ir_denoise |= ((u8) denoise_edge_smooth & 0xff) << 8;
-                        ir_config.ir_denoise |= (u8) denoise_color_intrpl & 0xff;
-                    }
-                    // Initialize the IR Sensor AND Take a photo.
-                    std::string err_msg;
-                    int res = irSensor(ir_config, err_msg, controller.getHandle());
-                    if(res > 0)
-                        ; // Error.
+                    // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
+                    controller.IRSensorCapture();
                 }
                 ImGui::EndGroup();
             }
@@ -425,10 +330,14 @@ namespace JCToolkit {
                         ImGui::Text("Resolution");
 
                         constexpr int res_count = _ARRAYSIZE(resolutions);
-                        for(int i = 0; i < res_count; i++){
-                            auto& res = resolutions[i];
-                            if(ImGui::RadioButton(res.second, i == res_selected))
-                                res_selected = i;
+                        for(int i=0; i < res_count; i++){
+                            auto& res_tuple = resolutions[i];
+                            bool selected = std::get<1>(res_tuple) == std::get<1>(resolutions[controller.ir_sensor.res_idx_selected]);
+                            if(ImGui::RadioButton(std::get<0>(res_tuple), selected)){
+                                controller.ir_sensor.res_idx_selected = i;
+                                // Set the resolution value on the config.
+                                ir_config_0.ir_res_reg = std::get<1>(res_tuple);
+                            }
                         }
                         ImGui::EndGroup();
 
@@ -437,10 +346,9 @@ namespace JCToolkit {
                         ImGui::BeginGroup();
                         ImGui::Text("Color Filter");
 
-                        constexpr int col_fils_count = _ARRAYSIZE(col_fils);
-                        for(int i = 0; i < col_fils_count; i++){
-                            if(ImGui::RadioButton(col_fils[i], i == col_fil_selected))
-                                col_fil_selected = i;
+                        for(int i = 0; i < IRColorCount; i++){
+                            if(ImGui::RadioButton(col_fils[i], i == controller.ir_sensor.ir_color))
+                                controller.ir_sensor.ir_color = (IRColor)i;
                         }
                         ImGui::EndGroup();
                     }
@@ -450,18 +358,28 @@ namespace JCToolkit {
                     if(ImGui::CollapsingHeader("Advanced Settings")){
                         static const u8 min_x = 1;
                         static const u8 max_x = 20;
-                        ImGui::SliderScalar("Digital Gain (lossy)", ImGuiDataType_U8, &digital_gain, &min_x, &max_x, "x%d");
+                        ImGui::SliderScalar("Digital Gain (lossy)", ImGuiDataType_U8, &ir_config_0.ir_digital_gain, &min_x, &max_x, "x%d");
                         /* Exposure */ {
                             ImGui::BeginGroup();
-                            ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt);
-                            ImGui::Checkbox("Auto Exposure (experimental)", &auto_exposure);
+                            if(ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt))
+                                ir_image_config_Sets::exposure(ir_config_0.ir_exposure, exposure_amt);
+                            if(ImGui::Checkbox("Auto Exposure (experimental)", &controller.ir_sensor.auto_exposure)){
+                                if(controller.ir_sensor.auto_exposure && enable_IRVideoPhoto)
+                                    enable_IRAutoExposure = false;
+                                else {
+                                    enable_IRAutoExposure = true;
+                                    ir_config_0.ir_digital_gain = 1;
+                                }
+                            }
                             ImGui::EndGroup();
                         }
                         /* Denoise */ {
                             ImGui::BeginGroup();
-                            ImGui::Checkbox("Enable", &use_denoise);
-                            ImGui::InputInt("Edge Smoothing", &denoise_edge_smooth); // TODO: Clamp to 0-256
-                            ImGui::InputInt("Color Interpolation", &denoise_color_intrpl); // TODO: Clamp to 0-256
+                            ImGui::CheckboxFlags("Enable", &ir_config_0.ir_denoise, ir_denoise_Enable);
+                            if(ImGui::InputInt("Edge Smoothing", &denoise_edge_smooth))
+                                ir_image_config_Sets::denoise_edge_smooth(ir_config_0.ir_denoise, denoise_edge_smooth); // TODO: Clamp to 0-256
+                            if(ImGui::InputInt("Color Interpolation", &denoise_color_intrpl))
+                                ir_image_config_Sets::denoise_color_intrpl(ir_config_0.ir_denoise, denoise_color_intrpl); // TODO: Clamp to 0-256
                             ImGui::EndGroup();
                         }
                     }
@@ -472,26 +390,26 @@ namespace JCToolkit {
                     if(ImGui::CollapsingHeader("Near-Infrared Light")){
                         static constexpr u8 max_intensity = ~u8(0);
                         static constexpr u8 min_intensity = 0;
-                        ImGui::Checkbox("Far/Narrow (75*) Leds 1-2", &use_narrow_ir);
-                        ImGui::SliderScalar("Intensity##narrow", ImGuiDataType_U8, &narrow_ir_intensity, &min_intensity, &max_intensity, "%u");
-                        ImGui::Checkbox("Near/Wide (130*) Leds 3-4", &use_wide_ir);
-                        ImGui::SliderScalar("Intensity##wide", ImGuiDataType_U8, &wide_ir_intensity, &min_intensity, &max_intensity, "%u");
-                        ImGui::Checkbox("Flashlight Mode", &use_flashlight);
-                        ImGui::Checkbox("Strobe Flash Mode", &use_strobe_flash);
-                        ImGui::Checkbox("External IR Filter", &use_ext_ir_filter);
+                        ImGui::CheckboxFlags("(Disable) Far/Narrow (75*) Leds 1-2", (uint32_t*)&ir_config_0.ir_leds, ir_leds_NarrowDisable);
+                        ImGui::SliderScalar("Intensity##narrow", ImGuiDataType_U8, &ir_config_0.ir_leds_intensity, &min_intensity, &max_intensity, "%u");
+                        ImGui::CheckboxFlags("(Disable) Near/Wide (130*) Leds 3-4", (uint32_t*)&ir_config_0.ir_leds, ir_leds_WideDisable);
+                        ImGui::SliderScalar("Intensity##wide", ImGuiDataType_U8, (u8*)&ir_config_0.ir_leds_intensity + 1, &min_intensity, &max_intensity, "%u");
+                        ImGui::CheckboxFlags("Flashlight Mode", (uint32_t*)&ir_config_0.ir_leds, ir_leds_FlashlightMode);
+                        ImGui::CheckboxFlags("Strobe Flash Mode", (uint32_t*)&ir_config_0.ir_leds, ir_leds_StrobeFlashMode);
+                        ImGui::CheckboxFlags("External IR Filter", (uint32_t*)&ir_config_0.ir_ex_light_filter, ir_ex_light_fliter_0);
                     }
                     ImGui::EndGroup();
 
                 }
                 /* IR Sensor Register/Value */ {
                     ImGui::BeginGroup();
-                    if(ImGui::CollapsingHeader("IR Sensor Register/Value")){
-                        ImGui::InputInt("Register", &ir_reg); // TODO: clamp to 0x5FF
-                        ImGui::InputInt("Value", &ir_reg_val); // TODO: clamp to 0xFF
+                    if(ImGui::CollapsingHeader("Custom IR Sensor Register/Value")){
+                        ImGui::InputInt("Register", (int*)&ir_config_0.ir_custom_register); // TODO: clamp to 0x5FF
+                        ImGui::InputInt("Value", (int *)((uint16_t*)&ir_config_0.ir_custom_register + 1)); // TODO: clamp to 0xFF
                     }
                     ImGui::EndGroup();
                 }
-                ImGui::Checkbox("Flip Capture", &flip_capture);
+                ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config_0.ir_flip, flip_dir_0);
                 ImGui::EndGroup();
             }
 

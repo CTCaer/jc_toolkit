@@ -2,6 +2,10 @@
 #include <string>
 #include "jctool_types.h"
 
+#ifdef __jctool_cpp_API__
+#include "Controller.hpp"
+#endif
+
 s16 uint16_to_int16(u16 a);
 void decode_stick_params(u16 *decoded_stick_params, u8 *encoded_stick_params);
 void encode_stick_params(u8 *encoded_stick_params, u16 *decoded_stick_params);
@@ -45,8 +49,8 @@ int set_led_busy(controller_hid_handle_t handle);
 int button_test(controller_hid_handle_t handle);
 int nfc_tag_info(controller_hid_handle_t handle);
 int silence_input_report(controller_hid_handle_t handle);
-int ir_sensor(controller_hid_handle_t handle, ir_image_config &ir_cfg);
-int ir_sensor_config_live(controller_hid_handle_t handle, ir_image_config &ir_cfg);
+int ir_sensor(Controller::IRSensor& use_ir_sensor);
+int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor);
 
 namespace JCToolkit {
     namespace Helpers {
@@ -67,7 +71,9 @@ extern bool cancel_spi_dump;
 extern bool check_connection_ok;
 
 extern u8 timming_byte;
+#ifndef __jctool_cpp_API__
 extern u8 ir_max_frag_no;
+#endif
 
 namespace CppWinFormJoy {
     class images

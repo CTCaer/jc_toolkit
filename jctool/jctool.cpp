@@ -57,7 +57,9 @@ bool cancel_spi_dump;
 bool check_connection_ok;
 
 u8 timming_byte;
+#ifndef __jctool_cpp_API__
 u8 ir_max_frag_no;
+#endif
 
 #ifndef __jctool_cpp_API__
 hid_device *handle;
@@ -1621,7 +1623,9 @@ int ir_sensor_auto_exposure(controller_hid_handle_t handle, int white_pixels_per
 #ifndef __jctool_cpp_API__
 int get_raw_ir_image(u8 show_status) {
 #else
-int get_raw_ir_image(controller_hid_handle_t handle, u8 show_status) {
+int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
+    controller_hid_handle_t handle = *use_ir_sensor.hostController();
+    u8 ir_max_frag_no = use_ir_sensor.maxFragNo();
 #endif
     std::stringstream ir_status;
 
@@ -1729,12 +1733,12 @@ int get_raw_ir_image(controller_hid_handle_t handle, u8 show_status) {
                     elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
                     FormJoy::myform1->setIRPictureWindow(buf_image, true);
 #else
-    // TODO: Implement else
-                    u8* rgb_pixels_buf = new u8[320*240*3];
-                    stbi_write_bmp("jctoolapi_test_ir_raw.bmp", 320, 240, 1, buf_image);
+                    auto& resolution = std::get<2>(use_ir_sensor.resolutions[use_ir_sensor.res_idx_selected]);
+                    u8* rgb_pixels_buf = new u8[resolution.width*resolution.height*3];
+                    stbi_write_bmp("jctoolapi_test_ir_raw.bmp", resolution.width, resolution.height, 1, buf_image);
                     for(int i=0; i < 4; i++){ // For all 4 colorized options.
-                        colorizefrom8BitsPP(buf_image, rgb_pixels_buf, 320, 240, 3, i);
-                        stbi_write_png(std::string("jctoolapi_test_ir_colorized" + std::to_string(i) + ".png").c_str(), 320, 240, 3, rgb_pixels_buf, 320*3);
+                        colorizefrom8BitsPP(buf_image, rgb_pixels_buf, resolution.width, resolution.height, 3, i);
+                        stbi_write_png(std::string("jctoolapi_test_ir_colorized" + std::to_string(i) + ".png").c_str(), resolution.width, resolution.height, 3, rgb_pixels_buf, resolution.width*3);
                     }
                     delete [] rgb_pixels_buf;
 #endif
@@ -1937,7 +1941,10 @@ int get_raw_ir_image(controller_hid_handle_t handle, u8 show_status) {
 #ifndef __jctool_cpp_API__
 int ir_sensor(ir_image_config &ir_cfg) {
 #else
-int ir_sensor(controller_hid_handle_t handle, ir_image_config &ir_cfg) {
+int ir_sensor(Controller::IRSensor& use_ir_sensor) {
+    controller_hid_handle_t handle = *use_ir_sensor.hostController();
+    u8 ir_max_frag_no = use_ir_sensor.maxFragNo();
+    ir_image_config& ir_cfg = use_ir_sensor.config;
 #endif
     int res;
     u8 buf[0x170];
@@ -2322,9 +2329,9 @@ step9:
     else
         res_get = get_raw_ir_image(1);
 #else
-        res_get = get_raw_ir_image(handle, 2);
+        res_get = get_raw_ir_image(use_ir_sensor, 2);
     else
-        res_get = get_raw_ir_image(handle, 1);
+        res_get = get_raw_ir_image(use_ir_sensor, 1);
 #endif
 
     //////

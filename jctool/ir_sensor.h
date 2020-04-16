@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO: make extern
 // crc-8-ccitt / polynomial 0x07 look up table
 static uint8_t mcu_crc8_table[256] = {
     0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F, 0x36, 0x31, 0x24, 0x23, 0x2A, 0x2D,
@@ -20,6 +21,7 @@ static uint8_t mcu_crc8_table[256] = {
     0xDE, 0xD9, 0xD0, 0xD7, 0xC2, 0xC5, 0xCC, 0xCB, 0xE6, 0xE1, 0xE8, 0xEF, 0xFA, 0xFD, 0xF4, 0xF3
 };
 
+// TODO: make extern
 // ARGB Ironbow palette
 static uint32_t iron_palette[] = {
     0xff000014, 0xff000025, 0xff00002a, 0xff000032, 0xff000036, 0xff00003e, 0xff000042, 0xff00004f,
@@ -56,3 +58,22 @@ static uint32_t iron_palette[] = {
     0xfffffad1, 0xfffffad4, 0xfffffcdb, 0xfffffcdf, 0xfffffde5, 0xfffffde8, 0xfffffeee, 0xfffffff6
 };
 
+
+enum IRColor {
+    IRGreyscale,
+    IRNightVision,
+    IRIronbow,
+    IRInfrared,
+    IRColorCount
+};
+/**
+ * Enum values for the various resolutions of the IR Camera.
+ * These are based on the normal orientation of the camera,
+ * which is when the rail is facing upwards.
+ */
+enum IRResolution : u8 {
+    IR_320x240 = 0b00000000,
+    IR_160x120 = 0b1010000,
+    IR_80x60 = 0b01100100,
+    IR_40x30 = 0b01101001
+};

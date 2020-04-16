@@ -3,6 +3,9 @@
 #include "jctool.h"
 #include "jctool_helpers.hpp"
 #include "luts.h"
+#ifdef __jctool_cpp_API__
+#include "Controller.hpp"
+#endif
 
 BatteryData parseBatteryData(const unsigned char* batt_data);
 	
@@ -11,13 +14,13 @@ TemperatureData parseTemperatureData(const unsigned char* temp_data);
 void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_width, int ir_image_height, int bytes_pp_out, int col_fil);
 
 template<typename ErrMsgStr>
-int irSensor(ir_image_config ir_img_cfg, ErrMsgStr& error_msg
 #ifndef __jctool_cpp_API__
+int irSensor(ir_image_config ir_img_cfg, ErrMsgStr& error_msg
 ){
     int res = ir_sensor(ir_img_cfg);
 #else
-, controller_hid_handle_t handle) {
-    int res = ir_sensor(handle, ir_img_cfg);
+int irSensor(Controller::IRSensor& use_ir_sensor, ErrMsgStr& error_msg) {
+    int res = ir_sensor(use_ir_sensor);
 #endif
     // Get error
     switch (res) {
@@ -165,5 +168,25 @@ void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, in
         vib_out[0xC + vib_off + i] = tempHF & 0xFF;
         vib_out[0xD + vib_off + i] = ((tempHF >> 8) & 0xFF) + lut_joy_amp.ha[j];
 
+    }
+}
+
+/**
+ * Helpers that set ir image config values.
+ */
+namespace ir_image_config_Sets {
+    // Origin: CTCaer
+    inline void exposure(u16& ir_exposure_var, u16 val) {
+        // Exposure time (Shutter speed) is in us. Valid values are 0 to 600us or 0 - 1/1666.66s
+        // ir_new_config.ir_exposure = (u16)(this->numeric_IRExposure->Value * 31200 / 1000);
+        ir_exposure_var =  (u16)val * 31200 / 1000;
+    }
+    // Origin: CTCaer
+    inline void denoise_edge_smooth(u32& ir_denoise_var, u8 val) {
+        ir_denoise_var |= ((u8) val & 0xff) << 8;
+    }
+    // Origin: CTCaer
+    inline void denoise_color_intrpl(u32& ir_denoise_var, u8 val) {
+        ir_denoise_var |= (u8) val & 0xff;
     }
 }

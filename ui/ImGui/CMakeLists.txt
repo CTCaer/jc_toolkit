@@ -6,7 +6,7 @@ project(ImGui)
 add_compile_options(
     -DIMGUI_IMPL_OPENGL_LOADER_GL3W
 )
-add_library(ImGui
+add_library(ImGui STATIC
     # Add ImGui source files.
     imgui/imgui.cpp
     imgui/imgui_demo.cpp

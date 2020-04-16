@@ -92,6 +92,22 @@ struct ir_image_config {
 
 #pragma pack(pop)
 
+enum ir_leds_Flags : u8 {
+    ir_leds_FlashlightMode = 1,
+    ir_leds_WideDisable = 1 << 4,
+    ir_leds_NarrowDisable = 1 << 5,
+    ir_leds_StrobeFlashMode = 1 << 7
+};
+enum flip_Flags : u8 {
+    flip_dir_0 = 1 << 1
+};
+enum ir_ex_light_filter_Flags : u8 {
+    ir_ex_light_fliter_0 = 0x3
+};
+enum ir_denoise_Flags : u32 {
+    ir_denoise_Enable = 1 << 16
+};
+
 struct BatteryData {
     int percent;
     int report;
