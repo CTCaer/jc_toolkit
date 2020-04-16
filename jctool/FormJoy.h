@@ -359,7 +359,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
     private: System::Windows::Forms::Label^  lbl_mainStickHelp;
     private: System::Windows::Forms::NumericUpDown^  numeric_StickParamRangeRatio2;
     private: System::Windows::Forms::NumericUpDown^  numeric_StickParamDeadzone2;
-
+    public:  System::Windows::Forms::TextBox^  txtBox_NFCTag;
 
     private: System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(images::typeid));
 
@@ -517,6 +517,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->radioBtn_IR120p = (gcnew System::Windows::Forms::RadioButton());
             this->radioBtn_IR240p = (gcnew System::Windows::Forms::RadioButton());
             this->grpBox_nfc = (gcnew System::Windows::Forms::GroupBox());
+            this->txtBox_NFCTag = (gcnew System::Windows::Forms::TextBox());
             this->txtBox_nfcUid = (gcnew System::Windows::Forms::TextBox());
             this->btn_NFC = (gcnew System::Windows::Forms::Button());
             this->lbl_nfcHelp = (gcnew System::Windows::Forms::Label());
@@ -2856,6 +2857,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             // 
             this->grpBox_nfc->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
                 static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->grpBox_nfc->Controls->Add(this->txtBox_NFCTag);
             this->grpBox_nfc->Controls->Add(this->txtBox_nfcUid);
             this->grpBox_nfc->Controls->Add(this->btn_NFC);
             this->grpBox_nfc->Controls->Add(this->lbl_nfcHelp);
@@ -2865,10 +2867,30 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->grpBox_nfc->Location = System::Drawing::Point(724, 445);
             this->grpBox_nfc->Margin = System::Windows::Forms::Padding(0, 0, 14, 0);
             this->grpBox_nfc->Name = L"grpBox_nfc";
-            this->grpBox_nfc->Size = System::Drawing::Size(220, 215);
+            this->grpBox_nfc->Size = System::Drawing::Size(220, 399);
             this->grpBox_nfc->TabIndex = 35;
             this->grpBox_nfc->TabStop = false;
             this->grpBox_nfc->Text = L"NFC Simple Tag Info";
+            // 
+            // txtBox_NFCTag
+            // 
+            this->txtBox_NFCTag->BackColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(70)), static_cast<System::Int32>(static_cast<System::Byte>(70)),
+                static_cast<System::Int32>(static_cast<System::Byte>(70)));
+            this->txtBox_NFCTag->BorderStyle = System::Windows::Forms::BorderStyle::None;
+            this->txtBox_NFCTag->Font = (gcnew System::Drawing::Font(L"Lucida Console", 8.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+                static_cast<System::Byte>(161)));
+            this->txtBox_NFCTag->ForeColor = System::Drawing::Color::FromArgb(static_cast<System::Int32>(static_cast<System::Byte>(9)), static_cast<System::Int32>(static_cast<System::Byte>(255)),
+                static_cast<System::Int32>(static_cast<System::Byte>(206)));
+            this->txtBox_NFCTag->Location = System::Drawing::Point(8, 218);
+            this->txtBox_NFCTag->Margin = System::Windows::Forms::Padding(0);
+            this->txtBox_NFCTag->Multiline = true;
+            this->txtBox_NFCTag->Name = L"txtBox_NFCTag";
+            this->txtBox_NFCTag->ReadOnly = true;
+            this->txtBox_NFCTag->ScrollBars = System::Windows::Forms::ScrollBars::Vertical;
+            this->txtBox_NFCTag->Size = System::Drawing::Size(203, 165);
+            this->txtBox_NFCTag->TabIndex = 37;
+            this->txtBox_NFCTag->TabStop = false;
+            this->txtBox_NFCTag->Text = L"Tag contents";
             // 
             // txtBox_nfcUid
             // 
@@ -2886,7 +2908,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
             this->txtBox_nfcUid->Size = System::Drawing::Size(203, 37);
             this->txtBox_nfcUid->TabIndex = 36;
             this->txtBox_nfcUid->TabStop = false;
-            this->txtBox_nfcUid->Text = L"Type:\r\nUID:";
+            this->txtBox_nfcUid->Text = L"UID:\r\nType:";
             // 
             // btn_NFC
             // 
@@ -4229,20 +4251,20 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         // Apply body color 
         switch (handle_ok) {
-        case 1:
-            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_body")));
-            break;
-        case 2:
-            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_body")));
-            break;
-        case 3:
-            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_grips_l")));
-            MyImageLayer2 = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_grips_r")));
-            break;
-        default:
-            MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
-            break;
+            case 1:
+                MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_body")));
+                break;
+            case 2:
+                MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_body")));
+                break;
+            case 3:
+                MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_grips_l")));
+                MyImageLayer2 = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_grips_r")));
+                break;
+            default:
+                MyImage = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_body")));
+                break;
         }
         // Skip slow SetPixel(). Reduce latency pixel set latency from 842us -> 260ns.
         System::Drawing::Imaging::BitmapData^ bmd = MyImage->LockBits(System::Drawing::Rectangle(0, 0, MyImage->Width, MyImage->Height), System::Drawing::Imaging::ImageLockMode::ReadOnly, MyImage->PixelFormat);
@@ -4328,19 +4350,19 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         // Apply buttons color 
         switch (handle_ok) {
-        case 1:
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_buttons")));
-            break;
-        case 2:
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_buttons")));
-            break;
-        case 3:
-            MyImage = drawLayeredImage(MyImage, MyImageLayer); // Apply grips layer
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
-            break;
-        default:
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
-            break;
+            case 1:
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_buttons")));
+                break;
+            case 2:
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_buttons")));
+                break;
+            case 3:
+                MyImage = drawLayeredImage(MyImage, MyImageLayer); // Apply grips layer
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
+                break;
+            default:
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_buttons")));
+                break;
         }
         // Skip slow SetPixel(). Reduce latency pixel set latency from 842us -> 260ns.
         bmd = MyImageLayer->LockBits(System::Drawing::Rectangle(0, 0, MyImageLayer->Width, MyImageLayer->Height), System::Drawing::Imaging::ImageLockMode::ReadOnly, MyImageLayer->PixelFormat);
@@ -4358,18 +4380,18 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
         // Apply outlines
         switch (handle_ok) {
-        case 1:
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_lines")));
-            break;
-        case 2:
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_lines")));
-            break;
-        case 3:
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_lines")));
-            break;
-        default:
-            MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_lines")));
-            break;
+            case 1:
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_l_joy_lines")));
+                break;
+            case 2:
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_r_joy_lines")));
+                break;
+            case 3:
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_lines")));
+                break;
+            default:
+                MyImageLayer = (cli::safe_cast<System::Drawing::Bitmap^>(resources->GetObject(L"base64_pro_lines")));
+                break;
         }
         MyImage = drawLayeredImage(MyImage, MyImageLayer);
 
@@ -6170,35 +6192,35 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             // Get error
             switch (res) {
-            case 1:
-                error_msg = "1ID31";
-                break;
-            case 2:
-                error_msg = "2MCUON";
-                break;
-            case 3:
-                error_msg = "3MCUONBUSY";
-                break;
-            case 4:
-                error_msg = "4MCUMODESET";
-                break;
-            case 5:
-                error_msg = "5MCUSETBUSY";
-                break;
-            case 6:
-                error_msg = "6IRMODESET";
-                break;
-            case 7:
-                error_msg = "7IRSETBUSY";
-                break;
-            case 8:
-                error_msg = "8IRCFG";
-                break;
-            case 9:
-                error_msg = "9IRFCFG";
-                break;
-            default:
-                break;
+                case 1:
+                    error_msg = "1ID31";
+                    break;
+                case 2:
+                    error_msg = "2MCUON";
+                    break;
+                case 3:
+                    error_msg = "3MCUONBUSY";
+                    break;
+                case 4:
+                    error_msg = "4MCUMODESET";
+                    break;
+                case 5:
+                    error_msg = "5MCUSETBUSY";
+                    break;
+                case 6:
+                    error_msg = "6IRMODESET";
+                    break;
+                case 7:
+                    error_msg = "7IRSETBUSY";
+                    break;
+                case 8:
+                    error_msg = "8IRCFG";
+                    break;
+                case 9:
+                    error_msg = "9IRFCFG";
+                    break;
+                default:
+                    break;
             }
             if (res > 0)
                 this->lbl_IRStatus->Text = "Status: Error " + error_msg + "!";
@@ -6347,30 +6369,32 @@ public ref class FormJoy : public System::Windows::Forms::Form
 
             // Get error
             switch (res) {
-            case 1:
-                error_msg = "1ID31";
-                break;
-            case 2:
-                error_msg = "2MCUON";
-                break;
-            case 3:
-                error_msg = "3MCUONBUSY";
-                break;
-            case 4:
-                error_msg = "4MCUMODESET";
-                break;
-            case 5:
-                error_msg = "5MCUSETBUSY";
-                break;
-            case 6:
-                error_msg = "6NFCPOLL";
-                break;
-            default:
-                break;
+                case 1:
+                    error_msg = "1ID31";
+                    break;
+                case 2:
+                    error_msg = "2MCUON";
+                    break;
+                case 3:
+                    error_msg = "3MCUONBUSY";
+                    break;
+                case 4:
+                    error_msg = "4MCUMODESET";
+                    break;
+                case 5:
+                    error_msg = "5MCUSETBUSY";
+                    break;
+                case 6:
+                    error_msg = "6NFCPOLL";
+                    break;
+                default:
+                    break;
             }
             if (res > 0)
                 this->txtBox_nfcUid->Text = "Error " + error_msg + "!";
         }
+        this->btn_NFC->Text = "Scan";
+        enable_NFCScanning = false;
     }
 
 
@@ -6622,6 +6646,53 @@ public ref class FormJoy : public System::Windows::Forms::Form
         }
         else
             return false;
+    }
+
+
+    public: System::Void show_ntag_contents(u8* ntag_buf, u8 ntag_pages) {
+        String^ ntag_temp_string = "";
+        for (int i = 0; i < ntag_pages; i++) {
+            ntag_temp_string += String::Format("{0:X2}: ", i);
+            for (int j = 0; j < 4; j++)
+                ntag_temp_string += String::Format("{0:X2} ", ntag_buf[i * 4 + j]);
+            ntag_temp_string += "|";
+            for (int j = 0; j < 4; j++) {
+                if (ntag_buf[i * 4 + j] < 0x20 || ntag_buf[i * 4 + j] > 0x7e)
+                    ntag_temp_string += ".";
+                else
+                    ntag_temp_string += String::Format("{0:S}", Convert::ToChar(ntag_buf[i * 4 + j]));
+            }
+            ntag_temp_string += "|";
+            if (i != (ntag_pages - 1))
+            ntag_temp_string += "\r\n";
+            if (i == 4) {
+                switch (ntag_pages) {
+                    case 45:
+                        this->txtBox_nfcUid->Text += "213 ";
+                        break;
+                    case 135:
+                        this->txtBox_nfcUid->Text += "215 ";
+                        break;
+                    case 231:
+                        this->txtBox_nfcUid->Text += "216 ";
+                        break;
+                    default:
+                        this->txtBox_nfcUid->Text += "???";
+                        break;
+                }
+                switch (ntag_buf[16]) {
+                    case 0xA5:
+                        this->txtBox_nfcUid->Text += "(Amiibo)";
+                        break;
+                    case 0x01:
+                        this->txtBox_nfcUid->Text += "(NDEF)";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        this->txtBox_NFCTag->Text = ntag_temp_string;
     }
 };
 }
