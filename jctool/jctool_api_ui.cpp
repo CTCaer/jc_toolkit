@@ -70,7 +70,7 @@ void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_hei
     int buf_pos = 0;
 
     for (int y = 0; y < ir_image_height; y++) {
-        byte* row = (byte *)pixel_data_out + (y * bytes_pp_out * ir_image_width);
+        u8* row = (u8 *)pixel_data_out + (y * bytes_pp_out * ir_image_width);
         for (int x = 0; x < ir_image_width; x++) {
             switch(col_fil){
                 case IRGreyscale:
@@ -329,7 +329,7 @@ namespace JCToolkit {
                         ImGui::BeginGroup();
                         ImGui::Text("Resolution");
 
-                        constexpr int res_count = _ARRAYSIZE(resolutions);
+                        constexpr int res_count = IM_ARRAYSIZE(resolutions);
                         for(int i=0; i < res_count; i++){
                             auto& res_tuple = resolutions[i];
                             bool selected = std::get<1>(res_tuple) == std::get<1>(resolutions[controller.ir_sensor.res_idx_selected]);
