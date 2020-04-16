@@ -38,4 +38,5 @@ target_include_directories(Tools PRIVATE
     tools
     ImGui/imgui/examples/libs/gl3w
     ImGui/imgui/examples/libs/glfw/include
+    ../stb
 )

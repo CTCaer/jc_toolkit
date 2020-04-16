@@ -7,7 +7,7 @@
 #include "ImageLoad.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include "stb_image.h"
 
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"

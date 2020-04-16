@@ -34,7 +34,7 @@ const auto min = [](auto a, auto b){
 #include "imgui.h"
 #include "ImGuiInterface.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "ImageLoad/stb/stb_image_write.h"
+#include "stb_image_write.h"
 #include "jctool_api.hpp"
 #endif
 
