@@ -22,8 +22,9 @@
 #include "jctool.h"
 #include "hidapi.h"
 
-#include "imgui.h"
 #ifdef __jctool_cpp_API__
+#include "imgui.h"
+#include "ui_helpers.hpp"
 #include "ImageLoad/ImageLoad.hpp"
 #include "Controller.hpp"
 #define BATTERY_INDICATORS_PATH "jctool/original_res/batt_"
@@ -308,17 +309,20 @@ namespace JCToolkit {
             // The controller's ir config
             ir_image_config& ir_config_0 = controller.ir_sensor.config;
 
+            ImGui::Columns(2);
             /* Stream/Capture */ {
                 ImGui::BeginGroup();
-                auto& size = std::get<2>(resolutions[controller.ir_sensor.res_idx_selected]);
-                ImGui::Image(0, {(float)size.width, (float)size.height});
                 if(ImGui::Button("Capture")) {
                     // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
                     controller.IRSensorCapture();
                 }
+                auto& size = std::get<2>(resolutions[controller.ir_sensor.res_idx_selected]);
+                auto avail_size = ImGui::GetContentRegionAvail();
+                auto resize = resizeRectAToFitInRectB(size, avail_size);
+                ImGui::Image((ImTextureID)controller.ir_sensor.lastCaptureTexID(), {(float)resize.width, (float)resize.height});
                 ImGui::EndGroup();
             }
-            ImGui::SameLine();
+            ImGui::NextColumn();
             /* IR Camera Settings */ {
                 ImGui::BeginGroup();
                 ImGui::Text("IR Camera Settings");
@@ -347,8 +351,8 @@ namespace JCToolkit {
                         ImGui::Text("Color Filter");
 
                         for(int i = 0; i < IRColorCount; i++){
-                            if(ImGui::RadioButton(col_fils[i], i == controller.ir_sensor.ir_color))
-                                controller.ir_sensor.ir_color = (IRColor)i;
+                            if(ImGui::RadioButton(col_fils[i], i == controller.ir_sensor.colorize_with))
+                                controller.ir_sensor.colorize_with = (IRColor)i;
                         }
                         ImGui::EndGroup();
                     }
@@ -412,7 +416,7 @@ namespace JCToolkit {
                 ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config_0.ir_flip, flip_dir_0);
                 ImGui::EndGroup();
             }
-
+            ImGui::Columns(1);
         }
 
         void show(){

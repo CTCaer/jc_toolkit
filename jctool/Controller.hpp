@@ -49,8 +49,12 @@ public:
         friend class Controller;
     public:
         struct Res {
-            u16 width;
-            u16 height;
+            union {
+                u16 x, width;
+            };
+            union {
+                u16 y, height;
+            };
         };
         static constexpr std::tuple<const char*, IRResolution, const Res> resolutions[] = {
             std::tuple<const char*, IRResolution, Res>("320 x 240", IR_320x240, {320, 240}),
@@ -63,14 +67,18 @@ public:
         * See the static member IRSensor::resolution.
         */
         ir_image_config config;
-        IRColor ir_color;
+        IRColor colorize_with;
         bool auto_exposure;
+
+        void storeCapture(u8* raw_capture);
 
         inline const controller_hid_handle_t* hostController() const { return this->host; }
         inline u8 maxFragNo() const { return this->ir_max_frag_no; }
+        inline uintptr_t lastCaptureTexID() { return this->last_capture_tex_id; }
     private:
         u8 ir_max_frag_no;
         controller_hid_handle_t* host;
+        uintptr_t last_capture_tex_id;
     } ir_sensor;
 
     Controller();

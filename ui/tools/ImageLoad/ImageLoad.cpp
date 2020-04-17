@@ -12,36 +12,48 @@
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"
 
-namespace GPUTextureOperation {
+namespace GPUTexture {
     void openGLUpload(ImageRID& rid, int width, int height, int num_channels, const uint8_t* bytes){
-        glGenTextures(1, &rid);
-        glBindTexture(GL_TEXTURE_2D, rid);
+        unsigned int pixel_fmt_src;
+        switch(num_channels){
+            case 1:
+                pixel_fmt_src = GL_R8;
+                break;
+            case 2:
+                pixel_fmt_src = GL_RG8;
+                break;
+            case 3: // RGB
+                pixel_fmt_src = GL_RGB;
+                break;
+            case 4: // RGBA
+                pixel_fmt_src = GL_RGBA;
+                break;
+            default:
+                return;
+        }
+        GLuint tex_id = 0;
+        glGenTextures(1, &tex_id);
+        glBindTexture(GL_TEXTURE_2D, tex_id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         /*
         // Texture filtering.
+        */
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        */
-        unsigned int pixel_fmt_src;
-        switch(num_channels){
-            case 4: // RGBA
-                pixel_fmt_src = GL_RGBA;
-            break;
-            default: // RGB
-                pixel_fmt_src = GL_RGB;
-        }
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Without this there are crashes when deleting and assigning a new texture.
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, pixel_fmt_src, GL_UNSIGNED_BYTE, bytes);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
+        rid = tex_id;
     }
 
     /**
      * Does not modify the value of rid.
+     * "glDeleteTextures silently ignores 0's and names that do not correspond to existing textures." - khronos.org
      */
-    inline void openGLFree(const ImageRID& rid){
-        glDeleteTextures(1, &rid);
+    void openGLFree(const ImageRID& rid){
+        glDeleteTextures(1, (GLuint*)&rid);
     }
 }
 
@@ -86,7 +98,7 @@ inline void ImageResource::freeBytes() {
 inline void ImageResource::unloadFromGPU(ImageRID swap_val) {
     std::swap(swap_val, this->rid);
     if(swap_val)
-        GPUTextureOperation::openGLFree(swap_val);
+        GPUTexture::openGLFree(swap_val);
 }
 
 ImageResource::~ImageResource() {
@@ -154,7 +166,7 @@ void ImageResource::uploadToGPU() {
 #ifdef ImageLoadASYNC
     glfwMakeContextCurrent(image_upload_in_bg_ctx);
 #endif
-    GPUTextureOperation::openGLUpload(new_img_rid, this->data.width, this->data.height, this->data.num_channels, this->data.bytes);
+    GPUTexture::openGLUpload(new_img_rid, this->data.width, this->data.height, this->data.num_channels, this->data.bytes);
 
 #ifdef ImageLoadASYNC
     glfwMakeContextCurrent(NULL);

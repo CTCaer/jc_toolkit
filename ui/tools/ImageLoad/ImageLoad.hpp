@@ -7,7 +7,7 @@
 #include <thread>
 #endif
 
-using ImageRID = unsigned int;
+using ImageRID = uintptr_t;
 
 struct ImageResourceData {
     int width = 0;
@@ -46,3 +46,8 @@ public:
         return this->rid;
     }
 };
+
+namespace GPUTexture {
+    void openGLUpload(ImageRID& rid, int width, int height, int num_channels, const uint8_t* bytes);
+    void openGLFree(const ImageRID& rid);
+}

@@ -33,9 +33,6 @@ const auto min = [](auto a, auto b){
 #else
 #include "imgui.h"
 #include "ImGuiInterface.hpp"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-#include "jctool_api.hpp"
 #endif
 
 #include "hidapi.h"
@@ -1733,14 +1730,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                     elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
                     FormJoy::myform1->setIRPictureWindow(buf_image, true);
 #else
-                    auto& resolution = std::get<2>(use_ir_sensor.resolutions[use_ir_sensor.res_idx_selected]);
-                    u8* rgb_pixels_buf = new u8[resolution.width*resolution.height*3];
-                    stbi_write_bmp("jctoolapi_test_ir_raw.bmp", resolution.width, resolution.height, 1, buf_image);
-                    for(int i=0; i < 4; i++){ // For all 4 colorized options.
-                        colorizefrom8BitsPP(buf_image, rgb_pixels_buf, resolution.width, resolution.height, 3, i);
-                        stbi_write_png(std::string("jctoolapi_test_ir_colorized" + std::to_string(i) + ".png").c_str(), resolution.width, resolution.height, 3, rgb_pixels_buf, resolution.width*3);
-                    }
-                    delete [] rgb_pixels_buf;
+                    use_ir_sensor.storeCapture(buf_image);
 #endif
 
                     //debug
