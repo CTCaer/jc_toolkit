@@ -3379,7 +3379,7 @@ int main(int argc, char** args) {
         },
         imgui_calls,
         [](){ // This function object gets called once after the graphics framework (open gl) is initialized.
-            JCToolkit::Helpers::loadBatteryImages();
+            JCToolkit::init();
             auto framebg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
             framebg_color.w = 1.0f;
             ImGui::PushStyleColor(ImGuiCol_WindowBg, framebg_color);

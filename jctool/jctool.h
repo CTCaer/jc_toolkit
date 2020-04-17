@@ -53,12 +53,10 @@ int ir_sensor(Controller::IRSensor& use_ir_sensor);
 int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor);
 
 namespace JCToolkit {
-    namespace Helpers {
-        void loadBatteryImages();
-    }
     namespace UI {
         void show();
     }
+    void init();
 }
 #endif
 

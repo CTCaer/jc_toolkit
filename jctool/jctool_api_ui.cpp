@@ -24,6 +24,8 @@
 
 #ifdef __jctool_cpp_API__
 #include "imgui.h"
+#include "ImGui/this_is_imconfig.h"
+#include "imgui_internal.h" // PushItemFlags
 #include "ui_helpers.hpp"
 #include "ImageLoad/ImageLoad.hpp"
 #include "Controller.hpp"
@@ -126,8 +128,6 @@ namespace JCToolkit {
                 Assets::battery_indicators[i].load(std::string(BATTERY_INDICATORS_PATH) + vec[i] + BATTERY_INDICATORS_EXT);
             }
         }
-
-
     }
     Controller default_controller;
     RumbleData default_rumble_data;
@@ -311,10 +311,14 @@ namespace JCToolkit {
 
             ImGui::Columns(2);
             /* Stream/Capture */ {
+                ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+
                 ImGui::BeginGroup();
+                ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config_0.ir_flip, flip_dir_0);
                 if(ImGui::Button("Capture")) {
                     // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
                     controller.IRSensorCapture();
+                    disable.ensureDisabled();
                 }
                 auto& size = std::get<2>(resolutions[controller.ir_sensor.res_idx_selected]);
                 auto avail_size = ImGui::GetContentRegionAvail();
@@ -322,13 +326,17 @@ namespace JCToolkit {
                 ImGui::Image((ImTextureID)controller.ir_sensor.lastCaptureTexID(), {(float)resize.width, (float)resize.height});
                 ImGui::EndGroup();
             }
+
             ImGui::NextColumn();
+            
             /* IR Camera Settings */ {
                 ImGui::BeginGroup();
                 ImGui::Text("IR Camera Settings");
                 /* Output Frame Settings */ {
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Frame Display Settings")){
+                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+
                         // Resolution settings
                         ImGui::BeginGroup();
                         ImGui::Text("Resolution");
@@ -360,6 +368,8 @@ namespace JCToolkit {
 
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Advanced Settings")){
+                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+
                         static const u8 min_x = 1;
                         static const u8 max_x = 20;
                         ImGui::SliderScalar("Digital Gain (lossy)", ImGuiDataType_U8, &ir_config_0.ir_digital_gain, &min_x, &max_x, "x%d");
@@ -392,6 +402,8 @@ namespace JCToolkit {
                 /* Near-Infrared Light Settings */ {
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Near-Infrared Light")){
+                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+
                         static constexpr u8 max_intensity = ~u8(0);
                         static constexpr u8 min_intensity = 0;
                         ImGui::CheckboxFlags("(Disable) Far/Narrow (75*) Leds 1-2", (uint32_t*)&ir_config_0.ir_leds, ir_leds_NarrowDisable);
@@ -408,12 +420,13 @@ namespace JCToolkit {
                 /* IR Sensor Register/Value */ {
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Custom IR Sensor Register/Value")){
+                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+
                         ImGui::InputInt("Register", (int*)&ir_config_0.ir_custom_register); // TODO: clamp to 0x5FF
                         ImGui::InputInt("Value", (int *)((uint16_t*)&ir_config_0.ir_custom_register + 1)); // TODO: clamp to 0xFF
                     }
                     ImGui::EndGroup();
                 }
-                ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config_0.ir_flip, flip_dir_0);
                 ImGui::EndGroup();
             }
             ImGui::Columns(1);
@@ -429,6 +442,10 @@ namespace JCToolkit {
             if(ImGui::CollapsingHeader("IR Camera"))
                 showIRCamera(default_controller);
         }
+    }
+    void init() {
+        GPUTexture::SideLoader::start();
+        Helpers::loadBatteryImages();
     }
 }
 #endif

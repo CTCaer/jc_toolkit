@@ -75,6 +75,7 @@ public:
         inline const controller_hid_handle_t* hostController() const { return this->host; }
         inline u8 maxFragNo() const { return this->ir_max_frag_no; }
         inline uintptr_t lastCaptureTexID() { return this->last_capture_tex_id; }
+        bool capture_in_progress;
     private:
         u8 ir_max_frag_no;
         controller_hid_handle_t* host;

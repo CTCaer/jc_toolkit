@@ -53,5 +53,6 @@ target_include_directories(JCToolkit PRIVATE
     ui/ImGui/imgui
     ui/ImGui/ImGuiInterface
     ui/tools
+    ui
     stb
 )

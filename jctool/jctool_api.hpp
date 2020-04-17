@@ -54,6 +54,10 @@ int irSensor(Controller::IRSensor& use_ir_sensor, ErrMsgStr& error_msg) {
     default:
         break;
     }
+
+#ifdef __jctool_cpp_API__
+    use_ir_sensor.capture_in_progress = false;
+#endif
     return res;
 }
 

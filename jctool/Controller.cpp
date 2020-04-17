@@ -1,10 +1,10 @@
+#include <thread>
+
 #include "Controller.hpp"
 
 #include "jctool.h"
 #include "jctool_api.hpp"
 #include "ImageLoad/ImageLoad.hpp"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 
 #ifdef linux
 #include <cstring> // memset linux
@@ -84,6 +84,8 @@ void Controller::connection(){
 void Controller::IRSensorCapture(){
     if(*ir_sensor.host == nullptr)
         return; // There is no controller connected yet.
+    
+    ir_sensor.capture_in_progress = true;
     // Set the max frag number.
     switch(ir_sensor.config.ir_res_reg) {
         case IR_320x240:
@@ -101,52 +103,41 @@ void Controller::IRSensorCapture(){
     }
 
     std::string err_msg;
-    irSensor(this->ir_sensor, err_msg);
+    std::thread ir_sensor_thread(irSensor<std::string>, std::ref(this->ir_sensor), err_msg); // Dispatch the thread.
+    ir_sensor_thread.detach(); // Detach the thread so it does not have to be explicitly joined.
 }
 
 void Controller::IRSensor::storeCapture(u8* raw_capture){
     auto& resolution = std::get<2>(this->resolutions[this->res_idx_selected]);
-    u8* rgb_pixels_buf = new u8[resolution.width*resolution.height*3];
+    ImageResourceData ird;
+    ird.width = resolution.width;
+    ird.height = resolution.height;
+    ird.num_channels = 3;
+    ird.bytes = new u8[ird.width*ird.height*ird.num_channels];
 
     // Colorize the raw capture.
     colorizefrom8BitsPP(
         raw_capture,
-        rgb_pixels_buf,
-        resolution.width,
-        resolution.height,
-        3,
+        ird.bytes,
+        ird.width,
+        ird.height,
+        ird.num_channels,
         this->colorize_with
     );
-
+    
     /*
     stbi_write_bmp("jctoolapi_test_ir_raw.bmp", resolution.width, resolution.height, 1, raw_capture);
     for(int i=0; i < 4; i++){ // For all 4 colorized options.
-        colorizefrom8BitsPP(raw_capture, rgb_pixels_buf, resolution.width, resolution.height, 3, i);
+        colorizefrom8BitsPP(raw_capture, ird.bytes, resolution.width, resolution.height, 3, i);
         stbi_write_png(
             std::string("jctoolapi_test_ir_colorized" + std::to_string(this->colorize_with) + ".png").c_str(),
             resolution.width,
             resolution.height,
             3,
-            rgb_pixels_buf,
+            ird.bytes,
             resolution.width*3
         );
     }
-    delete [] rgb_pixels_buf;
     */
-
-    ImageRID texture_id;
-    // Upload the IR capture to the gpu.
-    GPUTexture::openGLUpload(
-        texture_id,
-        resolution.width,
-        resolution.height,
-        3,
-        rgb_pixels_buf
-    );
-    
-    // Swap the old texture with the new one.
-    std::swap(this->last_capture_tex_id, texture_id);
-
-    // Free the old texture.
-    GPUTexture::openGLFree(texture_id);
+    GPUTexture::SideLoader::uploadTexture(this->last_capture_tex_id, std::move(ird));
 }

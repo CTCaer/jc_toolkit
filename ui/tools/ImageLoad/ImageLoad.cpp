@@ -1,13 +1,41 @@
-/**
- * 2020 Jonathan Mendez
+/*
+
+MIT License
+
+Copyright (c) 2020 Jonathan Mendez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
  */
 #include <iostream>
 #include <string>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "ImageLoad.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.h"
+#include "stb_image_write.h"
 
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"
@@ -55,37 +83,89 @@ namespace GPUTexture {
     void openGLFree(const ImageRID& rid){
         glDeleteTextures(1, (GLuint*)&rid);
     }
-}
+    
+    namespace SideLoader {
+        struct GPUTextureJob {
+            enum Type {
+                Upload,
+                Download,
+                Delete
+            } type;
 
-#ifdef ImageLoadASYNC
-/**
- * Set a bool to its opposite value on destruction.
- * The size of this is 2 bytes.
- */
-struct ScopedBool {
-    bool* scoped_bool;
-    bool set_val;
-    ScopedBool(bool& bool_ref) :
-    scoped_bool{&bool_ref},
-    set_val{!bool_ref}
-    {}
-    ~ScopedBool() {
-        *this->scoped_bool = this->set_val;
+            ImageRID& owner_rid_ref;
+            ImageResourceData ird;
+        };
+        namespace {
+            static GLFWwindow* texture_sideload_ctx = nullptr;
+            static std::queue<GPUTextureJob> texture_jobs0;
+            static std::mutex job_queue_mutex;
+            static std::condition_variable texture_job_avail;
+
+            static void waitOnGPUTextureJobs(){
+                std::cout << "Texture sideload thread has started." << std::endl;
+
+                while(true){
+                    std::unique_lock<std::mutex> lock(job_queue_mutex);
+                    // Wait indefinitely until a job is available.
+                    texture_job_avail.wait(lock, []{ return texture_jobs0.size() > 0; });
+                    std::cout << "Texture sideload thread working on a job." << std::endl;
+
+
+                    auto& tex_job = texture_jobs0.front();
+                    ImageRID rid=0;
+                    switch(tex_job.type) {
+                        case GPUTextureJob::Upload: {
+                            ImageResourceData& ird = tex_job.ird;
+
+                            glfwMakeContextCurrent(texture_sideload_ctx);
+                            openGLUpload(rid, ird.width, ird.height, ird.num_channels, ird.bytes);
+                            glfwMakeContextCurrent(NULL);
+
+                            // Update the provided variable to refer to the texture resource id.
+                            std::swap(tex_job.owner_rid_ref, rid);
+                        } break;
+                        //case GPUTextureJob::Download:
+                            //break;
+                        case GPUTextureJob::Delete:
+                            std::swap(tex_job.owner_rid_ref, rid);
+                            break;
+                    }
+                    openGLFree(rid); // Free the old texture.
+
+                    texture_jobs0.pop(); // Remove the job from the queue since it has been processed.
+                    std::cout << "Texture sideload thread finished a job." << std::endl;
+                }
+
+                glfwDestroyWindow(texture_sideload_ctx);
+                texture_sideload_ctx = nullptr;
+                std::cout << "Texture sideload thread has stopped." << std::endl;
+            }
+
+        }
+
+        void start() {
+            if(texture_sideload_ctx)
+                return; // Has already been successfully started.
+
+            // Create a seperate glfw context and share texture resources with the current context.
+            glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+            texture_sideload_ctx = glfwCreateWindow(640, 480, "Texture sideloader.", NULL, glfwGetCurrentContext());
+            std::thread sideload_thread(waitOnGPUTextureJobs);
+            sideload_thread.detach(); // We do not need to wait on the thread any longer.
+        }
+        
+        void uploadTexture(ImageRID& rid, ImageResourceData& texture_data) {
+            std::lock_guard<std::mutex> lock(job_queue_mutex);
+            texture_jobs0.push({GPUTextureJob::Upload, rid, std::move(texture_data)});
+            texture_job_avail.notify_one();
+        }
+
+        void deleteTexture(ImageRID& rid){
+            std::lock_guard<std::mutex> lock(job_queue_mutex);
+            texture_jobs0.push({GPUTextureJob::Delete, rid, ImageResourceData()});
+            texture_job_avail.notify_one();
+        }
     }
-};
-#endif
-
-#ifdef ImageLoadASYNC
-static GLFWwindow* image_upload_in_bg_ctx = nullptr;
-#endif
-
-ImageResourceData::ImageResourceData() {
-#ifdef ImageLoadASYNC
-    if(image_upload_in_bg_ctx == nullptr){
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        image_upload_in_bg_ctx = glfwCreateWindow(640, 480, "image upload in bg ctx", NULL, glfwGetCurrentContext());
-    }
-#endif
 }
 
 inline void ImageResource::freeBytes() {
@@ -95,15 +175,10 @@ inline void ImageResource::freeBytes() {
     }
 }
 
-inline void ImageResource::unloadFromGPU(ImageRID swap_val) {
-    std::swap(swap_val, this->rid);
-    if(swap_val)
-        GPUTexture::openGLFree(swap_val);
-}
-
 ImageResource::~ImageResource() {
     this->freeBytes();
-    this->unloadFromGPU();
+    if(this->rid)
+        GPUTexture::SideLoader::deleteTexture(this->rid);
 }
 
 ImageResource::ImageResource(const std::string& image_location, bool flip) {
@@ -111,36 +186,15 @@ ImageResource::ImageResource(const std::string& image_location, bool flip) {
 }
 
 void ImageResource::load(const std::string& image_location, bool flip) {
-    #ifdef ImageLoadASYNC
-    // Check if there is a thread already loading an image.
-    if(this->data.load_thread_active){
-        // TODO: If we supply a uri to an image that does not exist, then this->uploadToGPU() will never get called, thus leading to the thread that was attempting to load the image never being called to join the main thread and leading to an indefinite "false" image loading process (Which is in this code block.)
-        // There is a thread loading an image.
-        std::cout << "An image is already in the process of being loaded." << std::endl;
-        return; // Do not continue.
-    }
-    
-    this->data.load_thread_active = true;
-    this->data.load_thread = std::thread(&ImageResource::loadPATH, this, image_location, flip);
-    this->data.load_thread.detach();
-#else
-    this->loadPATH(image_location, flip);
-#endif
-}
-
-/**
- * Load the image from a local path.
- */
-void ImageResource::loadPATH(const std::string& image_path, bool flip) {
-#ifdef ImageLoadASYNC
-    ScopedBool change_bool_on_out_of_scope(this->data.load_thread_active);
-#endif
-    FILE* image_file = fopen(image_path.c_str(), "rb");
+    FILE* image_file = fopen(image_location.c_str(), "rb");
     if(image_file == nullptr)
         return;
     this->loadFILE(image_file, flip);
     fclose(image_file);
-    this->uploadToGPU();
+
+    if(!this->data.bytes)
+        return; // There is no image data to upload to the gpu.
+    GPUTexture::SideLoader::uploadTexture(this->rid, ImageResourceData(std::move(this->data)));
 }
 
 /**
@@ -150,28 +204,4 @@ void ImageResource::loadFILE(FILE* image_file, bool flip) {
 	this->freeBytes(); // Free any possible bytes from a previous texture, if there were any.
 	stbi_set_flip_vertically_on_load(flip);
 	this->data.bytes = stbi_load_from_file(image_file, &this->data.width, &this->data.height, &this->data.num_channels, 0);
-}
-
-/**
- * Upload the image to the gpu as a texture.
- */
-void ImageResource::uploadToGPU() {
-    if(!this->data.bytes)
-        return; // There is no image data to upload to the gpu.
-    /**
-     * TODO: Pass the image's bitmap data to a callback since various
-     * graphics frameworks upload the data differently.
-     */
-    ImageRID new_img_rid = 0;
-#ifdef ImageLoadASYNC
-    glfwMakeContextCurrent(image_upload_in_bg_ctx);
-#endif
-    GPUTexture::openGLUpload(new_img_rid, this->data.width, this->data.height, this->data.num_channels, this->data.bytes);
-
-#ifdef ImageLoadASYNC
-    glfwMakeContextCurrent(NULL);
-#endif
-    
-    this->unloadFromGPU(new_img_rid);
-    this->freeBytes(); // We no longer need the image data in memory.
 }

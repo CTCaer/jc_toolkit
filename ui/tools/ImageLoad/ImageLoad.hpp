@@ -3,9 +3,7 @@
  */
 
 #pragma once
-#ifdef ImageLoadASYNC
-#include <thread>
-#endif
+#include <memory>
 
 using ImageRID = uintptr_t;
 
@@ -14,12 +12,25 @@ struct ImageResourceData {
     int height = 0;
     int num_channels = 0;
     uint8_t* bytes = nullptr;
-#ifdef ImageLoadASYNC
-    std::thread load_thread;
-    bool load_thread_active = false;
-#endif
-    ImageResourceData();
+
+    ImageResourceData(){}
+    
+    // Move the bytes pointer only, and replace the original bytes pointer with a nullptr.
+    ImageResourceData(ImageResourceData&& ird) :
+    width(ird.width),
+    height(ird.height),
+    num_channels(ird.num_channels),
+    bytes(std::exchange(ird.bytes, nullptr))
+    {}
+
+    // Delete
+    ~ImageResourceData(){
+        if(bytes)
+            delete[] bytes;
+    }
 };
+
+
 
 class ImageResource {
 private:
@@ -28,7 +39,6 @@ private:
     ImageRID rid = 0;
 
     void uploadToGPU();
-    void unloadFromGPU(ImageRID replace_with = 0);
     void freeBytes();
     void loadFILE(FILE* image_file, bool flip = false);
     void loadPATH(const std::string& image_path, bool flip = false);
@@ -50,4 +60,13 @@ public:
 namespace GPUTexture {
     void openGLUpload(ImageRID& rid, int width, int height, int num_channels, const uint8_t* bytes);
     void openGLFree(const ImageRID& rid);
+
+    /**
+     * A seperate thread for texture upload jobs to be appended.
+     */
+    namespace SideLoader {
+        void start();
+        void uploadTexture(ImageRID& rid, ImageResourceData& texture_data);
+        void deleteTexture(ImageRID& rid);
+    };
 }
