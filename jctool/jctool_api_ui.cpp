@@ -315,11 +315,21 @@ namespace JCToolkit {
 
                 ImGui::BeginGroup();
                 ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config_0.ir_flip, flip_dir_0);
-                if(ImGui::Button("Capture")) {
+                if(ImGui::Button("Capture Image")) {
                     // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
                     controller.IRSensorCapture();
                     disable.ensureDisabled();
                 }
+                ImGui::SameLine();
+                bool video_in_progress = controller.ir_sensor.enable_video && controller.ir_sensor.capture_in_progress;
+                disable.allowEnable();
+                if(ImGui::Button(video_in_progress ? "Stop" : "Stream Video")){
+                    if(!video_in_progress)
+                        controller.IRSensorCapture();
+                    else
+                        controller.ir_sensor.enable_video = false; // Stop the video stream
+                }
+                disable.ensureDisabled();
                 auto& size = std::get<2>(resolutions[controller.ir_sensor.res_idx_selected]);
                 auto avail_size = ImGui::GetContentRegionAvail();
                 auto resize = resizeRectAToFitInRectB(size, avail_size);
@@ -378,10 +388,10 @@ namespace JCToolkit {
                             if(ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt))
                                 ir_image_config_Sets::exposure(ir_config_0.ir_exposure, exposure_amt);
                             if(ImGui::Checkbox("Auto Exposure (experimental)", &controller.ir_sensor.auto_exposure)){
-                                if(controller.ir_sensor.auto_exposure && enable_IRVideoPhoto)
-                                    enable_IRAutoExposure = false;
+                                if(controller.ir_sensor.auto_exposure && controller.ir_sensor.enable_video)
+                                    controller.ir_sensor.auto_exposure = false;
                                 else {
-                                    enable_IRAutoExposure = true;
+                                    controller.ir_sensor.auto_exposure = true;
                                     ir_config_0.ir_digital_gain = 1;
                                 }
                             }

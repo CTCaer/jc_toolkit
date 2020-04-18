@@ -63,10 +63,12 @@ public:
             std::tuple<const char*, IRResolution, Res>("40 x 30", IR_40x30, {40, 30})
         };
 
+        ir_image_config config;
+
+        bool enable_video;
         int res_idx_selected; /** The index number of the resolution selected.
         * See the static member IRSensor::resolution.
         */
-        ir_image_config config;
         IRColor colorize_with;
         bool auto_exposure;
 
