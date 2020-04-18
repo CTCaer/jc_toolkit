@@ -43,6 +43,7 @@ endif()
 if(LINUX)
     target_link_libraries(JCToolkit
         udev
+        pthread
     )
 endif()
 

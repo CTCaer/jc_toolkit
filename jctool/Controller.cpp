@@ -8,6 +8,7 @@
 
 #ifdef linux
 #include <cstring> // memset linux
+#include <unistd.h>
 #endif
 
 Controller::Controller() {
@@ -103,7 +104,7 @@ void Controller::IRSensorCapture(){
     }
 
     std::string err_msg;
-    std::thread ir_sensor_thread(irSensor<std::string>, std::ref(this->ir_sensor), err_msg); // Dispatch the thread.
+    std::thread ir_sensor_thread(irSensor<std::string>, std::ref(this->ir_sensor), std::ref(err_msg)); // Dispatch the thread.
     ir_sensor_thread.detach(); // Detach the thread so it does not have to be explicitly joined.
 }
 
@@ -139,5 +140,5 @@ void Controller::IRSensor::storeCapture(u8* raw_capture){
         );
     }
     */
-    GPUTexture::SideLoader::uploadTexture(this->last_capture_tex_id, std::move(ird));
+    GPUTexture::SideLoader::uploadTexture(this->last_capture_tex_id, ird);
 }

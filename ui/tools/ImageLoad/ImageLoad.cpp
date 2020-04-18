@@ -194,7 +194,7 @@ void ImageResource::load(const std::string& image_location, bool flip) {
 
     if(!this->data.bytes)
         return; // There is no image data to upload to the gpu.
-    GPUTexture::SideLoader::uploadTexture(this->rid, ImageResourceData(std::move(this->data)));
+    GPUTexture::SideLoader::uploadTexture(this->rid, this->data);
 }
 
 /**
