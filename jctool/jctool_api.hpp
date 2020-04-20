@@ -11,7 +11,43 @@ BatteryData parseBatteryData(const unsigned char* batt_data);
 	
 TemperatureData parseTemperatureData(const unsigned char* temp_data);
 
-void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_width, int ir_image_height, int bytes_pp_out, int col_fil);
+namespace ColorOrder {
+    enum ShiftPos : u8 {
+        RedShiftPos = 4,
+        GreenShiftPos = 2,
+        BlueShiftPos = 0
+    };
+    enum Mask : u8 {
+        RedMask = 0b11 << RedShiftPos,
+        GreenMask = 0b11 << GreenShiftPos,
+        BlueMask = 0b11 << BlueShiftPos
+    };
+    constexpr u8 makeColorOrder(const u8 red_pos_idx, const u8 green_pos_idx, const u8 blue_pos_idx){
+        return static_cast<u8>(
+            ((red_pos_idx << RedShiftPos) & RedMask)
+            |
+            ((green_pos_idx << GreenShiftPos) & GreenMask)
+            |
+            ((blue_pos_idx << BlueShiftPos) & BlueMask)
+        );
+    }
+    
+    const u8 InRGBOrder = makeColorOrder(0,1,2);
+    const u8 InBGROrder = makeColorOrder(2,1,0);
+
+    inline u8 getRedPosIdx(const u8 color_order){
+        return ((color_order & RedMask) >> RedShiftPos);
+    }
+    inline u8 getGreenPosIdx(const u8 color_order){
+        return ((color_order & GreenMask) >> GreenShiftPos);
+    }
+    inline u8 getBluePosIdx(const u8 color_order){
+        return ((color_order & BlueMask) >> BlueShiftPos);
+    }
+}
+
+
+void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_width, int ir_image_height, int bytes_pp_out, int col_fil, u8 color_order = ColorOrder::InBGROrder);
 
 inline void operator +=(std::ostream& stream, const char* msg) {
     stream << msg << std::endl;

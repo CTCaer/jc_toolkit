@@ -130,7 +130,8 @@ void Controller::IRSensor::storeCapture(std::shared_ptr<u8> raw_capture){
             ird.width,
             ird.height,
             ird.num_channels,
-            this->colorize_with
+            this->colorize_with,
+            ColorOrder::InRGBOrder
         );
 
         std::lock_guard<std::mutex> lock(this->vstream_frame_dat.texture_mutex);

@@ -69,8 +69,12 @@ TemperatureData parseTemperatureData(const unsigned char* temp_data){
     return {celsius, celsius*1.8f + 32};
 }
 
-void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_height, int ir_image_width, int bytes_pp_out, int col_fil){
+void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_height, int ir_image_width, int bytes_pp_out, int col_fil, u8 color_order){
     int buf_pos = 0;
+
+    u8 red_pos_idx = ColorOrder::getRedPosIdx(color_order);
+    u8 green_pos_idx = ColorOrder::getGreenPosIdx(color_order);
+    u8 blue_pos_idx = ColorOrder::getBluePosIdx(color_order);
 
     for (int y = 0; y < ir_image_height; y++) {
         u8* row = (u8 *)pixel_data_out + (y * bytes_pp_out * ir_image_width);
@@ -78,28 +82,28 @@ void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_hei
             switch(col_fil){
                 case IRGreyscale:
                     // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + 2] = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out + 1] = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out]     = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + red_pos_idx]     = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + green_pos_idx]   = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + blue_pos_idx]    = pixel_data_in[x + buf_pos];
                     break;
                 case IRNightVision:
                     // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + 2] = 0;
-                    row[x * bytes_pp_out + 1] = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out]     = 0;
+                    row[x * bytes_pp_out + red_pos_idx]     = 0;
+                    row[x * bytes_pp_out + green_pos_idx]   = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + blue_pos_idx]    = 0;
                     break;
                 case IRIronbow:
                     // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + 2] = (iron_palette[pixel_data_in[x + buf_pos]] >> 16)&0xFF;
-                    row[x * bytes_pp_out + 1] = (iron_palette[pixel_data_in[x + buf_pos]] >> 8) & 0xFF;
-                    row[x * bytes_pp_out]     =  iron_palette[pixel_data_in[x + buf_pos]] & 0xFF;
+                    row[x * bytes_pp_out + red_pos_idx]     = (iron_palette[pixel_data_in[x + buf_pos]] >> 16)&0xFF;
+                    row[x * bytes_pp_out + green_pos_idx]   = (iron_palette[pixel_data_in[x + buf_pos]] >> 8) & 0xFF;
+                    row[x * bytes_pp_out + blue_pos_idx]    =  iron_palette[pixel_data_in[x + buf_pos]] & 0xFF;
                     break;
                 case IRInfrared:
                 default:
                     // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + 2] = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out + 1] = 0;
-                    row[x * bytes_pp_out]     = 0;
+                    row[x * bytes_pp_out + red_pos_idx]     = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + green_pos_idx]   = 0;
+                    row[x * bytes_pp_out + blue_pos_idx]    = 0;
                     break;
             }
         }
