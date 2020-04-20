@@ -85,16 +85,6 @@ namespace GPUTexture {
     }
     
     namespace SideLoader {
-        struct GPUTextureJob {
-            enum Type {
-                Upload,
-                Download,
-                Delete
-            } type;
-
-            ImageRID& owner_rid_ref;
-            ImageResourceData ird;
-        };
         namespace {
             static GLFWwindow* texture_sideload_ctx = nullptr;
             static std::queue<GPUTextureJob> texture_jobs0;
@@ -102,43 +92,22 @@ namespace GPUTexture {
             static std::condition_variable texture_job_avail;
 
             static void waitOnGPUTextureJobs(){
-                std::cout << "Texture sideload thread has started." << std::endl;
-
                 while(true){
                     std::unique_lock<std::mutex> lock(job_queue_mutex);
                     // Wait indefinitely until a job is available.
                     texture_job_avail.wait(lock, []{ return texture_jobs0.size() > 0; });
-                    std::cout << "Texture sideload thread working on a job." << std::endl;
-
 
                     auto& tex_job = texture_jobs0.front();
-                    ImageRID rid=0;
-                    switch(tex_job.type) {
-                        case GPUTextureJob::Upload: {
-                            ImageResourceData& ird = tex_job.ird;
 
-                            glfwMakeContextCurrent(texture_sideload_ctx);
-                            openGLUpload(rid, ird.width, ird.height, ird.num_channels, ird.bytes);
-                            glfwMakeContextCurrent(NULL);
-
-                            // Update the provided variable to refer to the texture resource id.
-                            std::swap(tex_job.owner_rid_ref, rid);
-                        } break;
-                        //case GPUTextureJob::Download:
-                            //break;
-                        case GPUTextureJob::Delete:
-                            std::swap(tex_job.owner_rid_ref, rid);
-                            break;
-                    }
-                    openGLFree(rid); // Free the old texture.
+                    glfwMakeContextCurrent(texture_sideload_ctx);
+                    tex_job();
+                    glfwMakeContextCurrent(NULL);
 
                     texture_jobs0.pop(); // Remove the job from the queue since it has been processed.
-                    std::cout << "Texture sideload thread finished a job." << std::endl;
                 }
 
                 glfwDestroyWindow(texture_sideload_ctx);
                 texture_sideload_ctx = nullptr;
-                std::cout << "Texture sideload thread has stopped." << std::endl;
             }
 
         }
@@ -154,15 +123,9 @@ namespace GPUTexture {
             sideload_thread.detach(); // We do not need to wait on the thread any longer.
         }
         
-        void uploadTexture(ImageRID& rid, ImageResourceData& texture_data) {
+        void addJob(GPUTextureJob job){
             std::lock_guard<std::mutex> lock(job_queue_mutex);
-            texture_jobs0.push({GPUTextureJob::Upload, rid, std::move(texture_data)});
-            texture_job_avail.notify_one();
-        }
-
-        void deleteTexture(ImageRID& rid){
-            std::lock_guard<std::mutex> lock(job_queue_mutex);
-            texture_jobs0.push({GPUTextureJob::Delete, rid, ImageResourceData()});
+            texture_jobs0.push(job);
             texture_job_avail.notify_one();
         }
     }
@@ -175,10 +138,16 @@ inline void ImageResource::freeBytes() {
     }
 }
 
+void ImageResource::freeTexture() {
+    GPUTexture::SideLoader::addJob([this](){
+        GPUTexture::openGLFree(this->rid);
+        this->rid = 0;
+    });
+}
+
 ImageResource::~ImageResource() {
     this->freeBytes();
-    if(this->rid)
-        GPUTexture::SideLoader::deleteTexture(this->rid);
+    this->freeTexture();
 }
 
 ImageResource::ImageResource(const std::string& image_location, bool flip) {
@@ -194,7 +163,12 @@ void ImageResource::load(const std::string& image_location, bool flip) {
 
     if(!this->data.bytes)
         return; // There is no image data to upload to the gpu.
-    GPUTexture::SideLoader::uploadTexture(this->rid, this->data);
+    GPUTexture::SideLoader::addJob([this](){
+        GPUTexture::openGLFree(this->rid);
+        GPUTexture::openGLUpload(this->rid, this->data.width, this->data.height, this->data.num_channels, this->data.bytes);
+        delete[] this->data.bytes;
+    });
+    //GPUTexture::SideLoader::uploadTexture(this->rid, this->data);
 }
 
 /**

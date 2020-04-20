@@ -13,6 +13,10 @@ TemperatureData parseTemperatureData(const unsigned char* temp_data);
 
 void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_width, int ir_image_height, int bytes_pp_out, int col_fil);
 
+inline void operator +=(std::ostream& stream, const char* msg) {
+    stream << msg << std::endl;
+}
+
 template<typename ErrMsgStr>
 #ifndef __jctool_cpp_API__
 int irSensor(ir_image_config ir_img_cfg, ErrMsgStr& error_msg
@@ -25,31 +29,31 @@ int irSensor(Controller::IRSensor& use_ir_sensor, ErrMsgStr& error_msg) {
     // Get error
     switch (res) {
     case 1:
-        error_msg = "1ID31";
+        error_msg += "1ID31";
         break;
     case 2:
-        error_msg = "2MCUON";
+        error_msg += "2MCUON";
         break;
     case 3:
-        error_msg = "3MCUONBUSY";
+        error_msg += "3MCUONBUSY";
         break;
     case 4:
-        error_msg = "4MCUMODESET";
+        error_msg += "4MCUMODESET";
         break;
     case 5:
-        error_msg = "5MCUSETBUSY";
+        error_msg += "5MCUSETBUSY";
         break;
     case 6:
-        error_msg = "6IRMODESET";
+        error_msg += "6IRMODESET";
         break;
     case 7:
-        error_msg = "7IRSETBUSY";
+        error_msg += "7IRSETBUSY";
         break;
     case 8:
-        error_msg = "8IRCFG";
+        error_msg += "8IRCFG";
         break;
     case 9:
-        error_msg = "9IRFCFG";
+        error_msg += "9IRFCFG";
         break;
     default:
         break;

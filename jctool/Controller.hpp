@@ -4,6 +4,8 @@
 #include "jctool_types.h"
 #include "ir_sensor.h"
 
+#include <mutex>
+#include <sstream>
 #include <tuple>
 
 class Controller {
@@ -12,7 +14,8 @@ public:
         None,
         JoyConLeft,
         JoyConRight,
-        ProCon
+        ProCon,
+        Undefined
     };
 
     void connection();
@@ -46,7 +49,6 @@ private:
     controller_hid_handle_t hid_handle = nullptr;
 public:
     class IRSensor {
-        friend class Controller;
     public:
         struct Res {
             union {
@@ -63,26 +65,54 @@ public:
             std::tuple<const char*, IRResolution, Res>("40 x 30", IR_40x30, {40, 30})
         };
 
-        ir_image_config config;
+        struct CaptureInfo {
+            float fps;
+            int frame_counter;
+            float duration;
+            float noise_level;
+            int avg_intensity_percent;
+            int white_pixels_percent;
+            u16 exfilter;
+            u8 exf_int;
+        } capture_info;
 
-        bool enable_video;
+        ir_image_config config;
+        std::stringstream message_stream;
+
+        bool enable_ir_video_photo;
         int res_idx_selected; /** The index number of the resolution selected.
         * See the static member IRSensor::resolution.
         */
         IRColor colorize_with;
         bool auto_exposure;
 
-        void storeCapture(u8* raw_capture);
+        void capture();
+        void storeCapture(std::shared_ptr<u8> raw_capture);
 
-        inline const controller_hid_handle_t* hostController() const { return this->host; }
+        inline void setHostController(Controller& host_controller) { this->host = &host_controller; }
+        inline Controller* hostController() const { return this->host; }
         inline u8 maxFragNo() const { return this->ir_max_frag_no; }
         inline uintptr_t lastCaptureTexID() { return this->last_capture_tex_id; }
+        uintptr_t getCaptureTexID();
         bool capture_in_progress;
     private:
         u8 ir_max_frag_no;
-        controller_hid_handle_t* host;
+        Controller* host; // As long as the controller and ir sensor have the same lifetime, this should point to the controller.
         uintptr_t last_capture_tex_id;
+
+        struct VideoStreamFrameData {
+            uintptr_t textures[3] = {};
+            int idx_render = 0;
+            int idx_swap = 1;
+            int idx_display = 2;
+            bool updated = false;
+            std::mutex texture_mutex;
+        } vstream_frame_dat;
     } ir_sensor;
+
+    bool cancel_spi_dump = false;
+    bool enable_nfc_scanning = false;
+    u8 timming_byte = 0;
 
     Controller();
 };

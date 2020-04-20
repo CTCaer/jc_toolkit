@@ -12,10 +12,10 @@
 #include <cstdio>
 #include <Windows.h>
 #else
+#include <chrono>
 #include <stdio.h>
 #include <unistd.h>
 const auto& Sleep = sleep;
-//#include <algorithm>
 #include <math.h> // for sqrt
 const auto min = [](auto a, auto b){
     return (a < b) ? a : b;
@@ -45,6 +45,7 @@ using namespace CppWinFormJoy;
 
 bool enable_traffic_dump = false;
 
+#ifndef __jctool_cpp_API__
 int  handle_ok;
 bool enable_button_test;
 bool enable_IRVideoPhoto;
@@ -54,6 +55,7 @@ bool cancel_spi_dump;
 bool check_connection_ok;
 
 u8 timming_byte;
+#endif
 #ifndef __jctool_cpp_API__
 u8 ir_max_frag_no;
 #endif
@@ -154,7 +156,7 @@ void AnalogStickCalc(
 #ifndef __jctool_cpp_API__
 int set_led_busy() {
 #else
-int set_led_busy(controller_hid_handle_t handle) {
+int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, Controller::Type controller_type) {
 #endif
     int res;
     u8 buf[49];
@@ -170,7 +172,12 @@ int set_led_busy(controller_hid_handle_t handle) {
     res = hid_read_timeout(handle, buf, 0, 64);
 
     //Set breathing HOME Led
-    if (handle_ok != 1) {
+#ifndef __jctool_cpp_API__
+    if (handle_ok != 1)
+#else
+    if(controller_type != Controller::Type::JoyConLeft)
+#endif
+    {
         memset(buf, 0, sizeof(buf));
         hdr = (brcm_hdr *)buf;
         pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -192,7 +199,7 @@ int set_led_busy(controller_hid_handle_t handle) {
 #ifndef __jctool_cpp_API__
 std::string get_sn(u32 offset, const u16 read_len) {
 #else
-std::string get_sn(controller_hid_handle_t handle) {
+std::string get_sn(controller_hid_handle_t handle, u8& timming_byte) {
     static const u32 offset = 0x6001;
     static const u16 read_len = 0xF;
 #endif
@@ -244,7 +251,7 @@ std::string get_sn(controller_hid_handle_t handle) {
 #ifndef __jctool_cpp_API__
 int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
 #else
-int get_spi_data(controller_hid_handle_t handle, u32 offset, const u16 read_len, u8 * test_buf) {
+int get_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 read_len, u8 * test_buf) {
 #endif
     int res;
     u8 buf[49];
@@ -288,7 +295,7 @@ int get_spi_data(controller_hid_handle_t handle, u32 offset, const u16 read_len,
 #ifndef __jctool_cpp_API__
 int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
 #else
-int write_spi_data(controller_hid_handle_t handle, u32 offset, const u16 write_len, u8* test_buf) {
+int write_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 write_len, u8* test_buf) {
 #endif
     int res;
     u8 buf[49];
@@ -328,7 +335,7 @@ int write_spi_data(controller_hid_handle_t handle, u32 offset, const u16 write_l
 #ifndef __jctool_cpp_API__
 int get_device_info(u8* test_buf) {
 #else
-int get_device_info(controller_hid_handle_t handle, u8* test_buf) {
+int get_device_info(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf) {
 #endif
     int res;
     u8 buf[49];
@@ -367,7 +374,7 @@ int get_device_info(controller_hid_handle_t handle, u8* test_buf) {
 #ifndef __jctool_cpp_API__
 int get_battery(u8* test_buf) {
 #else
-int get_battery(controller_hid_handle_t handle, u8* test_buf) {
+int get_battery(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf) {
 #endif
     int res;
     u8 buf[49];
@@ -406,7 +413,7 @@ int get_battery(controller_hid_handle_t handle, u8* test_buf) {
 #ifndef __jctool_cpp_API__
 int get_temperature(u8* test_buf) {
 #else
-int get_temperature(controller_hid_handle_t handle, u8* test_buf) {
+int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf) {
 #endif
     int res;
     u8 buf[49];
@@ -506,7 +513,7 @@ int get_temperature(controller_hid_handle_t handle, u8* test_buf) {
 #ifndef __jctool_cpp_API__
 int dump_spi(const char *dev_name) {
 #else
-int dump_spi(controller_hid_handle_t handle, const char *dev_name) {
+int dump_spi(controller_hid_handle_t handle, u8& timming_byte, bool& cancel_spi_dump, const char *dev_name) {
 #endif
     std::string file_dev_name = dev_name;
     int error_reading = 0;
@@ -520,7 +527,7 @@ int dump_spi(controller_hid_handle_t handle, const char *dev_name) {
 #ifdef WIN32
     errno_t err;
     if ((err = fopen_s(&f, file_dev_name.c_str(), "wb")) != 0) {
-#elif defined(linux)
+#elif defined(__linux__)
     if ((f = fopen(file_dev_name.c_str(), "wb")) != nullptr) {
 #endif
 #ifndef __jctool_cpp_API__
@@ -589,7 +596,7 @@ int dump_spi(controller_hid_handle_t handle, const char *dev_name) {
 #ifndef __jctool_cpp_API__
 int send_rumble() {
 #else
-int send_rumble(controller_hid_handle_t handle) {
+int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Type controller_type) {
 #endif
     int res;
     u8 buf[49];
@@ -677,7 +684,12 @@ int send_rumble(controller_hid_handle_t handle) {
     res = hid_read_timeout(handle, buf, 0, 64);
 
     // Set HOME Led
-    if (handle_ok != 1) {
+#ifndef __jctool_cpp_API__
+    if (handle_ok != 1)
+#else
+    if(controller_type != Controller::Type::JoyConLeft)
+#endif
+    {
         memset(buf, 0, sizeof(buf));
         hdr = (brcm_hdr *)buf;
         pkt = (brcm_cmd_01 *)(hdr + 1);
@@ -701,7 +713,7 @@ int send_rumble(controller_hid_handle_t handle) {
 #ifndef __jctool_cpp_API__
 int send_custom_command(u8* arg) {
 #else
-int send_custom_command(controller_hid_handle_t handle, u8* arg){
+int send_custom_command(controller_hid_handle_t handle, u8& timming_byte, u8* arg){
 #endif
     int res_write;
     int res;
@@ -1256,7 +1268,7 @@ int button_test() {
 #ifndef __jctool_cpp_API__
 int play_tune(int tune_no) {
 #else
-int play_tune(controller_hid_handle_t handle, int tune_no) {
+int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
 #endif
     int res;
     u8 buf[49];
@@ -1347,7 +1359,7 @@ int play_tune(controller_hid_handle_t handle, int tune_no) {
 #ifndef __jctool_cpp_API__
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
 #else
-int play_hd_rumble_file(controller_hid_handle_t handle, RumbleData& rumble_data) {
+int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, RumbleData& rumble_data) {
     int file_type = rumble_data.metadata.vib_file_type;
     u16 sample_rate = rumble_data.metadata.sample_rate;
     int samples = rumble_data.metadata.samples;
@@ -1571,7 +1583,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, RumbleData& rumble_data)
 #ifndef __jctool_cpp_API__
 int ir_sensor_auto_exposure(int white_pixels_percent) {
 #else
-int ir_sensor_auto_exposure(controller_hid_handle_t handle, int white_pixels_percent) {
+int ir_sensor_auto_exposure(controller_hid_handle_t handle, u8& timming_byte, int white_pixels_percent) {
 #endif
     int res;
     u8 buf[49];
@@ -1619,19 +1631,25 @@ int ir_sensor_auto_exposure(controller_hid_handle_t handle, int white_pixels_per
 
 #ifndef __jctool_cpp_API__
 int get_raw_ir_image(u8 show_status) {
+    std::stringstream ir_status;
 #else
 int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
-    controller_hid_handle_t handle = *use_ir_sensor.hostController();
+    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
+    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
     u8 ir_max_frag_no = use_ir_sensor.maxFragNo();
+    std::stringstream& ir_status = use_ir_sensor.message_stream;
 #endif
-    std::stringstream ir_status;
 
-    int elapsed_time = 0;
-    int elapsed_time2 = 0;
+    int64_t elapsed_time = 0; // The time it took to get a fragment.
+    int64_t elapsed_time2 = 0; // The time it took to get a frame.
 #ifndef __jctool_cpp_API__
     System::Diagnostics::Stopwatch^ sw = System::Diagnostics::Stopwatch::StartNew();
 #else
-    // TODO: Implement else
+    int frame_counter = 0;
+    auto start = std::chrono::system_clock::now();
+    auto _elapsedClockTimeMS = [&start](){
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
+    };
 #endif
 
     u8 buf[49];
@@ -1668,7 +1686,12 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 
     // IR Read/ACK loop for fragmented data packets. 
     // It also avoids requesting missed data fragments, we just skip it to not complicate things.
-    while (enable_IRVideoPhoto || initialization) {
+#ifndef __jctool_cpp_API__
+    while (enable_IRVideoPhoto || initialization)
+#else
+    while(use_ir_sensor.enable_ir_video_photo || initialization)
+#endif
+    {
         memset(buf_reply, 0, sizeof(buf_reply));
         hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
 
@@ -1690,12 +1713,17 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 
                 // Auto exposure.
                 // TODO: Fix placement, so it doesn't drop next fragment.
-                if (enable_IRAutoExposure && initialization < 2 && got_frag_no == 0){
+#ifndef __jctool_cpp_API__
+                if (enable_IRAutoExposure 
+#else
+                if(use_ir_sensor.auto_exposure
+#endif
+                && initialization < 2 && got_frag_no == 0){
                     white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
 #ifndef __jctool_cpp_API__
                     ir_sensor_auto_exposure(white_pixels_percent);
 #else
-                    ir_sensor_auto_exposure(handle, white_pixels_percent);
+                    ir_sensor_auto_exposure(handle, timming_byte, white_pixels_percent);
 #endif
                 }
 
@@ -1720,7 +1748,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
                 elapsed_time = sw->ElapsedMilliseconds;
 #else
-    // TODO: Implement else
+                elapsed_time = _elapsedClockTimeMS();
 #endif
 
                 // Check if final fragment. Draw the frame.
@@ -1729,8 +1757,6 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 #ifndef __jctool_cpp_API__
                     elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
                     FormJoy::myform1->setIRPictureWindow(buf_image, true);
-#else
-                    use_ir_sensor.storeCapture(buf_image);
 #endif
 
                     //debug
@@ -1750,7 +1776,26 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 
                     elapsed_time2 = sw->ElapsedMilliseconds;
 #else
-                    // TODO: Implement else
+                    int64_t curr_time = _elapsedClockTimeMS();
+                    elapsed_time2 = curr_time - elapsed_time2;
+                    float fps = 0.0f;
+                    if(elapsed_time2 > 0) {
+                        fps = 1000 / elapsed_time2;
+                    }
+                    elapsed_time2 = _elapsedClockTimeMS();
+
+                    use_ir_sensor.capture_info.fps = fps;
+                    use_ir_sensor.capture_info.frame_counter = ++frame_counter;
+                    use_ir_sensor.capture_info.duration = (float) _elapsedClockTimeMS() / 1000;
+                    use_ir_sensor.capture_info.noise_level = noise_level;
+                    use_ir_sensor.capture_info.avg_intensity_percent = avg_intensity_percent;
+                    use_ir_sensor.capture_info.exfilter = *(u16*)&buf_reply[57];
+                    use_ir_sensor.capture_info.white_pixels_percent = white_pixels_percent;
+                    use_ir_sensor.capture_info.exf_int = buf_reply[54];
+                    
+                    u8* buf_copy = new u8[19 * 4096];
+                    memcpy(buf_copy,buf_image, 19 * 4096);
+                    use_ir_sensor.storeCapture(std::shared_ptr<u8>(buf_copy, [](u8* d){ delete[] d; }));
 #endif
 
                     if (initialization)
@@ -1869,7 +1914,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 elapsed_time = sw->ElapsedMilliseconds;
                 Application::DoEvents();
 #else
-                // TODO: Implement else
+                elapsed_time = _elapsedClockTimeMS();
 #endif
             }
             
@@ -1891,7 +1936,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 elapsed_time = sw->ElapsedMilliseconds;
                 Application::DoEvents();
 #else
-    // TODO: Implement else
+                elapsed_time = _elapsedClockTimeMS();
 #endif
 
                 previous_frag_no = 0;
@@ -1932,7 +1977,8 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 int ir_sensor(ir_image_config &ir_cfg) {
 #else
 int ir_sensor(Controller::IRSensor& use_ir_sensor) {
-    controller_hid_handle_t handle = *use_ir_sensor.hostController();
+    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
+    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
     u8 ir_max_frag_no = use_ir_sensor.maxFragNo();
     ir_image_config& ir_cfg = use_ir_sensor.config;
 #endif
@@ -2313,12 +2359,13 @@ step8:
 
 step9:
     // Stream or Capture images from NIR Camera
-    if (enable_IRVideoPhoto)
 #ifndef __jctool_cpp_API__
+    if (enable_IRVideoPhoto)
         res_get = get_raw_ir_image(2);
     else
         res_get = get_raw_ir_image(1);
 #else
+    if (use_ir_sensor.enable_ir_video_photo)
         res_get = get_raw_ir_image(use_ir_sensor, 2);
     else
         res_get = get_raw_ir_image(use_ir_sensor, 1);
@@ -2375,7 +2422,9 @@ stepf:
 #ifndef __jctool_cpp_API__
 int get_ir_registers(int start_reg, int reg_group) {
 #else
-int get_ir_registers(controller_hid_handle_t handle, int start_reg, int reg_group) {
+int get_ir_registers(Controller::IRSensor& use_ir_sensor, int start_reg, int reg_group) {
+    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
+    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
 #endif
     int res;
     u8 buf[0x170];
@@ -2446,7 +2495,10 @@ int get_ir_registers(controller_hid_handle_t handle, int start_reg, int reg_grou
 #ifndef __jctool_cpp_API__
 int ir_sensor_config_live(ir_image_config &ir_cfg) {
 #else
-int ir_sensor_config_live(controller_hid_handle_t handle, ir_image_config &ir_cfg) {
+int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor) {
+    ir_image_config& ir_cfg = use_ir_sensor.config;
+    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
+    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -2518,7 +2570,7 @@ int ir_sensor_config_live(controller_hid_handle_t handle, ir_image_config &ir_cf
 #ifndef __jctool_cpp_API__
 int nfc_tag_info() {
 #else
-int nfc_tag_info(controller_hid_handle_t handle) {
+int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte, bool& enable_nfc_scanning) {
 #endif
     /////////////////////////////////////////////////////
     // Kudos to Eric Betts (https://github.com/bettse) //
@@ -2771,7 +2823,11 @@ step6:
         res = hid_write(handle, buf, output_buffer_length - 1);
         int retries = 0;
         while (1) {
+#ifndef __jctool_cpp_API__
             if (!enable_NFCScanning)
+#else
+            if (!enable_nfc_scanning)
+#endif
                 goto step7;
             res = hid_read_timeout(handle, buf, sizeof(buf), 64);
             if (buf[0] == 0x31) {
@@ -3076,7 +3132,7 @@ stepf:
 #ifndef __jctool_cpp_API__
 int silence_input_report() {
 #else
-int silence_input_report(controller_hid_handle_t handle) {
+int silence_input_report(controller_hid_handle_t handle, u8& timming_byte) {
 #endif
     int res;
     u8 buf[49];
@@ -3235,10 +3291,11 @@ int test_chamber() {
 #ifndef __jctool_cpp_API__
 int device_connection(){
     if (check_connection_ok) {
+        handle_ok = 0;
 #else
 int device_connection(controller_hid_handle_t& handle){
+        int handle_ok = 0;
 #endif
-        handle_ok = 0;
         // Joy-Con (L)
         if (handle = hid_open(0x57e, 0x2006, nullptr)) {
             handle_ok = 1;
@@ -3295,8 +3352,8 @@ int main(int argc, char** args) {
         freopen("CONOUT$", "w", stdout);
     }
     */
-    check_connection_ok = true;
 #ifndef __jctool_cpp_API__
+    check_connection_ok = true;
     while (!device_connection()) {
         if (MessageBox::Show(
             L"The device is not paired or the device was disconnected!\n\n" +
@@ -3309,20 +3366,16 @@ int main(int argc, char** args) {
             MessageBoxButtons::RetryCancel, MessageBoxIcon::Stop) == System::Windows::Forms::DialogResult::Cancel)
             return 1;
     }
-#endif
     // Enable debugging
-#ifndef __jctool_cpp_API__
     if (args->Length > 0) {
-#else
-    if (argc > 0) {
-#endif
         if (args[0] == "-d")
             enable_traffic_dump = true; // Enable hid_write/read logging to text file
         else if (args[0] == "-f")
             check_connection_ok = false;   // Don't check connection after the 1st successful one
     }
-
     timming_byte = 0x0;
+#endif
+
 
     //test_chamber();
 #ifndef __jctool_cpp_API__
@@ -3353,13 +3406,14 @@ int main(int argc, char** args) {
     Application::Run(myform1);
 #else
     // Every UI frame call happens in the lambda function below.
+    static const char* window_name = "Joy-Con Toolkit";
     auto imgui_calls = []() {
         static bool window_still_open = true;
 
         ImGui::SetNextWindowPos({}, ImGuiCond_Once);
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
 
-        if(!ImGui::Begin("JC Toolkit", &window_still_open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)){
+        if(!ImGui::Begin(window_name, &window_still_open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)){
             ImGui::End();
         } else {
             JCToolkit::UI::show();
@@ -3373,7 +3427,7 @@ int main(int argc, char** args) {
 
     ImGuiMain(
         {
-            "Joy-Con Toolkit", // The window title.
+            window_name, // The window title.
             640, // The window width.
             480 // The window height.
         },

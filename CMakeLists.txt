@@ -53,6 +53,8 @@ target_include_directories(JCToolkit PRIVATE
     hidapi/hidapi
     ui/ImGui/imgui
     ui/ImGui/ImGuiInterface
+    ui/ImGui/imgui/examples/libs/gl3w
+    ui/ImGui/imgui/examples/libs/glfw/include
     ui/tools
     ui
     stb

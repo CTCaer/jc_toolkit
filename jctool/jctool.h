@@ -29,28 +29,28 @@ int silence_input_report();
 int ir_sensor(ir_image_config &ir_cfg);
 int ir_sensor_config_live(ir_image_config &ir_cfg);
 #else
-std::string get_sn(controller_hid_handle_t handle);
-int get_spi_data(controller_hid_handle_t handle, u32 offset, const u16 read_len, u8 *test_buf);
-int write_spi_data(controller_hid_handle_t handle, u32 offset, const u16 write_len, u8* test_buf);
-int get_device_info(controller_hid_handle_t handle, u8* test_buf);
-int get_battery(controller_hid_handle_t handle, u8* test_buf);
-int get_temperature(controller_hid_handle_t handle, u8* test_buf);
-int dump_spi(controller_hid_handle_t handle, const char *dev_name);
-int send_rumble(controller_hid_handle_t handle);
-int send_custom_command(controller_hid_handle_t handle, u8* arg);
-int play_tune(controller_hid_handle_t handle, int tune_no);
-int play_hd_rumble_file(controller_hid_handle_t handle, RumbleData& rumble_data);
+std::string get_sn(controller_hid_handle_t handle, u8& timming_byte);
+int get_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 read_len, u8 *test_buf);
+int write_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 write_len, u8* test_buf);
+int get_device_info(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
+int get_battery(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
+int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
+int dump_spi(controller_hid_handle_t handle, u8& timming_byte, const char *dev_name);
+int send_rumble(controller_hid_handle_t handle, u8& timming_byte);
+int send_custom_command(controller_hid_handle_t handle, u8& timming_byte, u8* arg);
+int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no);
+int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, RumbleData& rumble_data);
 int device_connection(controller_hid_handle_t& handle);
-int button_test(controller_hid_handle_t handle);
-int set_led_busy(controller_hid_handle_t handle);
-int nfc_tag_info(controller_hid_handle_t handle);
-int silence_input_report(controller_hid_handle_t handle);
-int set_led_busy(controller_hid_handle_t handle);
-int button_test(controller_hid_handle_t handle);
-int nfc_tag_info(controller_hid_handle_t handle);
-int silence_input_report(controller_hid_handle_t handle);
+int button_test(controller_hid_handle_t handle, u8& timming_byte);
+int set_led_busy(controller_hid_handle_t handle, u8& timming_byte);
+int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
+int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
+int set_led_busy(controller_hid_handle_t handle, u8& timming_byte);
+int button_test(controller_hid_handle_t handle, u8& timming_byte);
+int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
+int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
 int ir_sensor(Controller::IRSensor& use_ir_sensor);
-int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor);
+int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor, u8& timming_byte);
 
 namespace JCToolkit {
     namespace UI {
@@ -60,6 +60,7 @@ namespace JCToolkit {
 }
 #endif
 
+#ifndef __jctool_cpp_API__
 extern int  handle_ok;
 extern bool enable_button_test;
 extern bool enable_IRVideoPhoto;
@@ -69,7 +70,6 @@ extern bool cancel_spi_dump;
 extern bool check_connection_ok;
 
 extern u8 timming_byte;
-#ifndef __jctool_cpp_API__
 extern u8 ir_max_frag_no;
 #endif
 

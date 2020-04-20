@@ -19,8 +19,10 @@ namespace ImGui {
                 EnableItems();
         }
         inline void allowEnable() {
-            if(disabled)
+            if(disabled) {
                 EnableItems();
+                disabled = false;
+            }
         }
         /**
          * Make sure the items are disabled if enabled.

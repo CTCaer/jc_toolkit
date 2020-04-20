@@ -219,7 +219,7 @@ namespace JCToolkit {
                 ofn.lpstrInitialDir = NULL;
                 ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
                 if(GetOpenFileName(&ofn)) {
-#elif defined(linux)
+#elif defined(__linux__)
                 if(false) { // TODO: linux file open.
 #endif
                     std::ifstream rumble_fstream = std::ifstream(file_name_buf, std::ios_base::binary);
@@ -288,7 +288,7 @@ namespace JCToolkit {
                     );
                 }
                 if(default_controller.handle() && ImGui::Button("Play")){
-                    play_hd_rumble_file(default_controller.handle(), rumble_data);
+                    play_hd_rumble_file(default_controller.handle(), default_controller.timming_byte, rumble_data);
                 }
             }
         }
@@ -309,7 +309,7 @@ namespace JCToolkit {
             // The controller's ir config
             ir_image_config& ir_config_0 = controller.ir_sensor.config;
 
-            ImGui::Columns(2);
+            ImGui::Columns(3);
             /* Stream/Capture */ {
                 ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
 
@@ -317,24 +317,43 @@ namespace JCToolkit {
                 ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config_0.ir_flip, flip_dir_0);
                 if(ImGui::Button("Capture Image")) {
                     // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
-                    controller.IRSensorCapture();
+                    controller.ir_sensor.capture();
                     disable.ensureDisabled();
                 }
                 ImGui::SameLine();
-                bool video_in_progress = controller.ir_sensor.enable_video && controller.ir_sensor.capture_in_progress;
-                disable.allowEnable();
+                bool video_in_progress = controller.ir_sensor.enable_ir_video_photo && controller.ir_sensor.capture_in_progress;
+                if(video_in_progress)
+                    disable.allowEnable();
                 if(ImGui::Button(video_in_progress ? "Stop" : "Stream Video")){
-                    if(!video_in_progress)
-                        controller.IRSensorCapture();
-                    else
-                        controller.ir_sensor.enable_video = false; // Stop the video stream
+                    if(!video_in_progress) {
+                        controller.ir_sensor.enable_ir_video_photo = true;
+                        controller.ir_sensor.capture();
+                    } else
+                        controller.ir_sensor.enable_ir_video_photo = false; // For stopping the video stream
                 }
                 disable.ensureDisabled();
                 auto& size = std::get<2>(resolutions[controller.ir_sensor.res_idx_selected]);
                 auto avail_size = ImGui::GetContentRegionAvail();
                 auto resize = resizeRectAToFitInRectB(size, avail_size);
-                ImGui::Image((ImTextureID)controller.ir_sensor.lastCaptureTexID(), {(float)resize.width, (float)resize.height});
+                ImGui::Image((ImTextureID)controller.ir_sensor.getCaptureTexID(), {(float)resize.width, (float)resize.height});
                 ImGui::EndGroup();
+            }
+
+            ImGui::NextColumn();
+            /* IR Message Stream / Capture Information */ {
+                ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvailWidth());
+                ImGui::Text("%s", controller.ir_sensor.message_stream.rdbuf()->str().c_str());
+                ImGui::PopTextWrapPos();
+
+                auto capture_info = controller.ir_sensor.capture_info;
+                ImGui::Text("FPS: %.2f (%d ms)", capture_info.fps, (int) ((capture_info.fps > 0.0f) ? (1/capture_info.fps) : NAN));
+                ImGui::Text("Frame counter: %d", capture_info.frame_counter);
+                ImGui::Text("Duration: %f (seconds)", capture_info.duration);
+                ImGui::Text("Ambient Noise: %.2f", capture_info.noise_level);
+                ImGui::Text("Intensity: %d%%", capture_info.avg_intensity_percent);
+                ImGui::Text("EXFilter: %d", capture_info.exfilter);
+                ImGui::Text("EXFilter Int: %d", capture_info.exf_int);
+                ImGui::Text("White Px: %d%%", capture_info.white_pixels_percent);
             }
 
             ImGui::NextColumn();
@@ -388,10 +407,10 @@ namespace JCToolkit {
                             if(ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt))
                                 ir_image_config_Sets::exposure(ir_config_0.ir_exposure, exposure_amt);
                             if(ImGui::Checkbox("Auto Exposure (experimental)", &controller.ir_sensor.auto_exposure)){
-                                if(controller.ir_sensor.auto_exposure && controller.ir_sensor.enable_video)
+                                if(!controller.ir_sensor.auto_exposure && controller.ir_sensor.enable_ir_video_photo) {
                                     controller.ir_sensor.auto_exposure = false;
-                                else {
-                                    controller.ir_sensor.auto_exposure = true;
+                                    ir_image_config_Sets::exposure(ir_config_0.ir_exposure, exposure_amt);
+                                } else {
                                     ir_config_0.ir_digital_gain = 1;
                                 }
                             }
