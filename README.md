@@ -20,15 +20,15 @@ TODOS:
     - [ ] Acc/Gyro Calibration
     - [ ] 6-Axis and Stick Device Parameters
     
-  - [ ] IR Camera
-    - [ ] IR Camera Settings
-    - [ ] IR Camera Capture/Stream
+  - [x] IR Camera
+    - [x] IR Camera Settings
+    - [x] IR Camera Capture/Stream
     
   - [ ] User Calibration and Stick Device Parameters
 
 **Alpha API** with ImGui Screen shot:
 
-![](./ui2_screen_cap.png)
+![](./jctoolkit_ubuntu.png)
 
 Build the project with with CMake to get the above result.
 
