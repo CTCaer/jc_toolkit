@@ -20,4 +20,14 @@ namespace ImGui {
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
     }
+
+    void MakeSection(const std::string headername, Display display_section, bool* collapsable, int collapse_flags){
+        if((!collapsable) |
+            (collapsable && ImGui::CollapsingHeader(headername.c_str(), collapsable, collapse_flags))
+        ){
+            if(!collapsable)
+                ImGui::Text("%s", headername.c_str());
+            std::invoke(display_section);
+        }
+    }
 }

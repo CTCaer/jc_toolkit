@@ -15,7 +15,9 @@
 #include <chrono>
 #include <stdio.h>
 #include <unistd.h>
-const auto& Sleep = sleep;
+int Sleep(uint64_t ms){
+    return usleep(ms*1000);
+};
 #include <math.h> // for sqrt
 const auto min = [](auto a, auto b){
     return (a < b) ? a : b;
@@ -32,7 +34,8 @@ const auto min = [](auto a, auto b){
 #include "FormJoy.h"
 #else
 #include "imgui.h"
-#include "ImGuiInterface.hpp"
+#include "ImGui/tools/this_is_imconfig.h"
+#include "ImGui/tools/Interface/ImGuiInterface.hpp"
 #endif
 
 #include "hidapi.h"
@@ -1689,7 +1692,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 #ifndef __jctool_cpp_API__
     while (enable_IRVideoPhoto || initialization)
 #else
-    while(use_ir_sensor.enable_ir_video_photo || initialization)
+    while(use_ir_sensor.capture_mode_is_video || initialization)
 #endif
     {
         memset(buf_reply, 0, sizeof(buf_reply));
@@ -2365,7 +2368,7 @@ step9:
     else
         res_get = get_raw_ir_image(1);
 #else
-    if (use_ir_sensor.enable_ir_video_photo)
+    if (use_ir_sensor.capture_mode_is_video)
         res_get = get_raw_ir_image(use_ir_sensor, 2);
     else
         res_get = get_raw_ir_image(use_ir_sensor, 1);
@@ -3413,10 +3416,14 @@ int main(int argc, char** args) {
         ImGui::SetNextWindowPos({}, ImGuiCond_Once);
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
 
-        if(!ImGui::Begin(window_name, &window_still_open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)){
+        if(!ImGui::Begin(window_name, &window_still_open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar)){
             ImGui::End();
         } else {
-            JCToolkit::UI::show();
+            ImGui::MakeSection(window_name, [](){
+                static Controller controller;
+                static RumbleData rumble_data;
+                JCToolkit::UI::show(controller, rumble_data);
+            });
             ImGui::End();
         }
 

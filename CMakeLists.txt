@@ -10,19 +10,19 @@ if(UNIX AND NOT APPLE) # Linux
     set(LINUX TRUE)
 endif()
 
-if (WIN32)
-    set(HIDAPI_SOURCE hidapi/windows/hid.c)
-elseif(LINUX)
-    set(HIDAPI_SOURCE hidapi/linux/hid.c)
-endif()
-
 set(SOURCES
     jctool/jctool.cpp
-    ${HIDAPI_SOURCE}
-
     jctool/jctool_api_ui.cpp
     jctool/Controller.cpp
 )
+
+if (WIN32)
+    set(SOURCES ${SOURCES}
+        hidapi/windows/hid.c)
+elseif(LINUX)
+    set(SOURCES ${SOURCES}
+        hidapi/linux/hid.c)
+endif()
 
 if (JCTOOL_API_ONLY)
     add_compile_definitions(__jctool_API_ONLY__)
@@ -52,7 +52,7 @@ target_include_directories(JCToolkit PRIVATE
     jctool
     hidapi/hidapi
     ui/ImGui/imgui
-    ui/ImGui/ImGuiInterface
+    ui/ImGui/tools
     ui/ImGui/imgui/examples/libs/gl3w
     ui/ImGui/imgui/examples/libs/glfw/include
     ui/tools

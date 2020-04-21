@@ -54,7 +54,7 @@ int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor, u8& timming_byte)
 
 namespace JCToolkit {
     namespace UI {
-        void show();
+        void show(Controller& controller, RumbleData& rumble_data);
     }
     void init();
 }

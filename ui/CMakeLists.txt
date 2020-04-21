@@ -33,6 +33,7 @@ add_subdirectory(ImGui)
 # Miscellaneous tools
 add_library(Tools
     tools/ImageLoad/ImageLoad.cpp
+    tools/DirExplorer/dir_explorer.cpp
 )
 target_include_directories(Tools PRIVATE
     tools

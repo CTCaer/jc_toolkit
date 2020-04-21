@@ -79,7 +79,7 @@ public:
         ir_image_config config;
         std::stringstream message_stream;
 
-        bool enable_ir_video_photo;
+        bool capture_mode_is_video;
         int res_idx_selected; /** The index number of the resolution selected.
         * See the static member IRSensor::resolution.
         */

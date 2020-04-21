@@ -1,24 +1,31 @@
 #pragma once
 
+#include <string>
+#include <functional>
+
 namespace ImGui {
+    using Display = std::function<void()>;
+
     void DisableItems();
     void EnableItems();
 
-    class ScopedDisableItems {
+    void MakeSection(const std::string headername, Display display_section, bool* collapsable = nullptr, int collapse_flags = 0);
+
+    class ScopeDisableItems {
         bool disabled;
     public:
-        inline ScopedDisableItems(bool disable_if_true) {
+        inline ScopeDisableItems(bool disable_if_true) {
             if(disable_if_true) {
                 DisableItems();
                 disabled = true;
             } else 
                 disabled = false;
         }
-        inline ~ScopedDisableItems() {
+        inline ~ScopeDisableItems() {
             if(disabled)
                 EnableItems();
         }
-        inline void allowEnable() {
+        inline void allowEnabled() {
             if(disabled) {
                 EnableItems();
                 disabled = false;

@@ -5,7 +5,7 @@ project(ImGui)
 ##############################
 add_compile_options(
     -DIMGUI_IMPL_OPENGL_LOADER_GL3W
-    -DIMGUI_USER_CONFIG="${PROJECT_SOURCE_DIR}/this_is_imconfig.h"
+    -DIMGUI_USER_CONFIG="${PROJECT_SOURCE_DIR}/tools/this_is_imconfig.h"
 )
 add_library(ImGui STATIC
     # Add ImGui source files.
@@ -21,11 +21,14 @@ add_library(ImGui STATIC
     # Allow the use of std::string alongside C-style strings.
     imgui/misc/cpp/imgui_stdlib.cpp
 
-    # Add the ImGui Interface.
-    ImGuiInterface/ImGuiMain.cpp
-
     # Add the ImGui helpers
-    imgui_helpers.cpp
+    tools/imgui_helpers.cpp
+
+    # Add the ImGui Interface.
+    tools/Interface/ImGuiMain.cpp
+
+    # Directory Explorer
+    tools/DirExplorer/ImGuiDirExplorer.cpp
 )
 target_link_libraries(ImGui
     GL3W_LOADER
@@ -36,4 +39,5 @@ target_include_directories(ImGui PRIVATE
     imgui/examples
     imgui/examples/libs/gl3w
     imgui/examples/libs/glfw/include
+    ../tools
 )

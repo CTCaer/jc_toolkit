@@ -24,11 +24,12 @@
 
 #ifdef __jctool_cpp_API__
 #include "imgui.h"
-#include "ImGui/this_is_imconfig.h"
+#include "ImGui/tools/this_is_imconfig.h"
 #include "imgui_internal.h" // PushItemFlags
 #include "ui_helpers.hpp"
 #include "ImageLoad/ImageLoad.hpp"
 #include "Controller.hpp"
+#include "DirExplorer/ImGuiDirExplorer.hpp"
 #define BATTERY_INDICATORS_PATH "jctool/original_res/batt_"
 #define BATTERY_INDICATORS_COUNT 10
 #define BATTERY_INDICATOR_NAMES "0 0_chr 25 25_chr 50 50_chr 75 75_chr 100 100_chr"
@@ -133,8 +134,6 @@ namespace JCToolkit {
             }
         }
     }
-    Controller default_controller;
-    RumbleData default_rumble_data;
     namespace UI {
         /**
          * UI Port from jctool/FormJoy.h
@@ -202,39 +201,26 @@ namespace JCToolkit {
             ImGui::Text("S/N: %s", controller.serialNumber().c_str());
         }
 
-        void showRumblePlayer(RumbleData& rumble_data) {
-            if(ImGui::Button("Load Rumble Data")){
-                char file_name_buf[FILENAME_MAX];
-#ifdef WIN32
-                OPENFILENAME ofn;
-                ZeroMemory(&ofn, sizeof(ofn));
-                HWND hwnd = GetActiveWindow();
-                ofn.lStructSize = sizeof(ofn);
-                ofn.hwndOwner = hwnd;
-                ofn.lpstrFile = file_name_buf;
-                // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
-                // use the contents of szFile to initialize itself.
-                ofn.lpstrFile[0] = '\0';
-                ofn.nMaxFile = sizeof(file_name_buf);
-                ofn.lpstrFilter = "HD Rumble\0*.bnvib;*.jcvib\0\0";
-                ofn.nFilterIndex = 1;
-                ofn.lpstrFileTitle = NULL;
-                ofn.nMaxFileTitle = 0;
-                ofn.lpstrInitialDir = NULL;
-                ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-                if(GetOpenFileName(&ofn)) {
-#elif defined(__linux__)
-                if(false) { // TODO: linux file open.
-#endif
-                    std::ifstream rumble_fstream = std::ifstream(file_name_buf, std::ios_base::binary);
+        void showRumblePlayer(Controller& controller, RumbleData& rumble_data) {
+            static bool show_explorer = false;
+            static const char* explorer_name = "Choose HD Rumble File";
+            static ImGuiID dir_exp = ImGui::DirectoryExplorer::NewDirExplorer(explorer_name, std::filesystem::current_path().string());
+            static std::string selected;
+            if(ImGui::Button("Load Rumble Data"))
+                show_explorer = true;
+
+            if(ImGui::DirectoryExplorer::OpenFileDialog(dir_exp, selected, show_explorer)) {
+                const char* file_name = selected.c_str();
+                if(file_name) {
+                    std::ifstream rumble_fstream = std::ifstream(file_name, std::ios_base::binary);
                     if(!rumble_fstream.bad()){
                         RumbleData new_rumble_data;
                         // Calculate the size of the file.
-                        size_t rumble_data_size = std::filesystem::file_size(file_name_buf);
+                        size_t rumble_data_size = std::filesystem::file_size(file_name);
                         char* read_buf = new char[rumble_data_size];
                         rumble_fstream.read(read_buf, rumble_data_size);
 
-                        new_rumble_data.from_file = file_name_buf;
+                        new_rumble_data.from_file = file_name;
                         new_rumble_data.metadata = getVIBMetadata(read_buf);
                         new_rumble_data.data.reset(reinterpret_cast<u8*>(read_buf), [](u8* p){
                             delete[] p;
@@ -244,6 +230,7 @@ namespace JCToolkit {
                     }
                 }
             }
+            
             if(rumble_data.data == nullptr)
                 ImGui::Text("There is no rumble data loaded.");
             else {
@@ -291,65 +278,69 @@ namespace JCToolkit {
                         rumble_data.metadata.loop_times
                     );
                 }
-                if(default_controller.handle() && ImGui::Button("Play")){
-                    play_hd_rumble_file(default_controller.handle(), default_controller.timming_byte, rumble_data);
+                if(controller.handle() && ImGui::Button("Play")){
+                    play_hd_rumble_file(controller.handle(), controller.timming_byte, rumble_data);
                 }
             }
         }
+
+        static const char* col_fils[] = {
+            "Greyscale",
+            "Night Vision",
+            "Ironbow",
+            "Infrared"
+        };
+        static auto& resolutions = Controller::IRSensor::resolutions;
+
+        void showIRCameraFeed(Controller::IRSensor& ir_sensor){
+            auto& size = std::get<2>(resolutions[ir_sensor.res_idx_selected]);
+            auto avail_size = ImGui::GetContentRegionAvail();
+            auto resize = resizeRectAToFitInRectB(size, avail_size);
+            ImGui::Image((ImTextureID)ir_sensor.getCaptureTexID(), {(float)resize.width, (float)resize.height});
+            ImGui::EndGroup();
+        }
         
-        void showIRCamera(Controller& controller) {
-            static const char* col_fils[] = {
-                "Greyscale",
-                "Night Vision",
-                "Ironbow",
-                "Infrared"
-            };
-            static auto& resolutions = Controller::IRSensor::resolutions;
-            
+        void showIRCamera(Controller::IRSensor& ir_sensor) {
             static u16 exposure_amt = 300;
             static int denoise_edge_smooth = 35;
             static int denoise_color_intrpl = 68; // Color Interpolation
 
             // The controller's ir config
-            ir_image_config& ir_config_0 = controller.ir_sensor.config;
+            ir_image_config& ir_config = ir_sensor.config;
 
             ImGui::Columns(3);
             /* Stream/Capture */ {
-                ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+                ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
 
                 ImGui::BeginGroup();
-                ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config_0.ir_flip, flip_dir_0);
+                ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config.ir_flip, flip_dir_0);
                 if(ImGui::Button("Capture Image")) {
                     // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
-                    controller.ir_sensor.capture();
+                    ir_sensor.capture();
                     disable.ensureDisabled();
                 }
                 ImGui::SameLine();
-                bool video_in_progress = controller.ir_sensor.enable_ir_video_photo && controller.ir_sensor.capture_in_progress;
+                bool video_in_progress = ir_sensor.capture_mode_is_video && ir_sensor.capture_in_progress;
                 if(video_in_progress)
-                    disable.allowEnable();
+                    disable.allowEnabled();
                 if(ImGui::Button(video_in_progress ? "Stop" : "Stream Video")){
                     if(!video_in_progress) {
-                        controller.ir_sensor.enable_ir_video_photo = true;
-                        controller.ir_sensor.capture();
+                        ir_sensor.capture_mode_is_video = true;
+                        ir_sensor.capture();
                     } else
-                        controller.ir_sensor.enable_ir_video_photo = false; // For stopping the video stream
+                        ir_sensor.capture_mode_is_video = false; // For stopping the video stream
                 }
                 disable.ensureDisabled();
-                auto& size = std::get<2>(resolutions[controller.ir_sensor.res_idx_selected]);
-                auto avail_size = ImGui::GetContentRegionAvail();
-                auto resize = resizeRectAToFitInRectB(size, avail_size);
-                ImGui::Image((ImTextureID)controller.ir_sensor.getCaptureTexID(), {(float)resize.width, (float)resize.height});
-                ImGui::EndGroup();
+                showIRCameraFeed(ir_sensor);
             }
 
             ImGui::NextColumn();
             /* IR Message Stream / Capture Information */ {
                 ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvailWidth());
-                ImGui::Text("%s", controller.ir_sensor.message_stream.rdbuf()->str().c_str());
+                ImGui::Text("%s", ir_sensor.message_stream.rdbuf()->str().c_str());
                 ImGui::PopTextWrapPos();
 
-                auto capture_info = controller.ir_sensor.capture_info;
+                auto capture_info = ir_sensor.capture_info;
                 ImGui::Text("FPS: %.2f (%d ms)", capture_info.fps, (int) ((capture_info.fps > 0.0f) ? (1/capture_info.fps) : NAN));
                 ImGui::Text("Frame counter: %d", capture_info.frame_counter);
                 ImGui::Text("Duration: %f (seconds)", capture_info.duration);
@@ -368,7 +359,7 @@ namespace JCToolkit {
                 /* Output Frame Settings */ {
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Frame Display Settings")){
-                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
 
                         // Resolution settings
                         ImGui::BeginGroup();
@@ -377,11 +368,11 @@ namespace JCToolkit {
                         constexpr int res_count = IM_ARRAYSIZE(resolutions);
                         for(int i=0; i < res_count; i++){
                             auto& res_tuple = resolutions[i];
-                            bool selected = std::get<1>(res_tuple) == std::get<1>(resolutions[controller.ir_sensor.res_idx_selected]);
+                            bool selected = std::get<1>(res_tuple) == std::get<1>(resolutions[ir_sensor.res_idx_selected]);
                             if(ImGui::RadioButton(std::get<0>(res_tuple), selected)){
-                                controller.ir_sensor.res_idx_selected = i;
+                                ir_sensor.res_idx_selected = i;
                                 // Set the resolution value on the config.
-                                ir_config_0.ir_res_reg = std::get<1>(res_tuple);
+                                ir_config.ir_res_reg = std::get<1>(res_tuple);
                             }
                         }
                         ImGui::EndGroup();
@@ -392,8 +383,8 @@ namespace JCToolkit {
                         ImGui::Text("Color Filter");
 
                         for(int i = 0; i < IRColorCount; i++){
-                            if(ImGui::RadioButton(col_fils[i], i == controller.ir_sensor.colorize_with))
-                                controller.ir_sensor.colorize_with = (IRColor)i;
+                            if(ImGui::RadioButton(col_fils[i], i == ir_sensor.colorize_with))
+                                ir_sensor.colorize_with = (IRColor)i;
                         }
                         ImGui::EndGroup();
                     }
@@ -401,32 +392,32 @@ namespace JCToolkit {
 
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Advanced Settings")){
-                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
 
                         static const u8 min_x = 1;
                         static const u8 max_x = 20;
-                        ImGui::SliderScalar("Digital Gain (lossy)", ImGuiDataType_U8, &ir_config_0.ir_digital_gain, &min_x, &max_x, "x%d");
+                        ImGui::SliderScalar("Digital Gain (lossy)", ImGuiDataType_U8, &ir_config.ir_digital_gain, &min_x, &max_x, "x%d");
                         /* Exposure */ {
                             ImGui::BeginGroup();
                             if(ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt))
-                                ir_image_config_Sets::exposure(ir_config_0.ir_exposure, exposure_amt);
-                            if(ImGui::Checkbox("Auto Exposure (experimental)", &controller.ir_sensor.auto_exposure)){
-                                if(!controller.ir_sensor.auto_exposure && controller.ir_sensor.enable_ir_video_photo) {
-                                    controller.ir_sensor.auto_exposure = false;
-                                    ir_image_config_Sets::exposure(ir_config_0.ir_exposure, exposure_amt);
+                                ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
+                            if(ImGui::Checkbox("Auto Exposure (experimental)", &ir_sensor.auto_exposure)){
+                                if(!ir_sensor.auto_exposure && ir_sensor.capture_mode_is_video) {
+                                    ir_sensor.auto_exposure = false;
+                                    ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
                                 } else {
-                                    ir_config_0.ir_digital_gain = 1;
+                                    ir_config.ir_digital_gain = 1;
                                 }
                             }
                             ImGui::EndGroup();
                         }
                         /* Denoise */ {
                             ImGui::BeginGroup();
-                            ImGui::CheckboxFlags("Enable", &ir_config_0.ir_denoise, ir_denoise_Enable);
+                            ImGui::CheckboxFlags("Enable", &ir_config.ir_denoise, ir_denoise_Enable);
                             if(ImGui::InputInt("Edge Smoothing", &denoise_edge_smooth))
-                                ir_image_config_Sets::denoise_edge_smooth(ir_config_0.ir_denoise, denoise_edge_smooth); // TODO: Clamp to 0-256
+                                ir_image_config_Sets::denoise_edge_smooth(ir_config.ir_denoise, denoise_edge_smooth); // TODO: Clamp to 0-256
                             if(ImGui::InputInt("Color Interpolation", &denoise_color_intrpl))
-                                ir_image_config_Sets::denoise_color_intrpl(ir_config_0.ir_denoise, denoise_color_intrpl); // TODO: Clamp to 0-256
+                                ir_image_config_Sets::denoise_color_intrpl(ir_config.ir_denoise, denoise_color_intrpl); // TODO: Clamp to 0-256
                             ImGui::EndGroup();
                         }
                     }
@@ -435,17 +426,17 @@ namespace JCToolkit {
                 /* Near-Infrared Light Settings */ {
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Near-Infrared Light")){
-                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
 
                         static constexpr u8 max_intensity = ~u8(0);
                         static constexpr u8 min_intensity = 0;
-                        ImGui::CheckboxFlags("(Disable) Far/Narrow (75*) Leds 1-2", (uint32_t*)&ir_config_0.ir_leds, ir_leds_NarrowDisable);
-                        ImGui::SliderScalar("Intensity##narrow", ImGuiDataType_U8, &ir_config_0.ir_leds_intensity, &min_intensity, &max_intensity, "%u");
-                        ImGui::CheckboxFlags("(Disable) Near/Wide (130*) Leds 3-4", (uint32_t*)&ir_config_0.ir_leds, ir_leds_WideDisable);
-                        ImGui::SliderScalar("Intensity##wide", ImGuiDataType_U8, (u8*)&ir_config_0.ir_leds_intensity + 1, &min_intensity, &max_intensity, "%u");
-                        ImGui::CheckboxFlags("Flashlight Mode", (uint32_t*)&ir_config_0.ir_leds, ir_leds_FlashlightMode);
-                        ImGui::CheckboxFlags("Strobe Flash Mode", (uint32_t*)&ir_config_0.ir_leds, ir_leds_StrobeFlashMode);
-                        ImGui::CheckboxFlags("External IR Filter", (uint32_t*)&ir_config_0.ir_ex_light_filter, ir_ex_light_fliter_0);
+                        ImGui::CheckboxFlags("(Disable) Far/Narrow (75*) Leds 1-2", (uint32_t*)&ir_config.ir_leds, ir_leds_NarrowDisable);
+                        ImGui::SliderScalar("Intensity##narrow", ImGuiDataType_U8, &ir_config.ir_leds_intensity, &min_intensity, &max_intensity, "%u");
+                        ImGui::CheckboxFlags("(Disable) Near/Wide (130*) Leds 3-4", (uint32_t*)&ir_config.ir_leds, ir_leds_WideDisable);
+                        ImGui::SliderScalar("Intensity##wide", ImGuiDataType_U8, (u8*)&ir_config.ir_leds_intensity + 1, &min_intensity, &max_intensity, "%u");
+                        ImGui::CheckboxFlags("Flashlight Mode", (uint32_t*)&ir_config.ir_leds, ir_leds_FlashlightMode);
+                        ImGui::CheckboxFlags("Strobe Flash Mode", (uint32_t*)&ir_config.ir_leds, ir_leds_StrobeFlashMode);
+                        ImGui::CheckboxFlags("External IR Filter", (uint32_t*)&ir_config.ir_ex_light_filter, ir_ex_light_fliter_0);
                     }
                     ImGui::EndGroup();
 
@@ -453,10 +444,10 @@ namespace JCToolkit {
                 /* IR Sensor Register/Value */ {
                     ImGui::BeginGroup();
                     if(ImGui::CollapsingHeader("Custom IR Sensor Register/Value")){
-                        ImGui::ScopedDisableItems disable(controller.ir_sensor.capture_in_progress);
+                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
 
-                        ImGui::InputInt("Register", (int*)&ir_config_0.ir_custom_register); // TODO: clamp to 0x5FF
-                        ImGui::InputInt("Value", (int *)((uint16_t*)&ir_config_0.ir_custom_register + 1)); // TODO: clamp to 0xFF
+                        ImGui::InputInt("Register", (int*)&ir_config.ir_custom_register); // TODO: clamp to 0x5FF
+                        ImGui::InputInt("Value", (int *)((uint16_t*)&ir_config.ir_custom_register + 1)); // TODO: clamp to 0xFF
                     }
                     ImGui::EndGroup();
                 }
@@ -464,16 +455,43 @@ namespace JCToolkit {
             }
             ImGui::Columns(1);
         }
+    
+        void show(Controller& controller, RumbleData& rumble_data){
+            struct SectionHeader {
+                const char* header_name;
+                ImGui::Display display;
+                ImGuiTreeNodeFlags flags;
+                bool show;
+            };
+            static SectionHeader section_headers[] = {
+                {"Controller Status", [&](){
+                    showControllerInfo(controller);
+                }, ImGuiTreeNodeFlags_DefaultOpen, true},
+                {"HD Rumble Player", [&](){
+                    showRumblePlayer(controller, rumble_data);
+                }},
+                {"IR Camera", [&](){
+                    showIRCamera(controller.ir_sensor);
+                }}
+            };
 
-        void show(){
+            if(ImGui::BeginMenuBar()){
+                if(ImGui::BeginMenu("View")){
+                    for(auto& section: section_headers){
+                        ImGui::MenuItem(section.header_name, "", &section.show);
+                    }
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenuBar();
+            }
+
             // Try to establish a connection with a controller.
             if(ImGui::Button("Try Connection Attempt"))
-                default_controller.connection();
-            showControllerInfo(default_controller);
-            if(ImGui::CollapsingHeader("HD Rumble Player"))
-                showRumblePlayer(default_rumble_data);
-            if(ImGui::CollapsingHeader("IR Camera"))
-                showIRCamera(default_controller);
+                controller.connection();
+
+            for(auto& section: section_headers){
+                ImGui::MakeSection(section.header_name, section.display, &section.show, section.flags);
+            }
         }
     }
     void init() {
