@@ -1632,13 +1632,73 @@ int ir_sensor_auto_exposure(controller_hid_handle_t handle, u8& timming_byte, in
     return res;
 }
 
-namespace IRSensorLogic {
+namespace IR {
+    struct acknowledge {
+        controller_hid_handle_t& handle;
+        u8& timming_byte;
+        brcm_hdr* hdr;
+        u8* buf;
+        size_t buf_size;
+    };
     /**
      * Request an IR sensor packet. 
      */
-    int request_packet(controller_hid_handle_t handle, u8* buf_reply) {
-        memset(buf_reply, 0, sizeof(buf_reply));
-        hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+    int request_packet(controller_hid_handle_t handle, u8* buf_reply, size_t buf_size) {
+        memset(buf_reply, 0, buf_size);
+        return hid_read_timeout(handle, buf_reply, buf_size, 200);
+    }
+
+    /**
+     * Acknowledge the packet.
+     */
+    int ack_packet(acknowledge& ack, u8 frag_no){
+        ack.hdr->timer = ack.timming_byte & 0xF;
+        ack.timming_byte++;
+        ack.buf[14] = frag_no;
+        ack.buf[47] = mcu_crc8_calc(ack.buf + 11, 36);
+        return hid_write(ack.handle, ack.buf, ack.buf_size);
+    }
+
+    /**
+     * Set the acknowledge buffer for a missed packet.
+     * CTCaer's comment:
+     * You send what the next fragment number will be,
+     * instead of the actual missed packet.
+     */
+    inline int set_buf_missed_packet(u8 prev_frag_no, u8* ack_buf){
+        ack_buf[12] = 0x1;
+        ack_buf[13] = prev_frag_no + 1; // The next fragment number.
+        ack_buf[14] = 0;
+    }
+
+    inline void ack_buf_12_13_nullify(u8* ack_buf){
+        ack_buf[12] = 0x00;
+        ack_buf[13] = 0x00;
+    }
+
+    /**
+     * Send an acknowledge for a missed packet.
+     */
+    int ack_missed_packet(acknowledge& ack, u8 prev_frag_no){
+        set_buf_missed_packet(prev_frag_no, ack.buf);
+
+        int ack_res = ack_packet(ack, ack.buf[14]);
+
+        ack_buf_12_13_nullify(ack.buf);
+
+        return ack_res;
+    }
+
+    inline bool is_new_packet(u8* packet_buf){
+        return packet_buf[0] == 0x31 && packet_buf[49] == 0x03;
+    }
+
+    inline bool is_empty_report(u8* packet_buf){
+        return packet_buf[0] == 0x31;
+    }
+
+    inline u8 frag_no(u8* packet_buf){
+        return packet_buf[52];
     }
 }
 
@@ -1690,12 +1750,16 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
     pkt->subcmd = 0x03;
     buf[48] = 0xFF;
 
+    IR::acknowledge ack {
+        handle,
+        timming_byte,
+        hdr,
+        buf,
+        sizeof(buf)
+    };
+
     // First ack
-    hdr->timer = timming_byte & 0xF;
-    timming_byte++;
-    buf[14] = 0x0;
-    buf[47] = mcu_crc8_calc(buf + 11, 36);
-    hid_write(handle, buf, sizeof(buf));
+    IR::ack_packet(ack, 0x0);
 
     // IR Read/ACK loop for fragmented data packets. 
     // It also avoids requesting missed data fragments, we just skip it to not complicate things.
@@ -1705,24 +1769,16 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
     while(use_ir_sensor.capture_mode_is_video || initialization)
 #endif
     {
-        /* Request Packet */ {
-        memset(buf_reply, 0, sizeof(buf_reply));
-        hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
-        }
+        int packet_res = IR::request_packet(handle, buf_reply, sizeof(buf_reply));
 
         //Check if new packet
-        if (buf_reply[0] == 0x31 && buf_reply[49] == 0x03) {
-            got_frag_no = buf_reply[52];
+        if (IR::is_new_packet(buf_reply)) {
+            got_frag_no = IR::frag_no(buf_reply);
             if (got_frag_no == (previous_frag_no + 1) % (ir_max_frag_no + 1)) {
                 
-                previous_frag_no = got_frag_no;
+                IR::ack_packet(ack, got_frag_no);
 
-                // ACK for fragment
-                hdr->timer = timming_byte & 0xF;
-                timming_byte++;
-                buf[14] = previous_frag_no;
-                buf[47] = mcu_crc8_calc(buf + 11, 36);
-                hid_write(handle, buf, sizeof(buf));
+                previous_frag_no = got_frag_no;
 
                 memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
 
@@ -1826,15 +1882,12 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
             else if (got_frag_no  || previous_frag_no) {
                 // Check if repeat ACK should be send. Avoid writing to image buffer.
                 if (got_frag_no == previous_frag_no) {
+                    // Repeat
                     //debug
                     //printf("%02X Frag: Repeat\n", got_frag_no);
 
                     // ACK for fragment
-                    hdr->timer = timming_byte & 0xF;
-                    timming_byte++;
-                    buf[14] = got_frag_no;
-                    buf[47] = mcu_crc8_calc(buf + 11, 36);
-                    hid_write(handle, buf, sizeof(buf));
+                    IR::ack_packet(ack, got_frag_no);
 
                     missed_packet = false;
                 }
@@ -1845,17 +1898,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                         //printf("%02X Frag: Missed %02X, Prev: %02X, PrevM: %02X\n", got_frag_no, previous_frag_no + 1, previous_frag_no, missed_packet_no);
 
                         // Missed packet
-                        hdr->timer = timming_byte & 0xF;
-                        timming_byte++;
-                        //Request for missed packet. You send what the next fragment number will be, instead of the actual missed packet.
-                        buf[12] = 0x1;
-                        buf[13] = previous_frag_no + 1;
-                        buf[14] = 0;
-                        buf[47] = mcu_crc8_calc(buf + 11, 36);
-                        hid_write(handle, buf, sizeof(buf));
-
-                        buf[12] = 0x00;
-                        buf[13] = 0x00;
+                        IR::ack_missed_packet(ack, previous_frag_no);
 
                         memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
 
@@ -1868,12 +1911,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                         //debug
                         //printf("%02X Frag: Missed but res is 30x40\n", got_frag_no);
 
-                        // ACK for fragment
-                        hdr->timer = timming_byte & 0xF;
-                        timming_byte++;
-                        buf[14] = got_frag_no;
-                        buf[47] = mcu_crc8_calc(buf + 11, 36);
-                        hid_write(handle, buf, sizeof(buf));
+                        IR::ack_packet(ack, got_frag_no);
 
                         memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
 
@@ -1884,13 +1922,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 else if (missed_packet_no == got_frag_no){
                     //debug
                     //printf("%02X Frag: Got missed %02X\n", got_frag_no, missed_packet_no);
-
-                    // ACK for fragment
-                    hdr->timer = timming_byte & 0xF;
-                    timming_byte++;
-                    buf[14] = got_frag_no;
-                    buf[47] = mcu_crc8_calc(buf + 11, 36);
-                    hid_write(handle, buf, sizeof(buf));
+                    IR::ack_packet(ack, got_frag_no);
 
                     memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
 
@@ -1901,13 +1933,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 else {
                     //debug
                     //printf("%02X Frag: RepeatWoot M:%02X\n", got_frag_no, missed_packet_no);
-
-                    // ACK for fragment
-                    hdr->timer = timming_byte & 0xF;
-                    timming_byte++;
-                    buf[14] = got_frag_no;
-                    buf[47] = mcu_crc8_calc(buf + 11, 36);
-                    hid_write(handle, buf, sizeof(buf));
+                    IR::ack_packet(ack, got_frag_no);
                 }
                 
                 // Status percentage
@@ -1935,12 +1961,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
             
             // Streaming start
             else {
-                // ACK for fragment
-                hdr->timer = timming_byte & 0xF;
-                timming_byte++;
-                buf[14] = got_frag_no;
-                buf[47] = mcu_crc8_calc(buf + 11, 36);
-                hid_write(handle, buf, sizeof(buf));
+                IR::ack_packet(ack, got_frag_no);
 
                 memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
 
@@ -1959,27 +1980,15 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 
         }
         // Empty IR report. Send Ack again. Otherwise, it fallbacks to high latency mode (30ms per data fragment)
-        else if (buf_reply[0] == 0x31) {
-            // ACK for fragment
-            hdr->timer = timming_byte & 0xF;
-            timming_byte++;
-
+        else if (IR::is_empty_report(buf_reply)) {
             // Send ACK again or request missed frag
             if (buf_reply[49] == 0xFF) {
-                buf[14] = previous_frag_no;
+                IR::ack_packet(ack, previous_frag_no);
             }
             else if (buf_reply[49] == 0x00) {
-                buf[12] = 0x1;
-                buf[13] = previous_frag_no + 1;
-                buf[14] = 0;
-               // printf("%02X Mode: Missed next packet %02X\n", buf_reply[49], previous_frag_no + 1);
+                IR::ack_missed_packet(ack, previous_frag_no);
             }
-
-            buf[47] = mcu_crc8_calc(buf + 11, 36);
-            hid_write(handle, buf, sizeof(buf));
-
-            buf[12] = 0x00;
-            buf[13] = 0x00;
+            IR::ack_buf_12_13_nullify(ack.buf);
         }
     }
     
