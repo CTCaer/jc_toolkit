@@ -1645,7 +1645,8 @@ namespace IR {
     enum PacketFlags : u8 {
         WriteFrag = 1,
         UpdateIRStatus = 2,
-        AckMissed = 4
+        Ack = 4,
+        AckMissed = 8
     };
     struct PacketDescription {
         int frag_no;
@@ -1692,7 +1693,7 @@ namespace IR {
      * You send what the next fragment number will be,
      * instead of the actual missed packet.
      */
-    inline int set_buf_missed_packet(u8 prev_frag_no, u8* ack_buf){
+    inline void set_buf_missed_packet(u8 prev_frag_no, u8* ack_buf){
         ack_buf[12] = 0x1;
         ack_buf[13] = prev_frag_no + 1; // The next fragment number.
         ack_buf[14] = 0;
@@ -1732,7 +1733,7 @@ namespace IR {
         return sctx.missed_frag_no != frag_no && !sctx.missed_frag_no;
     }
 
-    inline bool is_missed_frag(int frag_no, StreamCTX& sctx){
+    inline bool got_missed_frag(int frag_no, StreamCTX& sctx){
         return frag_no == sctx.missed_frag_no;
     }
 
@@ -1800,7 +1801,7 @@ namespace IR {
                     : (pd.flags);
                 }
                 // Got the requested missed fragments.
-                else if (is_missed_frag(pd.frag_no, sctx)){
+                else if (got_missed_frag(pd.frag_no, sctx)){
                     pd.type = GotMissedFrag;
                     pd.flags = (PacketFlags)(pd.flags | WriteFrag);
                 }
@@ -1913,7 +1914,6 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
             {
             case IR::PacketType::Start:
                 IR::ack_packet(ack, got_frag_no);
-                memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
 #ifndef __jctool_cpp_API__
                 FormJoy::myform1->lbl_IRStatus->Text = (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
                 elapsed_time = sw->ElapsedMilliseconds;

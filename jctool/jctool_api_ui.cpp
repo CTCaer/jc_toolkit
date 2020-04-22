@@ -469,10 +469,10 @@ namespace JCToolkit {
                 }, ImGuiTreeNodeFlags_DefaultOpen, true},
                 {"HD Rumble Player", [&](){
                     showRumblePlayer(controller, rumble_data);
-                }},
+                }, ImGuiTreeNodeFlags_DefaultOpen, false},
                 {"IR Camera", [&](){
                     showIRCamera(controller.ir_sensor);
-                }}
+                }, ImGuiTreeNodeFlags_DefaultOpen, false}
             };
 
             if(ImGui::BeginMenuBar()){
