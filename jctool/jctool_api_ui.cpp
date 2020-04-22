@@ -209,7 +209,7 @@ namespace JCToolkit {
             if(ImGui::Button("Load Rumble Data"))
                 show_explorer = true;
 
-            if(ImGui::DirectoryExplorer::OpenFileDialog(dir_exp, selected, show_explorer)) {
+            if(ImGui::DirectoryExplorer::OpenFileDialog(dir_exp, selected, show_explorer, ".jcvib,.bnvib")) {
                 const char* file_name = selected.c_str();
                 if(file_name) {
                     std::ifstream rumble_fstream = std::ifstream(file_name, std::ios_base::binary);

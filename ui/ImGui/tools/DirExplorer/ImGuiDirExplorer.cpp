@@ -115,20 +115,56 @@ namespace ImGui {
             ImGui::PopItemWidth();
         }
 
-        void ListDirectory(){
+        /**
+         * A filter list denotes the file extensions to list (seperated by commas.)
+         */
+        void ListDirectory(const char* filter_list){
+            static const char * filter_seperator = ",";
             ImGuiDirExplorer dir_explorer;
             if(!getTop(dir_explorer))
                 return;
+
+            int size_tok_buf = strlen(filter_list) + 1;
+            char* filter_tok = new char[size_tok_buf];
+            memset(filter_tok, 0, size_tok_buf);
+            strncpy(filter_tok, filter_list, size_tok_buf - 1);
+            int i;
+            for(char* i_strtok = filter_tok, i=0;
+                filter_tok[i] != '\0';
+                i += strlen(i_strtok), i_strtok = nullptr
+            ){
+                i_strtok = strtok_r(i_strtok, filter_seperator, &i_strtok);
+            }
+
             for(auto dir_entry : *dir_explorer.second){
+                static auto _excludeDirEntry = [&](){
+                    bool filter_match = false;
+                    char* it = filter_tok;
+                    while(*it){
+                        if(dir_entry.path().extension().string().compare(it) == 0){
+                            filter_match = true;
+                            break;
+                        }
+                        it = it + strlen(it) + 1; // Get the next filter token.
+                    }
+                    // If there exists some filter && a filter was not matched.
+                    return !(size_tok_buf < 2) && !filter_match;
+                };
+
+                if(!dir_entry.is_directory() && _excludeDirEntry()){
+                    continue;
+                }
+
                 if(ImGui::Selectable(dir_entry.path().filename().string().c_str())){
-                    if(dir_entry.is_directory()){
-                        dir_explorer.second->swapDir(dir_entry.path().string());
+                    if (dir_entry.is_directory()){
+                        dir_explorer.second->swapDir(dir_entry.path());
                     }
                     else if(dir_entry.is_regular_file()) {
-                            dir_explorer.second->selectChild(dir_entry.path().string());
+                            dir_explorer.second->selectChild(dir_entry.path());
                     }
                 }
             }
+            delete[] filter_tok;
         }
 
         inline bool hasSelectedChild(DirExplorer& dir_explorer){
@@ -138,7 +174,7 @@ namespace ImGui {
         ChildAction SelectedChildShow(std::string& fill_in){
             ImGuiDirExplorer dir_explorer;
             if(!getTop(dir_explorer))
-                return ChildAction_NoneSelected;
+                return ChildAction_None;
             
             ChildAction c_action = ChildAction_None;
             if(hasSelectedChild(*dir_explorer.second)){
@@ -160,7 +196,7 @@ namespace ImGui {
             ImGui::EndChild();
         }
 
-        bool OpenFileDialog(ImGuiID dir_explorer_ctx, std::string& selected_file_name, bool& show){
+        bool OpenFileDialog(ImGuiID dir_explorer_ctx, std::string& selected_file_name, bool& show, const char* filter_list, const ImVec2& init_size){
             if(!show)
                 return false;
 
@@ -171,18 +207,30 @@ namespace ImGui {
             auto dir_explorer = find_res->second;
             auto explorer_name = dir_explorer->getExplorerName();
             
-            if(!ImGui::IsPopupOpen(explorer_name.c_str()))
+            if(!ImGui::IsPopupOpen(explorer_name.c_str())) {
                 ImGui::OpenPopup(explorer_name.c_str());
+                ImGui::SetNextWindowSize(init_size);
+            }
             
             bool open = false;
             if(ImGui::BeginPopupModal(explorer_name.c_str(), &show)){
                 if(ImGui::DirectoryExplorer::Begin(dir_explorer_ctx)){
                     ImGui::DirectoryExplorer::ShowHistoryButtons();
                     ImGui::SameLine();
-                    ImGui::DirectoryExplorer::ShowPathBar();
-                    ImGui::DirectoryExplorer::ListDirectory();
+                    float width_path_bar = ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(filter_list).x - ImGui::GetStyle().ItemSpacing.x;
+                    ImGui::DirectoryExplorer::ShowPathBar(width_path_bar);
+                    ImGui::SameLine();
+                    ImGui::Text("%s", filter_list);
+                    float directory_list_height = ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing();
+                    if(!ImGui::BeginChild("Directory List", {ImGui::GetContentRegionAvail().x, directory_list_height}, true)){
+                        ImGui::EndChild();
+                    } else {
+                        ImGui::DirectoryExplorer::ListDirectory(filter_list);
+                        ImGui::EndChild();
+                    }
                     if(ImGui::DirectoryExplorer::SelectedChildShow(selected_file_name) == ChildAction_OpenFile){
                         open = true;
+                        show = false;
                     }
                     ImGui::DirectoryExplorer::End();
                 }
