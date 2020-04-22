@@ -1633,10 +1633,37 @@ int ir_sensor_auto_exposure(controller_hid_handle_t handle, u8& timming_byte, in
 }
 
 namespace IR {
+    enum PacketType : u8 {
+        Empty,
+        Start,
+        Next,
+        Final,
+        GotMissedFrag,
+        Repeat,
+        HasJustMissed
+    };
+    enum PacketFlags : u8 {
+        WriteFrag = 1,
+        UpdateIRStatus = 2,
+        AckMissed = 4
+    };
+    struct PacketDescription {
+        int frag_no;
+        PacketType type;
+        PacketFlags flags;
+    };
+
+    struct StreamCTX {
+        int& prev_frag_no;
+        int& missed_frag_no;
+        u8& max_frag_no;
+        bool& missed_frag;
+    };
+
     struct acknowledge {
         controller_hid_handle_t& handle;
         u8& timming_byte;
-        brcm_hdr* hdr;
+        brcm_hdr*& hdr;
         u8* buf;
         size_t buf_size;
     };
@@ -1693,12 +1720,107 @@ namespace IR {
         return packet_buf[0] == 0x31 && packet_buf[49] == 0x03;
     }
 
+    inline bool is_next_frag(int frag_no, StreamCTX& sctx){
+        return frag_no == (sctx.prev_frag_no + 1) % (sctx.max_frag_no + 1);
+    }
+
+    inline bool is_repeat_frag(int frag_no, StreamCTX& sctx){
+        return frag_no == sctx.prev_frag_no;
+    }
+
+    inline bool has_missed_frag(int frag_no, StreamCTX& sctx){
+        return sctx.missed_frag_no != frag_no && !sctx.missed_frag_no;
+    }
+
+    inline bool is_missed_frag(int frag_no, StreamCTX& sctx){
+        return frag_no == sctx.missed_frag_no;
+    }
+
+    inline bool is_final_frag(int frag_no, int max_frag_no){
+        return frag_no == max_frag_no;
+    }
+
+    inline bool should_request_missed(StreamCTX& sctx){
+        return sctx.max_frag_no != 0x03; // 40x30 resolution
+    }
+
     inline bool is_empty_report(u8* packet_buf){
         return packet_buf[0] == 0x31;
     }
 
     inline u8 frag_no(u8* packet_buf){
         return packet_buf[52];
+    }
+
+    static const int BUF_SIZE_IMG = 19*4096;
+    struct Image {
+        u8* buf;
+        size_t buf_size;
+    };
+
+    inline void write_frag(Image& img){
+
+    }
+
+    /**
+     * Original credit goes to CTCaer!
+     * I (jon-dez) have only made it EASILY readable.
+     * The logic (should) be the same.
+     * The only difference is that the logic and the processing are done
+     * seperate from each other.
+     */
+    inline PacketDescription get_packet_desc(StreamCTX& sctx, u8* packet_buf) {
+        PacketDescription pd;
+        memset(&pd, 0, sizeof(pd));
+        //Check if new packet
+        if (is_new_packet(packet_buf)) {
+            pd.frag_no = frag_no(packet_buf);
+            if (is_next_frag(pd.frag_no, sctx)) {
+                pd.type = Next;
+                pd.flags = (PacketFlags)(UpdateIRStatus | WriteFrag);
+                // Check if final fragment. Draw the frame.
+                if (is_final_frag(pd.frag_no, sctx.max_frag_no)) 
+                    pd.type = Final; // Should draw the frame.
+            }
+            // Repeat/Missed fragment
+            else if (pd.frag_no  || sctx.prev_frag_no) {
+                pd.flags = UpdateIRStatus;
+                // Check if repeat ACK should be send. Avoid writing to image buffer.
+                if (is_repeat_frag(pd.frag_no, sctx)) {
+                    pd.type = Repeat;
+                }
+                // Check if missed fragment and request it.
+                else if(has_missed_frag(pd.frag_no, sctx)) {
+                    pd.type = HasJustMissed;
+                    pd.flags = (PacketFlags)(pd.flags | WriteFrag);
+
+                    // Check if missed fragment and res is 30x40. Don't request it.
+                    pd.flags = (should_request_missed(sctx))
+                    ? ((PacketFlags)(pd.flags | AckMissed))
+                    : (pd.flags);
+                }
+                // Got the requested missed fragments.
+                else if (is_missed_frag(pd.frag_no, sctx)){
+                    pd.type = GotMissedFrag;
+                    pd.flags = (PacketFlags)(pd.flags | WriteFrag);
+                }
+                // Repeat of fragment that is not max fragment.
+                else {
+                    pd.type = Repeat;
+                }
+            }
+            // Streaming start
+            else {
+                pd.type = Start;
+                pd.flags = WriteFrag;
+                pd.frag_no = 0;
+            }
+        }
+        // Empty IR report. Send Ack again. Otherwise, it fallbacks to high latency mode (30ms per data fragment)
+        else if (IR::is_empty_report(packet_buf)) {
+            pd.type = Empty;
+        }
+        return pd;
     }
 }
 
@@ -1724,10 +1846,11 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
     };
 #endif
+    static const int& BUF_SIZE_IMG = IR::BUF_SIZE_IMG;
 
     u8 buf[49];
     u8 buf_reply[0x170];
-    u8 *buf_image = new u8[19 * 4096]; // 8bpp greyscale image.
+    u8 *buf_image = new u8[BUF_SIZE_IMG]; // 8bpp greyscale image.
 	uint16_t bad_signal = 0;
     int error_reading = 0;
     float noise_level = 0.0f;
@@ -1740,7 +1863,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
     int max_pixels = ((ir_max_frag_no < 218 ? ir_max_frag_no : 217) + 1) * 300;
     int white_pixels_percent = 0;
 
-    memset(buf_image, 0, sizeof(buf_image));
+    memset(buf_image, 0, sizeof(BUF_SIZE_IMG));
 
     memset(buf, 0, sizeof(buf));
     memset(buf_reply, 0, sizeof(buf_reply));
@@ -1749,6 +1872,18 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
     hdr->cmd = 0x11;
     pkt->subcmd = 0x03;
     buf[48] = 0xFF;
+
+    IR::StreamCTX sctx {
+        previous_frag_no,
+        missed_packet_no,
+        ir_max_frag_no,
+        missed_packet
+    };
+
+    IR::Image img {
+        buf_image,
+        BUF_SIZE_IMG
+    };
 
     IR::acknowledge ack {
         handle,
@@ -1770,17 +1905,29 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 #endif
     {
         int packet_res = IR::request_packet(handle, buf_reply, sizeof(buf_reply));
+        /* Test */ {
+            auto pd = IR::get_packet_desc(sctx, buf_reply);
+            got_frag_no = pd.frag_no;
 
-        //Check if new packet
-        if (IR::is_new_packet(buf_reply)) {
-            got_frag_no = IR::frag_no(buf_reply);
-            if (got_frag_no == (previous_frag_no + 1) % (ir_max_frag_no + 1)) {
-                
+            switch (pd.type)
+            {
+            case IR::PacketType::Start:
                 IR::ack_packet(ack, got_frag_no);
-
-                previous_frag_no = got_frag_no;
-
                 memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+#ifndef __jctool_cpp_API__
+                FormJoy::myform1->lbl_IRStatus->Text = (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
+                elapsed_time = sw->ElapsedMilliseconds;
+                Application::DoEvents();
+#else
+                elapsed_time = _elapsedClockTimeMS();
+#endif
+                previous_frag_no = 0;
+                break;
+            // Final and Next flow result from the same logic, but Final is unique (Adressed after the switches.)
+            case IR::PacketType::Final:
+            case IR::PacketType::Next:{
+                IR::ack_packet(ack, got_frag_no);
+                previous_frag_no = got_frag_no;
 
                 // Auto exposure.
                 // TODO: Fix placement, so it doesn't drop next fragment.
@@ -1797,7 +1944,51 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                     ir_sensor_auto_exposure(handle, timming_byte, white_pixels_percent);
 #endif
                 }
+            }break;
+            case IR::PacketType::Repeat:
+                // Check if repeat ACK should be send. Avoid writing to image buffer.
+                // Repeat of fragment that is not max fragment.
+                IR::ack_packet(ack, got_frag_no);
+                missed_packet = false;
+                break;
+            case IR::PacketType::HasJustMissed:
+                if ((pd.flags & IR::PacketFlags::AckMissed) == IR::PacketFlags::AckMissed) {
+                    // Missed packet
+                    IR::ack_missed_packet(ack, previous_frag_no);
+                    previous_frag_no = got_frag_no;
+                    missed_packet_no = got_frag_no - 1;
+                    missed_packet = true;
+                }
+                // Check if missed fragment and res is 30x40. Don't request it.
+                else {
+                    IR::ack_packet(ack, got_frag_no);
+                    previous_frag_no = got_frag_no;
+                }
+                break;
+            case IR::PacketType::GotMissedFrag:
+                // Got the requested missed fragments.
+                //debug
+                //printf("%02X Frag: Got missed %02X\n", got_frag_no, missed_packet_no);
+                IR::ack_packet(ack, got_frag_no);
 
+                previous_frag_no = got_frag_no;
+                missed_packet = false;
+                break;
+            case IR::PacketType::Empty:
+                // Empty IR report. Send Ack again. Otherwise, it fallbacks to high latency mode (30ms per data fragment)
+            default:
+                // Send ACK again or request missed frag
+                if (buf_reply[49] == 0xFF) {
+                    IR::ack_packet(ack, previous_frag_no);
+                }
+                else if (buf_reply[49] == 0x00) {
+                    IR::ack_missed_packet(ack, previous_frag_no);
+                }
+                IR::ack_buf_12_13_nullify(ack.buf);
+                break;
+            }
+
+            if((pd.flags & IR::PacketFlags::UpdateIRStatus) == IR::PacketFlags::UpdateIRStatus){
                 // Status percentage
                 ir_status.str("");
                 ir_status.clear();
@@ -1818,177 +2009,65 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 #ifndef __jctool_cpp_API__
                 FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
                 elapsed_time = sw->ElapsedMilliseconds;
-#else
-                elapsed_time = _elapsedClockTimeMS();
-#endif
-
-                // Check if final fragment. Draw the frame.
-                if (got_frag_no == ir_max_frag_no) {
-                    // Update Viewport
-#ifndef __jctool_cpp_API__
-                    elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
-                    FormJoy::myform1->setIRPictureWindow(buf_image, true);
-#endif
-
-                    //debug
-                    //printf("%02X Frag: Draw -------\n", got_frag_no);
-
-                    // Stats/IR header parsing
-                    // buf_reply[53]: Average Intensity. 0-255 scale.
-                    // buf_reply[54]: Unknown. Shows up only when EXFilter is enabled.
-                    // *(u16*)&buf_reply[55]: White pixels (pixels with 255 value). Max 65535. Uint16 constraints, even though max is 76800.
-                    // *(u16*)&buf_reply[57]: Pixels with ambient noise from external light sources (sun, lighter, IR remotes, etc). Cleaned by External Light Filter.
-                    noise_level = (float)(*(u16*)&buf_reply[57]) / ((float)(*(u16*)&buf_reply[55]) + 1.0f);
-                    white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
-                    avg_intensity_percent = (int)((buf_reply[53] * 100) / 255);
-#ifndef __jctool_cpp_API__
-                    FormJoy::myform1->lbl_IRHelp->Text = String::Format("Amb Noise: {0:f2},  Int: {1:D}%,  FPS: {2:D} ({3:D}ms)\nEXFilter: {4:D},  White Px: {5:D}%,  EXF Int: {6:D}",
-                        noise_level, avg_intensity_percent, (int)(1000 / elapsed_time2), elapsed_time2, *(u16*)&buf_reply[57], white_pixels_percent, buf_reply[54]);
-
-                    elapsed_time2 = sw->ElapsedMilliseconds;
-#else
-                    int64_t curr_time = _elapsedClockTimeMS();
-                    elapsed_time2 = curr_time - elapsed_time2;
-                    float fps = 0.0f;
-                    if(elapsed_time2 > 0) {
-                        fps = 1000 / elapsed_time2;
-                    }
-                    elapsed_time2 = _elapsedClockTimeMS();
-
-                    use_ir_sensor.capture_info.fps = fps;
-                    use_ir_sensor.capture_info.frame_counter = ++frame_counter;
-                    use_ir_sensor.capture_info.duration = (float) _elapsedClockTimeMS() / 1000;
-                    use_ir_sensor.capture_info.noise_level = noise_level;
-                    use_ir_sensor.capture_info.avg_intensity_percent = avg_intensity_percent;
-                    use_ir_sensor.capture_info.exfilter = *(u16*)&buf_reply[57];
-                    use_ir_sensor.capture_info.white_pixels_percent = white_pixels_percent;
-                    use_ir_sensor.capture_info.exf_int = buf_reply[54];
-                    
-                    u8* buf_copy = new u8[19 * 4096];
-                    memcpy(buf_copy,buf_image, 19 * 4096);
-                    use_ir_sensor.storeCapture(std::shared_ptr<u8>(buf_copy, [](u8* d){ delete[] d; }));
-#endif
-
-                    if (initialization)
-                        initialization--;
-                }
-#ifndef __jctool_cpp_API__
-                Application::DoEvents();
-#else
-                // TODO: Implement else
-#endif
-            }
-            // Repeat/Missed fragment
-            else if (got_frag_no  || previous_frag_no) {
-                // Check if repeat ACK should be send. Avoid writing to image buffer.
-                if (got_frag_no == previous_frag_no) {
-                    // Repeat
-                    //debug
-                    //printf("%02X Frag: Repeat\n", got_frag_no);
-
-                    // ACK for fragment
-                    IR::ack_packet(ack, got_frag_no);
-
-                    missed_packet = false;
-                }
-                // Check if missed fragment and request it.
-                else if(missed_packet_no != got_frag_no && !missed_packet) {
-                    if (ir_max_frag_no != 0x03) {
-                        //debug
-                        //printf("%02X Frag: Missed %02X, Prev: %02X, PrevM: %02X\n", got_frag_no, previous_frag_no + 1, previous_frag_no, missed_packet_no);
-
-                        // Missed packet
-                        IR::ack_missed_packet(ack, previous_frag_no);
-
-                        memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
-
-                        previous_frag_no = got_frag_no;
-                        missed_packet_no = got_frag_no - 1;
-                        missed_packet = true;
-                    }
-                    // Check if missed fragment and res is 30x40. Don't request it.
-                    else {
-                        //debug
-                        //printf("%02X Frag: Missed but res is 30x40\n", got_frag_no);
-
-                        IR::ack_packet(ack, got_frag_no);
-
-                        memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
-
-                        previous_frag_no = got_frag_no;
-                    }
-                }
-                // Got the requested missed fragments.
-                else if (missed_packet_no == got_frag_no){
-                    //debug
-                    //printf("%02X Frag: Got missed %02X\n", got_frag_no, missed_packet_no);
-                    IR::ack_packet(ack, got_frag_no);
-
-                    memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
-
-                    previous_frag_no = got_frag_no;
-                    missed_packet = false;
-                }
-                // Repeat of fragment that is not max fragment.
-                else {
-                    //debug
-                    //printf("%02X Frag: RepeatWoot M:%02X\n", got_frag_no, missed_packet_no);
-                    IR::ack_packet(ack, got_frag_no);
-                }
-                
-                // Status percentage
-                ir_status.str("");
-                ir_status.clear();
-                if (initialization < 2) {
-                    if (show_status == 2)
-                        ir_status << "Status: Streaming.. ";
-                    else
-                        ir_status << "Status: Receiving.. ";
-                }
-                else
-                    ir_status << "Status: Initializing.. ";
-                ir_status << std::setfill(' ') << std::setw(3);
-                ir_status << std::fixed << std::setprecision(0) << (float)got_frag_no / (float)(ir_max_frag_no + 1) * 100.0f;
-                ir_status << "% - ";
-#ifndef __jctool_cpp_API__
-                FormJoy::myform1->lbl_IRStatus->Text = gcnew String(ir_status.str().c_str()) + (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
-                elapsed_time = sw->ElapsedMilliseconds;
                 Application::DoEvents();
 #else
                 elapsed_time = _elapsedClockTimeMS();
 #endif
             }
-            
-            // Streaming start
-            else {
-                IR::ack_packet(ack, got_frag_no);
 
+            if((pd.flags & IR::PacketFlags::WriteFrag) == IR::PacketFlags::WriteFrag){
                 memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+            }
+
+            // Check if final fragment. Draw the frame.
+            if(pd.type == IR::Final){
+                // Update Viewport
+#ifndef __jctool_cpp_API__
+                elapsed_time2 = sw->ElapsedMilliseconds - elapsed_time2;
+                FormJoy::myform1->setIRPictureWindow(buf_image, true);
+#endif
 
                 //debug
-                //printf("%02X Frag: 0 %02X\n", buf_reply[52], previous_frag_no);
+                //printf("%02X Frag: Draw -------\n", got_frag_no);
+
+                // Stats/IR header parsing
+                // buf_reply[53]: Average Intensity. 0-255 scale.
+                // buf_reply[54]: Unknown. Shows up only when EXFilter is enabled.
+                // *(u16*)&buf_reply[55]: White pixels (pixels with 255 value). Max 65535. Uint16 constraints, even though max is 76800.
+                // *(u16*)&buf_reply[57]: Pixels with ambient noise from external light sources (sun, lighter, IR remotes, etc). Cleaned by External Light Filter.
+                noise_level = (float)(*(u16*)&buf_reply[57]) / ((float)(*(u16*)&buf_reply[55]) + 1.0f);
+                white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
+                avg_intensity_percent = (int)((buf_reply[53] * 100) / 255);
 #ifndef __jctool_cpp_API__
-                FormJoy::myform1->lbl_IRStatus->Text = (sw->ElapsedMilliseconds - elapsed_time).ToString() + "ms";
-                elapsed_time = sw->ElapsedMilliseconds;
-                Application::DoEvents();
+                FormJoy::myform1->lbl_IRHelp->Text = String::Format("Amb Noise: {0:f2},  Int: {1:D}%,  FPS: {2:D} ({3:D}ms)\nEXFilter: {4:D},  White Px: {5:D}%,  EXF Int: {6:D}",
+                    noise_level, avg_intensity_percent, (int)(1000 / elapsed_time2), elapsed_time2, *(u16*)&buf_reply[57], white_pixels_percent, buf_reply[54]);
+
+                elapsed_time2 = sw->ElapsedMilliseconds;
 #else
-                elapsed_time = _elapsedClockTimeMS();
+                int64_t curr_time = _elapsedClockTimeMS();
+                elapsed_time2 = curr_time - elapsed_time2;
+                float fps = 0.0f;
+                if(elapsed_time2 > 0) {
+                    fps = 1000 / elapsed_time2;
+                }
+                elapsed_time2 = _elapsedClockTimeMS();
+
+                use_ir_sensor.capture_info.fps = fps;
+                use_ir_sensor.capture_info.frame_counter = ++frame_counter;
+                use_ir_sensor.capture_info.duration = (float) _elapsedClockTimeMS() / 1000;
+                use_ir_sensor.capture_info.noise_level = noise_level;
+                use_ir_sensor.capture_info.avg_intensity_percent = avg_intensity_percent;
+                use_ir_sensor.capture_info.exfilter = *(u16*)&buf_reply[57];
+                use_ir_sensor.capture_info.white_pixels_percent = white_pixels_percent;
+                use_ir_sensor.capture_info.exf_int = buf_reply[54];
+                
+                u8* buf_copy = new u8[BUF_SIZE_IMG];
+                memcpy(buf_copy,buf_image, BUF_SIZE_IMG);
+                use_ir_sensor.storeCapture(std::shared_ptr<u8>(buf_copy, [](u8* d){ delete[] d; }));
 #endif
-
-                previous_frag_no = 0;
+                if (initialization)
+                    initialization--;
             }
-
-        }
-        // Empty IR report. Send Ack again. Otherwise, it fallbacks to high latency mode (30ms per data fragment)
-        else if (IR::is_empty_report(buf_reply)) {
-            // Send ACK again or request missed frag
-            if (buf_reply[49] == 0xFF) {
-                IR::ack_packet(ack, previous_frag_no);
-            }
-            else if (buf_reply[49] == 0x00) {
-                IR::ack_missed_packet(ack, previous_frag_no);
-            }
-            IR::ack_buf_12_13_nullify(ack.buf);
         }
     }
     
