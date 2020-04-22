@@ -172,7 +172,7 @@ int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, Controller::T
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x81;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 0, 64);
+    res = hid_read_timeout(handle, buf, 1, 64);
 
     //Set breathing HOME Led
 #ifndef __jctool_cpp_API__
@@ -193,7 +193,7 @@ int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, Controller::T
         buf[13] = 0xF2;
         buf[14] = buf[15] = 0xF0;
         res = hid_write(handle, buf, sizeof(buf));
-        res = hid_read_timeout(handle, buf, 0, 64);
+        res = hid_read_timeout(handle, buf, 1, 64);
     }
 
     return 0;
@@ -460,7 +460,7 @@ int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_b
         pkt->subcmd = 0x40;
         pkt->subcmd_arg.arg1 = 0x01;
         res = hid_write(handle, buf, sizeof(buf));
-        res = hid_read_timeout(handle, buf, 0, 64);
+        res = hid_read_timeout(handle, buf, 1, 64);
 
         imu_changed = true;
 
@@ -507,7 +507,7 @@ int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_b
         pkt->subcmd = 0x40;
         pkt->subcmd_arg.arg1 = 0x00;
         res = hid_write(handle, buf, sizeof(buf));
-        res = hid_read_timeout(handle, buf, 0, 64);
+        res = hid_read_timeout(handle, buf, 1, 64);
     }
 
     return 0;
@@ -615,7 +615,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf2, 0, 64);
+    res = hid_read_timeout(handle, buf2, 1, 64);
 
     //New vibration like switch
     Sleep(16);
@@ -630,7 +630,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
     hdr->rumble_l[3] = 0x72;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf2, 0, 64);
+    res = hid_read_timeout(handle, buf2, 1, 64);
 
     Sleep(81);
 
@@ -642,7 +642,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
     hdr->rumble_l[3] = 0x40;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf2, 0, 64);
+    res = hid_read_timeout(handle, buf2, 1, 64);
 
     Sleep(5);
 
@@ -654,7 +654,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
     hdr->rumble_l[3] = 0x64;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf2, 0, 64);
+    res = hid_read_timeout(handle, buf2, 1, 64);
 
     Sleep(5);
 
@@ -673,7 +673,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x00;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 0, 64);
+    res = hid_read_timeout(handle, buf, 1, 64);
 
     memset(buf, 0, sizeof(buf));
     hdr = (brcm_hdr *)buf;
@@ -684,7 +684,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 0, 64);
+    res = hid_read_timeout(handle, buf, 1, 64);
 
     // Set HOME Led
 #ifndef __jctool_cpp_API__
@@ -707,7 +707,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
         buf[19] = buf[22] = buf[25] = buf[28] = buf[31] = 0x00;
         buf[20] = buf[21] = buf[23] = buf[24] = buf[26] = buf[27] = buf[29] = buf[30] = buf[32] = buf[33] = 0xFF;
         res = hid_write(handle, buf, sizeof(buf));
-        res = hid_read_timeout(handle, buf, 0, 64);
+        res = hid_read_timeout(handle, buf, 1, 64);
     }
 
     return 0;
@@ -1287,7 +1287,7 @@ int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf2, 0, 120);
+    res = hid_read_timeout(handle, buf2, 1, 120);
     // This needs to be changed for new bigger tunes.
     u32 *tune = new u32[6000];
     memset(tune, 0, sizeof(tune));
@@ -1341,7 +1341,7 @@ int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x00;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 0, 64);
+    res = hid_read_timeout(handle, buf, 1, 64);
 
     memset(buf, 0, sizeof(buf));
     hdr = (brcm_hdr *)buf;
@@ -1352,7 +1352,7 @@ int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 0, 64);
+    res = hid_read_timeout(handle, buf, 1, 64);
 
     delete[] tune;
 
@@ -1385,7 +1385,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, Rumble
     pkt->subcmd = 0x48;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf2, 0, 120);
+    res = hid_read_timeout(handle, buf2, 1, 120);
 
     if (file_type == 1 || file_type == 2) {
         for (int i = 0; i < samples * 4; i = i + 4) {
@@ -1567,7 +1567,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, Rumble
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     pkt->subcmd = 0x48;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 0, 64);
+    res = hid_read_timeout(handle, buf, 1, 64);
 
     memset(buf, 0, sizeof(buf));
     hdr = (brcm_hdr *)buf;
@@ -1578,7 +1578,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, Rumble
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
     res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 0, 64);
+    res = hid_read_timeout(handle, buf, 1, 64);
 
     return 0;
 }
@@ -1630,6 +1630,16 @@ int ir_sensor_auto_exposure(controller_hid_handle_t handle, u8& timming_byte, in
     res = hid_write(handle, buf, sizeof(buf));
 
     return res;
+}
+
+namespace IRSensorLogic {
+    /**
+     * Request an IR sensor packet. 
+     */
+    int request_packet(controller_hid_handle_t handle, u8* buf_reply) {
+        memset(buf_reply, 0, sizeof(buf_reply));
+        hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+    }
 }
 
 #ifndef __jctool_cpp_API__
@@ -1695,8 +1705,10 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
     while(use_ir_sensor.capture_mode_is_video || initialization)
 #endif
     {
+        /* Request Packet */ {
         memset(buf_reply, 0, sizeof(buf_reply));
         hid_read_timeout(handle, buf_reply, sizeof(buf_reply), 200);
+        }
 
         //Check if new packet
         if (buf_reply[0] == 0x31 && buf_reply[49] == 0x03) {
