@@ -161,8 +161,11 @@ void Controller::IRSensor::storeCapture(std::shared_ptr<u8> raw_capture){
 
         std::lock_guard<std::mutex> lock(this->vstream_frame_dat.texture_mutex);
         this->vstream_frame_dat.updated = true;
-        std::swap(this->vstream_frame_dat.idx_swap, this->vstream_frame_dat.idx_render);
+        // 1. Render to the texture.
         GPUTexture::openGLUpload(this->vstream_frame_dat.textures[this->vstream_frame_dat.idx_render], ird.width, ird.height, ird.num_channels, ird.bytes);
+        // 2. The texture was rendered so put it in the swap,
+        // so that the new texture could be swapped out for the old texture.
+        std::swap(this->vstream_frame_dat.idx_swap, this->vstream_frame_dat.idx_render);
     });
 }
 
@@ -170,9 +173,11 @@ uintptr_t Controller::IRSensor::getCaptureTexID() {
     auto& frame_dat = this->vstream_frame_dat;
     std::lock_guard<std::mutex> lock(frame_dat.texture_mutex);
     if(frame_dat.updated){
+        // 3. Get the new texture from the swap, and replace the swap with the old texture.
         std::swap(frame_dat.idx_swap, frame_dat.idx_display);
         frame_dat.updated = false;
         GPUTexture::SideLoader::addJob([this](){
+            // 4. Free the old texture from the swap.
             GPUTexture::openGLFree(this->vstream_frame_dat.textures[this->vstream_frame_dat.idx_swap]);
         });
     }
