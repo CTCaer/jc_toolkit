@@ -36,9 +36,6 @@ SOFTWARE.
 #include <unistd.h>
 #endif
 
-#include "GL/gl3w.h"
-#include "GLFW/glfw3.h"
-
 Controller::Controller() {
     // Set up an IR Sensor with a default configuration scheme.
     //memset(&ir_sensor, 0, sizeof(ir_sensor)); // Set all values to zero.

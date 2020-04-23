@@ -74,6 +74,10 @@ namespace CppWinFormJoy {
 }
 #endif
 
+// For irSensor template...
+inline void operator +=(std::ostream& stream, const char* msg) {
+    stream << msg << std::endl;
+}
 
 template<typename ErrMsgStr>
 #ifndef __jctool_cpp_API__

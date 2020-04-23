@@ -2,15 +2,21 @@
 #include "jctool_types.h"
 #include "luts.h"
 
+
+/**
+ * =======================================================================
+ * The below code originated from the original Joy-Con Toolkit from CTCaer
+ * unless mentioned otherwise. There may have been some slight
+ * modifications to the original code, but only for convienience.
+ * =======================================================================
+ */
 template <typename T>
 T CLAMP(const T& value, const T& low, const T& high)
 {
     return value < low ? low : (value > high ? high : value);
 }
 
-
 /**
- * Origin: CTCaer
  * Helpers that set ir image config values.
  */
 namespace ir_image_config_Sets {
@@ -27,54 +33,9 @@ namespace ir_image_config_Sets {
     }
 }
 
-/**
- * Origin: jon-dez.
- */
-namespace ColorOrder {
-
-    enum ShiftPos : u8 {
-        RedShiftPos = 4,
-        GreenShiftPos = 2,
-        BlueShiftPos = 0
-    };
-    enum Mask : u8 {
-        RedMask = 0b11 << RedShiftPos,
-        GreenMask = 0b11 << GreenShiftPos,
-        BlueMask = 0b11 << BlueShiftPos
-    };
-    constexpr u8 makeColorOrder(const u8 red_pos_idx, const u8 green_pos_idx, const u8 blue_pos_idx){
-        return static_cast<u8>(
-            ((red_pos_idx << RedShiftPos) & RedMask)
-            |
-            ((green_pos_idx << GreenShiftPos) & GreenMask)
-            |
-            ((blue_pos_idx << BlueShiftPos) & BlueMask)
-        );
-    }
-    
-    const u8 InRGBOrder = makeColorOrder(0,1,2);
-    const u8 InBGROrder = makeColorOrder(2,1,0);
-
-    inline u8 getRedPosIdx(const u8 color_order){
-        return ((color_order & RedMask) >> RedShiftPos);
-    }
-    inline u8 getGreenPosIdx(const u8 color_order){
-        return ((color_order & GreenMask) >> GreenShiftPos);
-    }
-    inline u8 getBluePosIdx(const u8 color_order){
-        return ((color_order & BlueMask) >> BlueShiftPos);
-    }
-}
-
 BatteryData parseBatteryData(const unsigned char* batt_data);
 	
 TemperatureData parseTemperatureData(const unsigned char* temp_data);
-
-void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_width, int ir_image_height, int bytes_pp_out, int col_fil, u8 color_order = ColorOrder::InBGROrder);
-
-inline void operator +=(std::ostream& stream, const char* msg) {
-    stream << msg << std::endl;
-}
 
 template<typename ByteArray>
 VIBMetadata getVIBMetadata(ByteArray vib_loaded_file) {
@@ -92,9 +53,9 @@ VIBMetadata getVIBMetadata(ByteArray vib_loaded_file) {
             if (vib_loaded_file[i] == file_magic[i])
                 vib_file_type = (VIBType)1; // Raw
             else
-                break; // Early out; falls through to return VIB Unkown (invalid).
+                break; // Early out; falls through to return VIB Unknown (invalid).
         }
-        if (vib_file_type == 1) {
+        if (vib_file_type == VIBRaw) {
             vib_sample_rate = (vib_loaded_file[0x4] << 8) + vib_loaded_file[0x5];
             vib_samples = (vib_loaded_file[0x6] << 24) + (vib_loaded_file[0x7] << 16) + (vib_loaded_file[0x8] << 8) + vib_loaded_file[0x9];
             return { VIBRaw, vib_sample_rate, vib_samples };
@@ -102,30 +63,30 @@ VIBMetadata getVIBMetadata(ByteArray vib_loaded_file) {
     }
     else if (vib_loaded_file[4] == file_magic[6]) {
         if (vib_loaded_file[0] == file_magic[4]) {
-            vib_file_type = (VIBType)2; // Binary
+            vib_file_type = VIBBinary; // Binary
             u32 vib_size = vib_loaded_file[0x8] + (vib_loaded_file[0x9] << 8) + (vib_loaded_file[0xA] << 16) + (vib_loaded_file[0xB] << 24);
             vib_sample_rate = 1000 / (vib_loaded_file[0x6] + (vib_loaded_file[0x7] << 8));
             vib_samples = vib_size / 4;
             return { VIBBinary, vib_sample_rate, vib_samples };
         }
         else if (vib_loaded_file[0] == file_magic[5]) {
-            vib_file_type = (VIBType)3; // Loop Binary
+            vib_file_type = VIBBinaryLoop; // Loop Binary
             u32 vib_size = vib_loaded_file[0x10] + (vib_loaded_file[0x11] << 8) + (vib_loaded_file[0x12] << 16) + (vib_loaded_file[0x13] << 24);
             vib_sample_rate = 1000 / (vib_loaded_file[0x6] + (vib_loaded_file[0x7] << 8));
             vib_samples = vib_size / 4;
             vib_loop_start = vib_loaded_file[0x8] + (vib_loaded_file[0x9] << 8) + (vib_loaded_file[0xA] << 16) + (vib_loaded_file[0xB] << 24);
             vib_loop_end = vib_loaded_file[0xC] + (vib_loaded_file[0xD] << 8) + (vib_loaded_file[0xE] << 16) + (vib_loaded_file[0xF] << 24);
-            return { VIBRaw, vib_sample_rate, vib_samples, vib_loop_start, vib_loop_end };
+            return { VIBBinaryLoop, vib_sample_rate, vib_samples, vib_loop_start, vib_loop_end };
         }
         else if (vib_loaded_file[0] == file_magic[7]) {
-            vib_file_type = (VIBType)4; // Loop and Wait Binary
+            vib_file_type = VIBBinaryLoopAndWait; // Loop and Wait Binary
             u32 vib_size = vib_loaded_file[0x14] + (vib_loaded_file[0x15] << 8) + (vib_loaded_file[0x16] << 16) + (vib_loaded_file[0x17] << 24);
             vib_sample_rate = 1000 / (vib_loaded_file[0x6] + (vib_loaded_file[0x7] << 8));
             vib_samples = vib_size / 4;
             vib_loop_start = vib_loaded_file[0x8] + (vib_loaded_file[0x9] << 8) + (vib_loaded_file[0xA] << 16) + (vib_loaded_file[0xB] << 24);
             vib_loop_end = vib_loaded_file[0xC] + (vib_loaded_file[0xD] << 8) + (vib_loaded_file[0xE] << 16) + (vib_loaded_file[0xF] << 24);
             vib_loop_wait = vib_loaded_file[0x10] + (vib_loaded_file[0x11] << 8) + (vib_loaded_file[0x12] << 16) + (vib_loaded_file[0x13] << 24);
-            return { VIBRaw, vib_sample_rate, vib_samples, vib_loop_start, vib_loop_end, vib_loop_wait };
+            return { VIBBinaryLoopAndWait, vib_sample_rate, vib_samples, vib_loop_start, vib_loop_end, vib_loop_wait };
         }
     }
 
@@ -141,9 +102,9 @@ void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, in
         return;
 
     u8 vib_off = 0;
-    if (metadata.vib_file_type == 3)
+    if (metadata.vib_file_type == VIBBinaryLoop)
         vib_off = 8;
-    if (metadata.vib_file_type == 4)
+    if (metadata.vib_file_type == VIBBinaryLoopAndWait)
         vib_off = 12;
     //Convert to RAW vibration, apply EQ and clamp inside safe values
     //vib_size = this->vib_loaded_file[0x8] + (this->vib_loaded_file[0x9] << 8) + (this->vib_loaded_file[0xA] << 16) + (this->vib_loaded_file[0xB] << 24);
@@ -189,3 +150,48 @@ void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, in
 
     }
 }
+
+/**
+ * ===========================================================================
+ * The code below was added for convienience to build off the original Joy-Con
+ * Toolkit.
+ * ===========================================================================
+ */
+namespace ColorOrder {
+
+    enum ShiftPos : u8 {
+        RedShiftPos = 4,
+        GreenShiftPos = 2,
+        BlueShiftPos = 0
+    };
+    enum Mask : u8 {
+        RedMask = 0b11 << RedShiftPos,
+        GreenMask = 0b11 << GreenShiftPos,
+        BlueMask = 0b11 << BlueShiftPos
+    };
+    constexpr u8 makeColorOrder(const u8 red_pos_idx, const u8 green_pos_idx, const u8 blue_pos_idx){
+        return static_cast<u8>(
+            ((red_pos_idx << RedShiftPos) & RedMask)
+            |
+            ((green_pos_idx << GreenShiftPos) & GreenMask)
+            |
+            ((blue_pos_idx << BlueShiftPos) & BlueMask)
+        );
+    }
+    
+    const u8 InRGBOrder = makeColorOrder(0,1,2);
+    const u8 InBGROrder = makeColorOrder(2,1,0);
+
+    inline u8 getRedPosIdx(const u8 color_order){
+        return ((color_order & RedMask) >> RedShiftPos);
+    }
+    inline u8 getGreenPosIdx(const u8 color_order){
+        return ((color_order & GreenMask) >> GreenShiftPos);
+    }
+    inline u8 getBluePosIdx(const u8 color_order){
+        return ((color_order & BlueMask) >> BlueShiftPos);
+    }
+}
+
+// CTCaer
+void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_width, int ir_image_height, int bytes_pp_out, int col_fil, u8 color_order = ColorOrder::InBGROrder);

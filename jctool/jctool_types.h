@@ -3,6 +3,14 @@
 #include <cstdint>
 #include "hidapi.h"
 
+/**
+ * ===============================================================
+ * The below code is from the original Joy-Con Toolkit from CTCaer
+ * unless mentioned otherwise. There may have been some slight
+ * modifications to the original code, but only for convienience.
+ * ===============================================================
+ */
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -91,6 +99,13 @@ struct ir_image_config {
 };
 
 #pragma pack(pop)
+
+/**
+ * ===========================================================================
+ * The code below was added for convienience to build off the original Joy-Con
+ * Toolkit 
+ * ===========================================================================
+ */
 
 enum ir_leds_Flags : u8 {
     ir_leds_FlashlightMode = 1,
