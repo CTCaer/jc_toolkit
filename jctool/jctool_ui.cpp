@@ -1,3 +1,36 @@
+/*
+
+MIT License
+
+Copyright (c) 2020 Jonathan Mendez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+/**
+ * =============================================================================
+ * The code below attempts to provide a crossplatform user-interface which
+ * unfortunately was not included in the original Joy-Con Toolkit.
+ * =============================================================================
+ */
+
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -14,6 +47,7 @@
 
 #include "jctool.h"
 #include "jctool_helpers.hpp"
+#include "ir_sensor.h"
 
 #include "hidapi.h"
 #include "imgui.h"
@@ -28,7 +62,6 @@
 #define BATTERY_INDICATOR_NAMES "0 0_chr 25 25_chr 50 50_chr 75 75_chr 100 100_chr"
 #define BATTERY_INDICATORS_EXT ".png"
 
-#include "ir_sensor.h"
 
 namespace JCToolkit {
     namespace Assets {
@@ -134,12 +167,12 @@ namespace JCToolkit {
                         RumbleData new_rumble_data;
                         // Calculate the size of the file.
                         size_t rumble_data_size = std::filesystem::file_size(file_name);
-                        char* read_buf = new char[rumble_data_size];
-                        rumble_fstream.read(read_buf, rumble_data_size);
+                        u8* read_buf = new u8[rumble_data_size];
+                        rumble_fstream.read((char*)read_buf, rumble_data_size);
 
                         new_rumble_data.from_file = file_name;
                         new_rumble_data.metadata = getVIBMetadata(read_buf);
-                        new_rumble_data.data.reset(reinterpret_cast<u8*>(read_buf), [](u8* p){
+                        new_rumble_data.data.reset(read_buf, [](u8* p){
                             delete[] p;
                         }); // Allocate enough space for the rumble data.
 
