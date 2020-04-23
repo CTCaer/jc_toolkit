@@ -29,6 +29,7 @@ SOFTWARE.
 
 #include "jctool.h"
 #include "jctool_helpers.hpp"
+#include "ir_sensor.h"
 #include "ImageLoad/ImageLoad.hpp"
 
 #ifdef __linux__
@@ -41,7 +42,7 @@ Controller::Controller() {
     //memset(&ir_sensor, 0, sizeof(ir_sensor)); // Set all values to zero.
     ir_sensor.setHostController(*this);
     //memmove(&ir_sensor.message_stream, new std::stringstream(), sizeof(std::stringstream));
-    ir_sensor.message_stream << "IR Message:" << std::endl;
+    ir_sensor.capture_status.message_stream << "IR Message:" << std::endl;
 
     ir_image_config& ir_config = ir_sensor.config;
     ir_config.ir_leds_intensity = ~ir_config.ir_leds_intensity; // Max intensity.
@@ -132,13 +133,25 @@ void Controller::IRSensor::capture(){
             break;
     }
 
-    std::thread ir_sensor_thread(irSensor<std::stringstream>, std::ref(*this), std::ref(this->message_stream)); // Dispatch the thread.
-    ir_sensor_thread.detach(); // Detach the thread so it does not have to be explicitly joined.
+    std::thread ir_sensor_thread(
+        irSensorStart<std::stringstream>,
+        std::ref(this->capture_in_progress),
+        IRCaptureCTX{
+            this->host->hid_handle,
+            this->host->timming_byte,
+            this->config,
+            this->ir_max_frag_no,
+            this->capture_mode,
+            this->capture_status
+        },
+        std::bind(&Controller::IRSensor::storeCapture, this, std::placeholders::_1)
+    ); // Dispatch the thread.
+    ir_sensor_thread.detach(); // Detach the thread so it does not have to be joined.
 }
 
 void Controller::IRSensor::storeCapture(std::shared_ptr<u8> raw_capture){
     GPUTexture::SideLoader::addJob([this, raw_capture](){
-        auto& resolution = std::get<2>(this->resolutions[this->res_idx_selected]);
+        auto& resolution = std::get<2>(ir_resolutions[this->res_idx_selected]);
         ImageResourceData ird;
         ird.width = resolution.width;
         ird.height = resolution.height;
@@ -179,4 +192,13 @@ uintptr_t Controller::IRSensor::getCaptureTexID() {
         });
     }
     return frame_dat.textures[frame_dat.idx_display];
+}
+
+void Controller::rumble(RumbleData& rumble_data){
+    this->rumble_active = true;
+    std::thread hd_rumble_thread([this, rumble_data](){
+        int res = play_hd_rumble_file(this->hid_handle, this->timming_byte, rumble_data);
+        this->rumble_active = false;
+    });
+    hd_rumble_thread.detach();
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <cstdint>
+#include <sstream>
 #include "hidapi.h"
 
 /**
@@ -153,7 +154,6 @@ struct VIBMetadata {
     int loop_times;
 };
 
-#if __jctool_cpp_API__
 using controller_hid_handle_t = hid_device*;
 
 struct RumbleData {
@@ -161,4 +161,59 @@ struct RumbleData {
     VIBMetadata metadata;
     std::shared_ptr<u8> data;
 };
-#endif
+
+enum IRColor : u8 {
+    IRGreyscale,
+    IRNightVision,
+    IRIronbow,
+    IRInfrared,
+    IRColorCount
+};
+/**
+ * Enum values for the various resolutions of the IR Camera.
+ * These are based on the normal orientation of the camera,
+ * which is when the rail is facing upwards.
+ */
+enum IRResolution : u8 {
+    IR_320x240 = 0b00000000,
+    IR_160x120 = 0b1010000,
+    IR_80x60 = 0b01100100,
+    IR_40x30 = 0b01101001
+};
+
+enum IRCaptureMode : u8 {
+    Off,
+    Image,
+    Video
+};
+
+struct IRCaptureStatus {
+    float fps;
+    int frame_counter;
+    int last_frag_no;
+    float duration;
+    float noise_level;
+    int avg_intensity_percent;
+    int white_pixels_percent;
+    u16 exfilter;
+    u8 exf_int;
+    std::stringstream message_stream;
+};
+
+struct IRCaptureCTX {
+    controller_hid_handle_t handle;
+    u8& timming_byte; 
+    ir_image_config& ir_cfg;
+    u8& ir_max_frag_no;
+    IRCaptureMode& capture_mode;
+    IRCaptureStatus& capture_status;
+};
+
+struct Size2D {
+    union {
+        u16 x, width;
+    };
+    union {
+        u16 y, height;
+    };
+};

@@ -156,8 +156,6 @@ namespace JCToolkit {
             static const char* explorer_name = "Choose HD Rumble File";
             static ImGuiID dir_exp = ImGui::DirectoryExplorer::NewDirExplorer(explorer_name, std::filesystem::current_path().string());
             static std::string selected;
-            if(ImGui::Button("Load Rumble Data"))
-                show_explorer = true;
 
             if(ImGui::DirectoryExplorer::OpenFileDialog(dir_exp, selected, show_explorer, ".jcvib,.bnvib")) {
                 const char* file_name = selected.c_str();
@@ -180,6 +178,11 @@ namespace JCToolkit {
                     }
                 }
             }
+
+            ImGui::ScopeDisableItems disable(controller.rumble_active);
+
+            if(ImGui::Button("Load Rumble Data"))
+                show_explorer = true;
             
             if(rumble_data.data == nullptr)
                 ImGui::Text("There is no rumble data loaded.");
@@ -229,7 +232,7 @@ namespace JCToolkit {
                     );
                 }
                 if(controller.handle() && ImGui::Button("Play")){
-                    play_hd_rumble_file(controller.handle(), controller.timming_byte, rumble_data);
+                    controller.rumble(rumble_data);
                 }
             }
         }
@@ -240,10 +243,9 @@ namespace JCToolkit {
             "Ironbow",
             "Infrared"
         };
-        static auto& resolutions = Controller::IRSensor::resolutions;
 
         void showIRCameraFeed(Controller::IRSensor& ir_sensor){
-            auto& size = std::get<2>(resolutions[ir_sensor.res_idx_selected]);
+            auto& size = std::get<2>(ir_resolutions[ir_sensor.res_idx_selected]);
             auto avail_size = ImGui::GetContentRegionAvail();
             auto resize = resizeRectAToFitInRectB(size, avail_size);
             ImGui::Image((ImTextureID)ir_sensor.getCaptureTexID(), {(float)resize.width, (float)resize.height});
@@ -265,20 +267,21 @@ namespace JCToolkit {
                 ImGui::BeginGroup();
                 ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config.ir_flip, flip_dir_0);
                 if(ImGui::Button("Capture Image")) {
+                    ir_sensor.capture_mode = IRCaptureMode::Image;
                     // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
                     ir_sensor.capture();
                     disable.ensureDisabled();
                 }
                 ImGui::SameLine();
-                bool video_in_progress = ir_sensor.capture_mode_is_video && ir_sensor.capture_in_progress;
+                bool video_in_progress = ir_sensor.capture_mode == IRCaptureMode::Video;
                 if(video_in_progress)
                     disable.allowEnabled();
                 if(ImGui::Button(video_in_progress ? "Stop" : "Stream Video")){
                     if(!video_in_progress) {
-                        ir_sensor.capture_mode_is_video = true;
+                        ir_sensor.capture_mode = IRCaptureMode::Video;
                         ir_sensor.capture();
                     } else
-                        ir_sensor.capture_mode_is_video = false; // For stopping the video stream
+                        ir_sensor.capture_mode = IRCaptureMode::Off; // For stopping the video stream
                 }
                 disable.ensureDisabled();
                 showIRCameraFeed(ir_sensor);
@@ -287,19 +290,19 @@ namespace JCToolkit {
             ImGui::NextColumn();
             /* IR Message Stream / Capture Information */ {
                 ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvailWidth());
-                ImGui::Text("%s", ir_sensor.message_stream.rdbuf()->str().c_str());
+                ImGui::Text("%s", ir_sensor.capture_status.message_stream.rdbuf()->str().c_str());
                 ImGui::PopTextWrapPos();
 
-                auto capture_info = ir_sensor.capture_info;
-                ImGui::Text("FPS: %.2f (%d ms)", capture_info.fps, (int) ((capture_info.fps > 0.0f) ? (1/capture_info.fps) : NAN));
-                ImGui::Text("Frame counter: %d", capture_info.frame_counter);
-                ImGui::Text("Last frag no: %d", capture_info.last_frag_no);
-                ImGui::Text("Duration: %f (seconds)", capture_info.duration);
-                ImGui::Text("Ambient Noise: %.2f", capture_info.noise_level);
-                ImGui::Text("Intensity: %d%%", capture_info.avg_intensity_percent);
-                ImGui::Text("EXFilter: %d", capture_info.exfilter);
-                ImGui::Text("EXFilter Int: %d", capture_info.exf_int);
-                ImGui::Text("White Px: %d%%", capture_info.white_pixels_percent);
+                auto& capture_status = ir_sensor.capture_status;
+                ImGui::Text("FPS: %.2f (%d ms)", capture_status.fps, (int) ((capture_status.fps > 0.0f) ? (1/capture_status.fps) : NAN));
+                ImGui::Text("Frame counter: %d", capture_status.frame_counter);
+                ImGui::Text("Last frag no: %d", capture_status.last_frag_no);
+                ImGui::Text("Duration: %f (seconds)", capture_status.duration);
+                ImGui::Text("Ambient Noise: %.2f", capture_status.noise_level);
+                ImGui::Text("Intensity: %d%%", capture_status.avg_intensity_percent);
+                ImGui::Text("EXFilter: %d", capture_status.exfilter);
+                ImGui::Text("EXFilter Int: %d", capture_status.exf_int);
+                ImGui::Text("White Px: %d%%", capture_status.white_pixels_percent);
             }
 
             ImGui::NextColumn();
@@ -316,10 +319,10 @@ namespace JCToolkit {
                         ImGui::BeginGroup();
                         ImGui::Text("Resolution");
 
-                        constexpr int res_count = IM_ARRAYSIZE(resolutions);
+                        const int res_count = IM_ARRAYSIZE(ir_resolutions);
                         for(int i=0; i < res_count; i++){
-                            auto& res_tuple = resolutions[i];
-                            bool selected = std::get<1>(res_tuple) == std::get<1>(resolutions[ir_sensor.res_idx_selected]);
+                            auto& res_tuple = ir_resolutions[i];
+                            bool selected = std::get<1>(res_tuple) == std::get<1>(ir_resolutions[ir_sensor.res_idx_selected]);
                             if(ImGui::RadioButton(std::get<0>(res_tuple), selected)){
                                 ir_sensor.res_idx_selected = i;
                                 // Set the resolution value on the config.
@@ -353,7 +356,7 @@ namespace JCToolkit {
                             if(ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt))
                                 ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
                             if(ImGui::Checkbox("Auto Exposure (experimental)", &ir_sensor.auto_exposure)){
-                                if(!ir_sensor.auto_exposure && ir_sensor.capture_mode_is_video) {
+                                if(!ir_sensor.auto_exposure && (ir_sensor.capture_mode == IRCaptureMode::Video)) {
                                     ir_sensor.auto_exposure = false;
                                     ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
                                 } else {

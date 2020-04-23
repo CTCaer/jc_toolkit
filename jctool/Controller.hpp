@@ -1,12 +1,9 @@
 #pragma once
 #include <string>
-#include "hidapi.h"
-#include "jctool_types.h"
-#include "ir_sensor.h"
-
 #include <mutex>
-#include <sstream>
 #include <tuple>
+
+#include "jctool_types.h"
 
 class Controller {
 public:
@@ -22,6 +19,7 @@ public:
     void updateBatteryData();
     void updateTemperatureData();
     void IRSensorCapture();
+    void rumble(RumbleData& rumble_data);
     
     /**
      * Return -1 on invalid battery report.
@@ -50,39 +48,15 @@ private:
 public:
     class IRSensor {
     public:
-        struct Res {
-            union {
-                u16 x, width;
-            };
-            union {
-                u16 y, height;
-            };
-        };
-        static constexpr std::tuple<const char*, IRResolution, const Res> resolutions[] = {
-            std::tuple<const char*, IRResolution, Res>("320 x 240", IR_320x240, {320, 240}),
-            std::tuple<const char*, IRResolution, Res>("160 x 120", IR_160x120, {160, 120}),
-            std::tuple<const char*, IRResolution, Res>("80 x 60", IR_80x60, {80, 60}),
-            std::tuple<const char*, IRResolution, Res>("40 x 30", IR_40x30, {40, 30})
-        };
-
-        struct CaptureInfo {
-            float fps;
-            int frame_counter;
-            int last_frag_no;
-            float duration;
-            float noise_level;
-            int avg_intensity_percent;
-            int white_pixels_percent;
-            u16 exfilter;
-            u8 exf_int;
-        } capture_info;
-
         ir_image_config config;
-        std::stringstream message_stream;
 
-        bool capture_mode_is_video;
+
+        bool capture_in_progress;
+        IRCaptureMode capture_mode;
+        IRCaptureStatus capture_status;
+
         int res_idx_selected; /** The index number of the resolution selected.
-        * See the static member IRSensor::resolution.
+        * See ir_sensor.h.
         */
         IRColor colorize_with;
         bool auto_exposure;
@@ -95,7 +69,6 @@ public:
         inline u8 maxFragNo() const { return this->ir_max_frag_no; }
         inline uintptr_t lastCaptureTexID() { return this->last_capture_tex_id; }
         uintptr_t getCaptureTexID();
-        bool capture_in_progress;
     private:
         u8 ir_max_frag_no;
         Controller* host; // As long as the controller and ir sensor have the same lifetime, this should point to the controller.
@@ -114,6 +87,8 @@ public:
     bool cancel_spi_dump = false;
     bool enable_nfc_scanning = false;
     u8 timming_byte = 0;
+
+    bool rumble_active = false;
 
     Controller();
 };

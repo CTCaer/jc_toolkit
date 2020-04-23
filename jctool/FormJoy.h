@@ -6090,7 +6090,7 @@ public ref class FormJoy : public System::Windows::Forms::Form
         // Initialize camera
         if (startNewConfig) {
             // Configure the IR camera and take a photo or stream.
-            res = irSensor(ir_new_config, error_msg);
+            res = irSensorStart(ir_new_config, error_msg);
             if (res > 0)
                 this->lbl_IRStatus->Text = "Status: Error " + error_msg + "!";
         }

@@ -3,6 +3,7 @@
 #include "jctool_types.h"
 
 #ifdef __jctool_cpp_API__
+#include <functional> // for storeCapture
 #include "Controller.hpp"
 #endif
 
@@ -39,7 +40,7 @@ int dump_spi(controller_hid_handle_t handle, u8& timming_byte, const char *dev_n
 int send_rumble(controller_hid_handle_t handle, u8& timming_byte);
 int send_custom_command(controller_hid_handle_t handle, u8& timming_byte, u8* arg);
 int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no);
-int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, RumbleData& rumble_data);
+int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, const RumbleData& rumble_data);
 int device_connection(controller_hid_handle_t& handle);
 int button_test(controller_hid_handle_t handle, u8& timming_byte);
 int set_led_busy(controller_hid_handle_t handle, u8& timming_byte);
@@ -49,8 +50,9 @@ int set_led_busy(controller_hid_handle_t handle, u8& timming_byte);
 int button_test(controller_hid_handle_t handle, u8& timming_byte);
 int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
 int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
-int ir_sensor(Controller::IRSensor& use_ir_sensor);
-int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor);
+using StoreRawCaptureCB = std::function<void(std::shared_ptr<u8>)>;
+int ir_sensor(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capture_cb);
+int ir_sensor_config_live(controller_hid_handle_t handle, u8& timming_byte, ir_image_config& ir_cfg);
 #endif
 
 #ifndef __jctool_cpp_API__
@@ -74,19 +76,20 @@ namespace CppWinFormJoy {
 }
 #endif
 
-// For irSensor template...
+// For irSensorStart template...
 inline void operator +=(std::ostream& stream, const char* msg) {
     stream << msg << std::endl;
 }
 
 template<typename ErrMsgStr>
 #ifndef __jctool_cpp_API__
-int irSensor(ir_image_config ir_img_cfg, ErrMsgStr& error_msg
+int irSensorStart(ir_image_config ir_img_cfg, ErrMsgStr& error_msg
 ){
     int res = ir_sensor(ir_img_cfg);
 #else
-int irSensor(Controller::IRSensor& use_ir_sensor, ErrMsgStr& error_msg) {
-    int res = ir_sensor(use_ir_sensor);
+int irSensorStart(bool& capture_in_progress, IRCaptureCTX capture_context, StoreRawCaptureCB store_capture_cb) {
+    int res = ir_sensor(capture_context, store_capture_cb);
+    ErrMsgStr& error_msg = capture_context.capture_status.message_stream;
 #endif
     // Get error
     switch (res) {
@@ -122,7 +125,7 @@ int irSensor(Controller::IRSensor& use_ir_sensor, ErrMsgStr& error_msg) {
     }
 
 #ifdef __jctool_cpp_API__
-    use_ir_sensor.capture_in_progress = false;
+    capture_in_progress = false;
 #endif
     return res;
 }

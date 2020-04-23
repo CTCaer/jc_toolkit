@@ -1363,8 +1363,8 @@ int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
 #ifndef __jctool_cpp_API__
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
 #else
-int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, RumbleData& rumble_data) {
-    int file_type = rumble_data.metadata.vib_file_type;
+int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, const RumbleData& rumble_data) {
+    VIBType file_type = rumble_data.metadata.vib_file_type;
     u16 sample_rate = rumble_data.metadata.sample_rate;
     int samples = rumble_data.metadata.samples;
     int loop_start = rumble_data.metadata.loop_start;
@@ -1388,7 +1388,7 @@ int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, Rumble
     res = hid_write(handle, buf, sizeof(buf));
     res = hid_read_timeout(handle, buf2, 1, 120);
 
-    if (file_type == 1 || file_type == 2) {
+    if (file_type == VIBRaw || file_type == VIBBinary) {
         for (int i = 0; i < samples * 4; i = i + 4) {
             Sleep(sample_rate);
             memset(buf, 0, sizeof(buf));
@@ -1427,11 +1427,11 @@ int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, Rumble
 #endif
         }
     }
-    else if (file_type == 3 || file_type == 4) {
+    else if (file_type == VIBBinaryLoop || file_type == VIBBinaryLoopAndWait) {
         u8 vib_off = 0;
-        if (file_type == 3)
+        if (file_type == VIBBinaryLoop)
             vib_off = 8;
-        else if (file_type == 4)
+        else if (file_type == VIBBinaryLoopAndWait)
             vib_off = 12;
 
         for (int i = 0; i < loop_start * 4; i = i + 4) {
@@ -1835,14 +1835,16 @@ namespace IR {
 }
 
 #ifndef __jctool_cpp_API__
-int get_raw_ir_image(u8 show_status) {
+int get_raw_ir_image(u8 capture_mode) {
     std::stringstream ir_status;
 #else
-int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
-    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
-    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
-    u8 ir_max_frag_no = use_ir_sensor.maxFragNo();
-    std::stringstream& ir_status = use_ir_sensor.message_stream;
+int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capture_cb) {
+    controller_hid_handle_t handle = capture_context.handle;
+    u8& timming_byte = capture_context.timming_byte;
+    IRCaptureMode& capture_mode = capture_context.capture_mode;
+    ir_image_config& ir_cfg = capture_context.ir_cfg;
+    u8& ir_max_frag_no = capture_context.ir_max_frag_no;
+    std::stringstream& ir_status = capture_context.capture_status.message_stream;
 #endif
 
     int64_t elapsed_time = 0; // The time it took to get a fragment.
@@ -1912,7 +1914,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 #ifndef __jctool_cpp_API__
     while (enable_IRVideoPhoto || initialization)
 #else
-    while(use_ir_sensor.capture_mode_is_video || initialization)
+    while((capture_mode == IRCaptureMode::Video) || initialization)
 #endif
     {
         int packet_res = IR::request_packet(handle, buf_reply, sizeof(buf_reply));
@@ -1936,7 +1938,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
             // Final and Next flow result from the same logic, but Final is unique (Adressed after the switches.)
             case IR::PacketType::Final:
             case IR::PacketType::Next:{
-                use_ir_sensor.capture_info.last_frag_no = got_frag_no;
+                capture_context.capture_status.last_frag_no = got_frag_no;
                 IR::ack_packet(ack, got_frag_no);
                 previous_frag_no = got_frag_no;
 
@@ -1945,16 +1947,16 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 #ifndef __jctool_cpp_API__
                 if (enable_IRAutoExposure 
 #else
-                if(use_ir_sensor.auto_exposure
+                //if(use_ir_sensor.auto_exposure
 #endif
-                && initialization < 2 && got_frag_no == 0){
-                    white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / buf_size_img);
+                //&& initialization < 2 && got_frag_no == 0){
+                //    white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / buf_size_img);
 #ifndef __jctool_cpp_API__
                     ir_sensor_auto_exposure(white_pixels_percent);
 #else
-                    ir_sensor_auto_exposure(handle, timming_byte, white_pixels_percent);
+                //    ir_sensor_auto_exposure(handle, timming_byte, white_pixels_percent);
 #endif
-                }
+                //}
             }break;
             case IR::PacketType::Repeat:
                 // Check if repeat ACK should be send. Avoid writing to image buffer.
@@ -2004,10 +2006,17 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 ir_status.str("");
                 ir_status.clear();
                 if (initialization < 2) {
-                    if (show_status == 2)
-                        ir_status << "Status: Streaming.. ";
-                    else
+                    switch(capture_mode){
+                        case IRCaptureMode::Image:
                         ir_status << "Status: Receiving.. ";
+                        break;
+                        case IRCaptureMode::Video:
+                        ir_status << "Status: Streaming.. ";
+                        break;
+                        case IRCaptureMode::Off:
+                        ir_status << "Status: Turning off.. ";
+                        break;
+                    }
                 }
                 else
                     ir_status << "Status: Initializing.. ";
@@ -2063,19 +2072,19 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 }
                 elapsed_time2 = _elapsedClockTimeMS();
 
-                use_ir_sensor.capture_info.fps = fps;
-                use_ir_sensor.capture_info.frame_counter = ++frame_counter;
-                use_ir_sensor.capture_info.duration = (float) _elapsedClockTimeMS() / 1000;
-                use_ir_sensor.capture_info.noise_level = noise_level;
-                use_ir_sensor.capture_info.avg_intensity_percent = avg_intensity_percent;
-                use_ir_sensor.capture_info.exfilter = *(u16*)&buf_reply[57];
-                use_ir_sensor.capture_info.white_pixels_percent = white_pixels_percent;
-                use_ir_sensor.capture_info.exf_int = buf_reply[54];
+                capture_context.capture_status.fps = fps;
+                capture_context.capture_status.frame_counter = ++frame_counter;
+                capture_context.capture_status.duration = (float) _elapsedClockTimeMS() / 1000;
+                capture_context.capture_status.noise_level = noise_level;
+                capture_context.capture_status.avg_intensity_percent = avg_intensity_percent;
+                capture_context.capture_status.exfilter = *(u16*)&buf_reply[57];
+                capture_context.capture_status.white_pixels_percent = white_pixels_percent;
+                capture_context.capture_status.exf_int = buf_reply[54];
                 
                 u8* buf_copy = new u8[buf_size_img];
                 memset(buf_copy, 0, buf_size_img);
                 memcpy(buf_copy, buf_image, buf_size_img);
-                use_ir_sensor.storeCapture(std::shared_ptr<u8>(buf_copy, [](u8* d){ delete[] d; }));
+                store_capture_cb(std::shared_ptr<u8>(buf_copy, [](u8* d){ delete[] d; }));
 #endif
                 if (initialization)
                     initialization--;
@@ -2091,11 +2100,12 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 #ifndef __jctool_cpp_API__
 int ir_sensor(ir_image_config &ir_cfg) {
 #else
-int ir_sensor(Controller::IRSensor& use_ir_sensor) {
-    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
-    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
-    u8 ir_max_frag_no = use_ir_sensor.maxFragNo();
-    ir_image_config& ir_cfg = use_ir_sensor.config;
+int ir_sensor(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capture_cb) {
+    controller_hid_handle_t handle = capture_context.handle;
+    u8& timming_byte = capture_context.timming_byte;
+    IRCaptureMode& capture_mode = capture_context.capture_mode;
+    ir_image_config& ir_cfg = capture_context.ir_cfg;
+    u8& ir_max_frag_no = capture_context.ir_max_frag_no;
 #endif
     int res;
     u8 buf[0x170];
@@ -2480,10 +2490,9 @@ step9:
     else
         res_get = get_raw_ir_image(1);
 #else
-    if (use_ir_sensor.capture_mode_is_video)
-        res_get = get_raw_ir_image(use_ir_sensor, 2);
-    else
-        res_get = get_raw_ir_image(use_ir_sensor, 1);
+    if(capture_mode > 0){
+        res_get = get_raw_ir_image(capture_context, store_capture_cb);
+    }
 #endif
 
     //////
@@ -2610,10 +2619,7 @@ int get_ir_registers(Controller::IRSensor& use_ir_sensor, int start_reg, int reg
 #ifndef __jctool_cpp_API__
 int ir_sensor_config_live(ir_image_config &ir_cfg) {
 #else
-int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor) {
-    ir_image_config& ir_cfg = use_ir_sensor.config;
-    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
-    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
+int ir_sensor_config_live(controller_hid_handle_t handle, u8& timming_byte, ir_image_config& ir_cfg) {
 #endif
     int res;
     u8 buf[49];
