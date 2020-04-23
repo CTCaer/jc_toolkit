@@ -50,14 +50,7 @@ int button_test(controller_hid_handle_t handle, u8& timming_byte);
 int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
 int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
 int ir_sensor(Controller::IRSensor& use_ir_sensor);
-int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor, u8& timming_byte);
-
-namespace JCToolkit {
-    namespace UI {
-        void show(Controller& controller, RumbleData& rumble_data);
-    }
-    void init();
-}
+int ir_sensor_config_live(Controller::IRSensor& use_ir_sensor);
 #endif
 
 #ifndef __jctool_cpp_API__
@@ -71,7 +64,6 @@ extern bool check_connection_ok;
 
 extern u8 timming_byte;
 extern u8 ir_max_frag_no;
-#endif
 
 namespace CppWinFormJoy {
     class images
@@ -79,4 +71,54 @@ namespace CppWinFormJoy {
         //For annoying designer..
         //Todo.
     };
+}
+#endif
+
+
+template<typename ErrMsgStr>
+#ifndef __jctool_cpp_API__
+int irSensor(ir_image_config ir_img_cfg, ErrMsgStr& error_msg
+){
+    int res = ir_sensor(ir_img_cfg);
+#else
+int irSensor(Controller::IRSensor& use_ir_sensor, ErrMsgStr& error_msg) {
+    int res = ir_sensor(use_ir_sensor);
+#endif
+    // Get error
+    switch (res) {
+    case 1:
+        error_msg += "1ID31";
+        break;
+    case 2:
+        error_msg += "2MCUON";
+        break;
+    case 3:
+        error_msg += "3MCUONBUSY";
+        break;
+    case 4:
+        error_msg += "4MCUMODESET";
+        break;
+    case 5:
+        error_msg += "5MCUSETBUSY";
+        break;
+    case 6:
+        error_msg += "6IRMODESET";
+        break;
+    case 7:
+        error_msg += "7IRSETBUSY";
+        break;
+    case 8:
+        error_msg += "8IRCFG";
+        break;
+    case 9:
+        error_msg += "9IRFCFG";
+        break;
+    default:
+        break;
+    }
+
+#ifdef __jctool_cpp_API__
+    use_ir_sensor.capture_in_progress = false;
+#endif
+    return res;
 }

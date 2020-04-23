@@ -10,7 +10,8 @@
 #include "overrides.h"
 #include "luts.h"
 
-#include "jctool_api.hpp"
+#include "jctool.hpp"
+#include "jctool_helpers.hpp"
 
 using namespace System;
 

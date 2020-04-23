@@ -12,7 +12,7 @@ endif()
 
 set(SOURCES
     jctool/jctool.cpp
-    jctool/jctool_api_ui.cpp
+    jctool/jctool_ui.cpp
     jctool/Controller.cpp
 )
 

@@ -36,6 +36,7 @@ const auto min = [](auto a, auto b){
 #include "imgui.h"
 #include "ImGui/tools/this_is_imconfig.h"
 #include "ImGui/tools/Interface/ImGuiInterface.hpp"
+#include "jctool_ui.hpp"
 #endif
 
 #include "hidapi.h"
@@ -1847,11 +1848,12 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start).count();
     };
 #endif
-    static const int& BUF_SIZE_IMG = IR::BUF_SIZE_IMG;
+
+    int buf_size_img = (ir_max_frag_no+1) * 300;
 
     u8 buf[49];
     u8 buf_reply[0x170];
-    u8 *buf_image = new u8[BUF_SIZE_IMG]; // 8bpp greyscale image.
+    u8 *buf_image = new u8[buf_size_img]; // 8bpp greyscale image.
 	uint16_t bad_signal = 0;
     int error_reading = 0;
     float noise_level = 0.0f;
@@ -1860,11 +1862,11 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
     int got_frag_no = 0;
     int missed_packet_no = 0;
     bool missed_packet = false;
-    int initialization = 2;
-    int max_pixels = ((ir_max_frag_no < 218 ? ir_max_frag_no : 217) + 1) * 300;
+    int initialization = 2; // Make 3, not 2?
+    //int max_pixels = ((ir_max_frag_no < 218 ? ir_max_frag_no : 217) + 1) * 300;
     int white_pixels_percent = 0;
 
-    memset(buf_image, 0, sizeof(BUF_SIZE_IMG));
+    memset(buf_image, 0, sizeof(buf_size_img));
 
     memset(buf, 0, sizeof(buf));
     memset(buf_reply, 0, sizeof(buf_reply));
@@ -1883,7 +1885,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
 
     IR::Image img {
         buf_image,
-        BUF_SIZE_IMG
+        buf_size_img
     };
 
     IR::acknowledge ack {
@@ -1926,6 +1928,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
             // Final and Next flow result from the same logic, but Final is unique (Adressed after the switches.)
             case IR::PacketType::Final:
             case IR::PacketType::Next:{
+                use_ir_sensor.capture_info.last_frag_no = got_frag_no;
                 IR::ack_packet(ack, got_frag_no);
                 previous_frag_no = got_frag_no;
 
@@ -1937,7 +1940,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 if(use_ir_sensor.auto_exposure
 #endif
                 && initialization < 2 && got_frag_no == 0){
-                    white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
+                    white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / buf_size_img);
 #ifndef __jctool_cpp_API__
                     ir_sensor_auto_exposure(white_pixels_percent);
 #else
@@ -2036,7 +2039,7 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 // *(u16*)&buf_reply[55]: White pixels (pixels with 255 value). Max 65535. Uint16 constraints, even though max is 76800.
                 // *(u16*)&buf_reply[57]: Pixels with ambient noise from external light sources (sun, lighter, IR remotes, etc). Cleaned by External Light Filter.
                 noise_level = (float)(*(u16*)&buf_reply[57]) / ((float)(*(u16*)&buf_reply[55]) + 1.0f);
-                white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / max_pixels);
+                white_pixels_percent = (int)((*(u16*)&buf_reply[55] * 100) / buf_size_img);
                 avg_intensity_percent = (int)((buf_reply[53] * 100) / 255);
 #ifndef __jctool_cpp_API__
                 FormJoy::myform1->lbl_IRHelp->Text = String::Format("Amb Noise: {0:f2},  Int: {1:D}%,  FPS: {2:D} ({3:D}ms)\nEXFilter: {4:D},  White Px: {5:D}%,  EXF Int: {6:D}",
@@ -2061,8 +2064,9 @@ int get_raw_ir_image(Controller::IRSensor& use_ir_sensor, u8 show_status) {
                 use_ir_sensor.capture_info.white_pixels_percent = white_pixels_percent;
                 use_ir_sensor.capture_info.exf_int = buf_reply[54];
                 
-                u8* buf_copy = new u8[BUF_SIZE_IMG];
-                memcpy(buf_copy,buf_image, BUF_SIZE_IMG);
+                u8* buf_copy = new u8[buf_size_img];
+                memset(buf_copy, 0, buf_size_img);
+                memcpy(buf_copy, buf_image, buf_size_img);
                 use_ir_sensor.storeCapture(std::shared_ptr<u8>(buf_copy, [](u8* d){ delete[] d; }));
 #endif
                 if (initialization)
@@ -3553,6 +3557,87 @@ int main(int argc, char** args) {
     return 0;
 }
 #endif
+
+/**
+ * Below is some code extracted from the orginal UI framework source (CppWinForm.)
+ * Goal: Eliminate dependency to the original UI framework so that useful code
+ * that was once only accessible by the original UI is now accessible through
+ * an API.
+ */
+
+BatteryData parseBatteryData(const unsigned char* batt_data) {
+    int batt_percent = 0;
+    int batt = ((u8)batt_data[0] & 0xF0) >> 4;
+
+    // Calculate aproximate battery percent from regulated voltage
+    u16 batt_volt = (u8)batt_data[1] + ((u8)batt_data[2] << 8);
+    if (batt_volt < 0x560)
+        batt_percent = 1;
+    else if (batt_volt > 0x55F && batt_volt < 0x5A0) {
+        batt_percent = static_cast<int>(((batt_volt - 0x60) & 0xFF) / 7.0f) + 1;
+    }
+    else if (batt_volt > 0x59F && batt_volt < 0x5E0) {
+        batt_percent = static_cast<int>(((batt_volt - 0xA0) & 0xFF) / 2.625f) + 11;
+    }
+    else if (batt_volt > 0x5DF && batt_volt < 0x618) {
+        batt_percent = static_cast<int>((batt_volt - 0x5E0) / 1.8965f) + 36;
+    }
+    else if (batt_volt > 0x617 && batt_volt < 0x658) {
+        batt_percent = static_cast<int>(((batt_volt - 0x18) & 0xFF) / 1.8529f) + 66;
+    }
+    else if (batt_volt > 0x657)
+        batt_percent = 100;
+
+    return {batt_percent, batt, (batt_volt * 2.5f) / 1000};
+}
+
+TemperatureData parseTemperatureData(const unsigned char* temp_data){
+    // Convert reading to Celsius according to datasheet
+    float celsius = 25.0f + uint16_to_int16(temp_data[1] << 8 | temp_data[0]) * 0.0625f;
+    return {celsius, celsius*1.8f + 32};
+}
+
+void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_height, int ir_image_width, int bytes_pp_out, int col_fil, u8 color_order){
+    int buf_pos = 0;
+
+    u8 red_pos_idx = ColorOrder::getRedPosIdx(color_order);
+    u8 green_pos_idx = ColorOrder::getGreenPosIdx(color_order);
+    u8 blue_pos_idx = ColorOrder::getBluePosIdx(color_order);
+
+    for (int y = 0; y < ir_image_height; y++) {
+        u8* row = (u8 *)pixel_data_out + (y * bytes_pp_out * ir_image_width);
+        for (int x = 0; x < ir_image_width; x++) {
+            switch(col_fil){
+                case IRGreyscale:
+                    // Values are in BGR in memory. Here in RGB order.
+                    row[x * bytes_pp_out + red_pos_idx]     = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + green_pos_idx]   = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + blue_pos_idx]    = pixel_data_in[x + buf_pos];
+                    break;
+                case IRNightVision:
+                    // Values are in BGR in memory. Here in RGB order.
+                    row[x * bytes_pp_out + red_pos_idx]     = 0;
+                    row[x * bytes_pp_out + green_pos_idx]   = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + blue_pos_idx]    = 0;
+                    break;
+                case IRIronbow:
+                    // Values are in BGR in memory. Here in RGB order.
+                    row[x * bytes_pp_out + red_pos_idx]     = (iron_palette[pixel_data_in[x + buf_pos]] >> 16)&0xFF;
+                    row[x * bytes_pp_out + green_pos_idx]   = (iron_palette[pixel_data_in[x + buf_pos]] >> 8) & 0xFF;
+                    row[x * bytes_pp_out + blue_pos_idx]    =  iron_palette[pixel_data_in[x + buf_pos]] & 0xFF;
+                    break;
+                case IRInfrared:
+                default:
+                    // Values are in BGR in memory. Here in RGB order.
+                    row[x * bytes_pp_out + red_pos_idx]     = pixel_data_in[x + buf_pos];
+                    row[x * bytes_pp_out + green_pos_idx]   = 0;
+                    row[x * bytes_pp_out + blue_pos_idx]    = 0;
+                    break;
+            }
+        }
+        buf_pos += ir_image_width;
+    }
+}
 
 lut_amp lut_joy_amp{
 	{ 0.00000f, 0.007843f, 0.011823f, 0.014061f, 0.01672f, 0.019885f, 0.023648f, 0.028123f,

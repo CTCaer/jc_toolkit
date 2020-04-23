@@ -1,9 +1,3 @@
-/**
- * Code extracted from the orginal UI framework source (CppWinForm.)
- * Goal: Eliminate dependency to the original UI framework so that useful code
- * that was once only accessible by the original UI is now accessible through
- * an API.
- */
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -18,11 +12,10 @@
 #include "commdlg.h"
 #endif
 
-#include "jctool_api.hpp"
 #include "jctool.h"
-#include "hidapi.h"
+#include "jctool_helpers.hpp"
 
-#ifdef __jctool_cpp_API__
+#include "hidapi.h"
 #include "imgui.h"
 #include "ImGui/tools/this_is_imconfig.h"
 #include "imgui_internal.h" // PushItemFlags
@@ -34,85 +27,9 @@
 #define BATTERY_INDICATORS_COUNT 10
 #define BATTERY_INDICATOR_NAMES "0 0_chr 25 25_chr 50 50_chr 75 75_chr 100 100_chr"
 #define BATTERY_INDICATORS_EXT ".png"
-#endif
 
 #include "ir_sensor.h"
 
-BatteryData parseBatteryData(const unsigned char* batt_data) {
-    int batt_percent = 0;
-    int batt = ((u8)batt_data[0] & 0xF0) >> 4;
-
-    // Calculate aproximate battery percent from regulated voltage
-    u16 batt_volt = (u8)batt_data[1] + ((u8)batt_data[2] << 8);
-    if (batt_volt < 0x560)
-        batt_percent = 1;
-    else if (batt_volt > 0x55F && batt_volt < 0x5A0) {
-        batt_percent = static_cast<int>(((batt_volt - 0x60) & 0xFF) / 7.0f) + 1;
-    }
-    else if (batt_volt > 0x59F && batt_volt < 0x5E0) {
-        batt_percent = static_cast<int>(((batt_volt - 0xA0) & 0xFF) / 2.625f) + 11;
-    }
-    else if (batt_volt > 0x5DF && batt_volt < 0x618) {
-        batt_percent = static_cast<int>((batt_volt - 0x5E0) / 1.8965f) + 36;
-    }
-    else if (batt_volt > 0x617 && batt_volt < 0x658) {
-        batt_percent = static_cast<int>(((batt_volt - 0x18) & 0xFF) / 1.8529f) + 66;
-    }
-    else if (batt_volt > 0x657)
-        batt_percent = 100;
-
-    return {batt_percent, batt, (batt_volt * 2.5f) / 1000};
-}
-
-TemperatureData parseTemperatureData(const unsigned char* temp_data){
-    // Convert reading to Celsius according to datasheet
-    float celsius = 25.0f + uint16_to_int16(temp_data[1] << 8 | temp_data[0]) * 0.0625f;
-    return {celsius, celsius*1.8f + 32};
-}
-
-void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_height, int ir_image_width, int bytes_pp_out, int col_fil, u8 color_order){
-    int buf_pos = 0;
-
-    u8 red_pos_idx = ColorOrder::getRedPosIdx(color_order);
-    u8 green_pos_idx = ColorOrder::getGreenPosIdx(color_order);
-    u8 blue_pos_idx = ColorOrder::getBluePosIdx(color_order);
-
-    for (int y = 0; y < ir_image_height; y++) {
-        u8* row = (u8 *)pixel_data_out + (y * bytes_pp_out * ir_image_width);
-        for (int x = 0; x < ir_image_width; x++) {
-            switch(col_fil){
-                case IRGreyscale:
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + red_pos_idx]     = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out + green_pos_idx]   = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out + blue_pos_idx]    = pixel_data_in[x + buf_pos];
-                    break;
-                case IRNightVision:
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + red_pos_idx]     = 0;
-                    row[x * bytes_pp_out + green_pos_idx]   = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out + blue_pos_idx]    = 0;
-                    break;
-                case IRIronbow:
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + red_pos_idx]     = (iron_palette[pixel_data_in[x + buf_pos]] >> 16)&0xFF;
-                    row[x * bytes_pp_out + green_pos_idx]   = (iron_palette[pixel_data_in[x + buf_pos]] >> 8) & 0xFF;
-                    row[x * bytes_pp_out + blue_pos_idx]    =  iron_palette[pixel_data_in[x + buf_pos]] & 0xFF;
-                    break;
-                case IRInfrared:
-                default:
-                    // Values are in BGR in memory. Here in RGB order.
-                    row[x * bytes_pp_out + red_pos_idx]     = pixel_data_in[x + buf_pos];
-                    row[x * bytes_pp_out + green_pos_idx]   = 0;
-                    row[x * bytes_pp_out + blue_pos_idx]    = 0;
-                    break;
-            }
-        }
-        buf_pos += ir_image_width;
-    }
-}
-
-#ifdef __jctool_cpp_API__
 namespace JCToolkit {
     namespace Assets {
         ImageResource battery_indicators[BATTERY_INDICATORS_COUNT];
@@ -343,6 +260,7 @@ namespace JCToolkit {
                 auto capture_info = ir_sensor.capture_info;
                 ImGui::Text("FPS: %.2f (%d ms)", capture_info.fps, (int) ((capture_info.fps > 0.0f) ? (1/capture_info.fps) : NAN));
                 ImGui::Text("Frame counter: %d", capture_info.frame_counter);
+                ImGui::Text("Last frag no: %d", capture_info.last_frag_no);
                 ImGui::Text("Duration: %f (seconds)", capture_info.duration);
                 ImGui::Text("Ambient Noise: %.2f", capture_info.noise_level);
                 ImGui::Text("Intensity: %d%%", capture_info.avg_intensity_percent);
@@ -499,4 +417,3 @@ namespace JCToolkit {
         Helpers::loadBatteryImages();
     }
 }
-#endif

@@ -68,6 +68,7 @@ public:
         struct CaptureInfo {
             float fps;
             int frame_counter;
+            int last_frag_no;
             float duration;
             float noise_level;
             int avg_intensity_percent;
