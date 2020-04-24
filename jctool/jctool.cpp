@@ -2546,9 +2546,7 @@ stepf:
 #ifndef __jctool_cpp_API__
 int get_ir_registers(int start_reg, int reg_group) {
 #else
-int get_ir_registers(Controller::IRSensor& use_ir_sensor, int start_reg, int reg_group) {
-    controller_hid_handle_t handle = use_ir_sensor.hostController()->handle();
-    u8& timming_byte = use_ir_sensor.hostController()->timming_byte;
+int get_ir_registers(controller_hid_handle_t handle, u8& timming_byte, int start_reg, int reg_group) {
 #endif
     int res;
     u8 buf[0x170];
@@ -3654,6 +3652,32 @@ void colorizefrom8BitsPP(u8* pixel_data_in, u8* pixel_data_out, int ir_image_hei
             }
         }
         buf_pos += ir_image_width;
+    }
+}
+
+std::string ir_sensorErrorToString(int errno_ir_sensor){
+    // Get error
+    switch (errno_ir_sensor) {
+    case 1:
+        return "1ID31";
+    case 2:
+        return "2MCUON";
+    case 3:
+        return "3MCUONBUSY";
+    case 4:
+        return "4MCUMODESET";
+    case 5:
+        return "5MCUSETBUSY";
+    case 6:
+        return "6IRMODESET";
+    case 7:
+        return "7IRSETBUSY";
+    case 8:
+        return "8IRCFG";
+    case 9:
+        return "9IRFCFG";
+    default:
+        return "UNDEFINED_ERR";
     }
 }
 

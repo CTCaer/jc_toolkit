@@ -40,11 +40,10 @@ SOFTWARE.
 Controller::Controller() {
     // Set up an IR Sensor with a default configuration scheme.
     //memset(&ir_sensor, 0, sizeof(ir_sensor)); // Set all values to zero.
-    ir_sensor.setHostController(*this);
     //memmove(&ir_sensor.message_stream, new std::stringstream(), sizeof(std::stringstream));
-    ir_sensor.capture_status.message_stream << "IR Message:" << std::endl;
+    ir.capture_status.message_stream << "IR Message:" << std::endl;
 
-    ir_image_config& ir_config = ir_sensor.config;
+    ir_image_config& ir_config = ir.config;
     ir_config.ir_leds_intensity = ~ir_config.ir_leds_intensity; // Max intensity.
     ir_config.ir_ex_light_filter = ir_ex_light_fliter_0;
     ir_config.ir_denoise = ir_denoise_Enable;
@@ -112,9 +111,9 @@ void Controller::connection(){
     }
 }
 
-void Controller::IRSensor::capture(){
-    if(this->host->hid_handle == nullptr)
-        return; // There is no controller connected yet.
+void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& timming_byte){
+    if(host_controller == nullptr)
+        return; // There is no controller
     
     this->capture_in_progress = true;
     // Set the max frag number.
@@ -134,49 +133,54 @@ void Controller::IRSensor::capture(){
     }
 
     std::thread ir_sensor_thread(
-        irSensorStart<std::stringstream>,
-        std::ref(this->capture_in_progress),
-        IRCaptureCTX{
-            this->host->hid_handle,
-            this->host->timming_byte,
-            this->config,
-            this->ir_max_frag_no,
-            this->capture_mode,
-            this->capture_status
-        },
-        std::bind(&Controller::IRSensor::storeCapture, this, std::placeholders::_1)
+        [this, host_controller, &timming_byte](){
+            IRCaptureCTX capture_context{
+                    host_controller,
+                    timming_byte,
+                    this->config,
+                    this->ir_max_frag_no,
+                    this->capture_mode,
+                    this->capture_status
+            };
+            int res = ir_sensor(capture_context,
+                [this](auto raw_capture){
+                    GPUTexture::SideLoader::addJob(
+                        [this, raw_capture](){
+                            auto& resolution = std::get<2>(ir_resolutions[this->res_idx_selected]);
+                            ImageResourceData ird;
+                            ird.width = resolution.width;
+                            ird.height = resolution.height;
+                            ird.num_channels = 3;
+                            ird.bytes = new u8[ird.width*ird.height*ird.num_channels];
+
+                            // Colorize the raw capture.
+                            colorizefrom8BitsPP(
+                                &*raw_capture,
+                                ird.bytes,
+                                ird.width,
+                                ird.height,
+                                ird.num_channels,
+                                this->colorize_with,
+                                ColorOrder::InRGBOrder
+                            );
+
+                            std::lock_guard<std::mutex> lock(this->vstream_frame_dat.texture_mutex);
+                            this->vstream_frame_dat.updated = true;
+                            // 1. Render to the texture.
+                            GPUTexture::openGLUpload(this->vstream_frame_dat.textures[this->vstream_frame_dat.idx_render], ird.width, ird.height, ird.num_channels, ird.bytes);
+                            // 2. The texture was rendered so put it in the swap,
+                            // so that the new texture could be swapped out for the old texture.
+                            std::swap(this->vstream_frame_dat.idx_swap, this->vstream_frame_dat.idx_render);
+                        }
+                    );
+                }
+            );
+            this->capture_in_progress = false;
+
+            this->capture_status.message_stream << ir_sensorErrorToString(res);
+        }
     ); // Dispatch the thread.
     ir_sensor_thread.detach(); // Detach the thread so it does not have to be joined.
-}
-
-void Controller::IRSensor::storeCapture(std::shared_ptr<u8> raw_capture){
-    GPUTexture::SideLoader::addJob([this, raw_capture](){
-        auto& resolution = std::get<2>(ir_resolutions[this->res_idx_selected]);
-        ImageResourceData ird;
-        ird.width = resolution.width;
-        ird.height = resolution.height;
-        ird.num_channels = 3;
-        ird.bytes = new u8[ird.width*ird.height*ird.num_channels];
-
-        // Colorize the raw capture.
-        colorizefrom8BitsPP(
-            &*raw_capture,
-            ird.bytes,
-            ird.width,
-            ird.height,
-            ird.num_channels,
-            this->colorize_with,
-            ColorOrder::InRGBOrder
-        );
-
-        std::lock_guard<std::mutex> lock(this->vstream_frame_dat.texture_mutex);
-        this->vstream_frame_dat.updated = true;
-        // 1. Render to the texture.
-        GPUTexture::openGLUpload(this->vstream_frame_dat.textures[this->vstream_frame_dat.idx_render], ird.width, ird.height, ird.num_channels, ird.bytes);
-        // 2. The texture was rendered so put it in the swap,
-        // so that the new texture could be swapped out for the old texture.
-        std::swap(this->vstream_frame_dat.idx_swap, this->vstream_frame_dat.idx_render);
-    });
 }
 
 uintptr_t Controller::IRSensor::getCaptureTexID() {

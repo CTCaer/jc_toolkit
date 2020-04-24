@@ -18,7 +18,6 @@ public:
     void connection();
     void updateBatteryData();
     void updateTemperatureData();
-    void IRSensorCapture();
     void rumble(RumbleData& rumble_data);
     
     /**
@@ -61,19 +60,10 @@ public:
         IRColor colorize_with;
         bool auto_exposure;
 
-        void capture();
-        void storeCapture(std::shared_ptr<u8> raw_capture);
-
-        inline void setHostController(Controller& host_controller) { this->host = &host_controller; }
-        inline Controller* hostController() const { return this->host; }
-        inline u8 maxFragNo() const { return this->ir_max_frag_no; }
-        inline uintptr_t lastCaptureTexID() { return this->last_capture_tex_id; }
+        void capture(controller_hid_handle_t host_controller, u8& timming_byte);
         uintptr_t getCaptureTexID();
     private:
         u8 ir_max_frag_no;
-        Controller* host; // As long as the controller and ir sensor have the same lifetime, this should point to the controller.
-        uintptr_t last_capture_tex_id;
-
         struct VideoStreamFrameData {
             uintptr_t textures[3] = {};
             int idx_render = 0;
@@ -82,7 +72,7 @@ public:
             bool updated = false;
             std::mutex texture_mutex;
         } vstream_frame_dat;
-    } ir_sensor;
+    } ir;
 
     bool cancel_spi_dump = false;
     bool enable_nfc_scanning = false;

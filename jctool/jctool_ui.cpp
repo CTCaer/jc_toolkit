@@ -252,11 +252,12 @@ namespace JCToolkit {
             ImGui::EndGroup();
         }
         
-        void showIRCamera(Controller::IRSensor& ir_sensor) {
+        void showIRCamera(Controller& controller) {
             static u16 exposure_amt = 300;
             static int denoise_edge_smooth = 35;
             static int denoise_color_intrpl = 68; // Color Interpolation
 
+            Controller::IRSensor& ir_sensor = controller.ir;
             // The controller's ir config
             ir_image_config& ir_config = ir_sensor.config;
 
@@ -269,7 +270,7 @@ namespace JCToolkit {
                 if(ImGui::Button("Capture Image")) {
                     ir_sensor.capture_mode = IRCaptureMode::Image;
                     // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
-                    ir_sensor.capture();
+                    ir_sensor.capture(controller.handle(), controller.timming_byte);
                     disable.ensureDisabled();
                 }
                 ImGui::SameLine();
@@ -279,7 +280,7 @@ namespace JCToolkit {
                 if(ImGui::Button(video_in_progress ? "Stop" : "Stream Video")){
                     if(!video_in_progress) {
                         ir_sensor.capture_mode = IRCaptureMode::Video;
-                        ir_sensor.capture();
+                        ir_sensor.capture(controller.handle(), controller.timming_byte);
                     } else
                         ir_sensor.capture_mode = IRCaptureMode::Off; // For stopping the video stream
                 }
@@ -425,7 +426,7 @@ namespace JCToolkit {
                     showRumblePlayer(controller, rumble_data);
                 }, ImGuiTreeNodeFlags_DefaultOpen, false},
                 {"IR Camera", [&](){
-                    showIRCamera(controller.ir_sensor);
+                    showIRCamera(controller);
                 }, ImGuiTreeNodeFlags_DefaultOpen, false}
             };
 

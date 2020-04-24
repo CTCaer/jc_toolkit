@@ -151,6 +151,8 @@ void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, in
     }
 }
 
+std::string ir_sensorErrorToString(int errno_ir_sensor);
+
 /**
  * ===========================================================================
  * The code below was added for convienience to build off the original Joy-Con
