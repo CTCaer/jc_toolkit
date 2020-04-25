@@ -155,9 +155,50 @@ namespace JCToolkit {
                 device_info[7], device_info[8], device_info[9]
             );
             ImGui::Text("S/N: %s", controller.serialNumber().c_str());
+
+            static bool dumping = false;
+            static size_t bytes_dumped = 0;
+            static const char* spi_dump_file = "spi_dump.bin";
+
+            ImGui::TextWrapped("ATTENTION: It is recommended that you backup your SPI before uploading any modifications to your controller! The only person to blame will be yourself if you choose to ignore this warning!");
+            
+            ImGui::ScopeDisableItems disable(dumping);
             if(ImGui::Button("Dump SPI")){
-                dump_spi(controller.handle(), controller.timming_byte, controller.cancel_spi_dump, "dump");
+                dumping = true;
+                controller.cancel_spi_dump = false;
+                std::thread dump_spi_thread(
+                    [&controller](){
+                        
+                        DumpSPICTX ctx{
+                            controller.cancel_spi_dump,
+                            bytes_dumped,
+                            spi_dump_file
+                        };
+                        bytes_dumped = 0;
+                        int res = dump_spi(controller.handle(), controller.timming_byte, ctx);
+                        if(res)
+                            printf("There was a problem backing up the SPI. Try again?");
+                        dumping = false;
+                    }
+                );
+                dump_spi_thread.detach();
             }
+            ImGui::SameLine();
+            ImGui::TextWrapped("The output will be named %s", spi_dump_file);
+
+            if(dumping)
+                disable.allowEnabled();
+            else
+                disable.ensureDisabled();
+            
+            if(ImGui::Button("Cancel Dump"))
+                controller.cancel_spi_dump = true;
+            ImGui::SameLine();
+            ImGui::ProgressBar((float) bytes_dumped / SPI_SIZE, {-1, 0},
+                std::string(std::to_string(bytes_dumped / SPI_SIZE) + "%").c_str()
+            );
+            ImGui::Text("%.2f KB / %.2f KB", (float) bytes_dumped / 1024, float(SPI_SIZE / 1024));
+
             ImGui::EndGroup();
         }
 

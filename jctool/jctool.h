@@ -36,7 +36,7 @@ int write_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset,
 int get_device_info(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
 int get_battery(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
 int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
-int dump_spi(controller_hid_handle_t handle, u8& timming_byte, bool& cancel_spi_dump, const char *dev_name);
+int dump_spi(controller_hid_handle_t handle, u8& timming_byte, DumpSPICTX& dump_spi_ctx);
 int send_rumble(controller_hid_handle_t handle, u8& timming_byte);
 int send_custom_command(controller_hid_handle_t handle, u8& timming_byte, u8* arg);
 int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no);
@@ -75,3 +75,5 @@ namespace CppWinFormJoy {
     };
 }
 #endif
+
+const size_t SPI_SIZE = 0x80000;

@@ -231,3 +231,9 @@ struct SPIColors {
     color_t right_grip;
 };
 #pragma pack(pop)
+
+struct DumpSPICTX {
+    bool& cancel_spi_dump;
+    size_t& bytes_dumped;
+    const char* file_name;
+};

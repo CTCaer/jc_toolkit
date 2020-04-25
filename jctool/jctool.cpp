@@ -517,10 +517,12 @@ int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_b
 #ifndef __jctool_cpp_API__
 int dump_spi(const char *dev_name) {
 #else
-int dump_spi(controller_hid_handle_t handle, u8& timming_byte, bool& cancel_spi_dump, const char *dev_name) {
+int dump_spi(controller_hid_handle_t handle, u8& timming_byte, DumpSPICTX& dump_spi_ctx) {
+    const char*& dev_name = dump_spi_ctx.file_name;
+    bool& cancel_spi_dump = dump_spi_ctx.cancel_spi_dump;
 #endif
-    std::string file_dev_name = dev_name;
     int error_reading = 0;
+    std::string file_dev_name = dev_name;
 #ifndef __jctool_cpp_API__
     String^ filename_sys = gcnew String(file_dev_name.c_str());
 #endif
@@ -546,16 +548,14 @@ int dump_spi(controller_hid_handle_t handle, u8& timming_byte, bool& cancel_spi_
     
     u16 read_len = 0x1d;
     u32 offset = 0x0;
-    while (offset < 0x80000 && !cancel_spi_dump) {
+    while (offset < SPI_SIZE && !cancel_spi_dump) {
         error_reading = 0;
+#ifndef __jctool_cpp_API__
         std::stringstream offset_label;
         offset_label << std::fixed << std::setprecision(2) << std::setfill(' ') << offset/1024.0f;
         offset_label << "KB of 512KB";
-#ifndef __jctool_cpp_API__
         FormJoy::myform1->label_progress->Text = gcnew String(offset_label.str().c_str());
         Application::DoEvents();
-#else
-        // TODO: Report progress through some callback function.
 #endif
 
         while(1) {
@@ -591,6 +591,9 @@ int dump_spi(controller_hid_handle_t handle, u8& timming_byte, bool& cancel_spi_
         offset += read_len;
         if (offset == 0x7FFE6)
             read_len = 0x1A;
+#ifdef __jctool_cpp_API__
+        dump_spi_ctx.bytes_dumped = offset;
+#endif
     }
     fclose(f);
 
