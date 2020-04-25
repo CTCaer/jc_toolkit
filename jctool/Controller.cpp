@@ -91,6 +91,9 @@ void Controller::connection(){
         this->updateTemperatureData();
 
         this->serial_number = get_sn(this->hid_handle, this->timming_byte);
+
+        // Get the controller colors
+        this->saved_colors = this->preview_colors = get_spi_colors(this->hid_handle, this->timming_byte);
     }
 
     // Set the controller type based on the return value.
@@ -176,8 +179,8 @@ void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& 
                 }
             );
             this->capture_in_progress = false;
-
-            this->capture_status.message_stream << ir_sensorErrorToString(res);
+            if(res > 0)
+                this->capture_status.message_stream << ir_sensorErrorToString(res);
         }
     ); // Dispatch the thread.
     ir_sensor_thread.detach(); // Detach the thread so it does not have to be joined.

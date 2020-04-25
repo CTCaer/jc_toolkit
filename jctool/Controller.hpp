@@ -44,6 +44,8 @@ private:
     BatteryData battery;
     Type controller_type = Type::None;
     controller_hid_handle_t hid_handle = nullptr;
+
+    SPIColors saved_colors;
 public:
     class IRSensor {
     public:
@@ -79,6 +81,8 @@ public:
     u8 timming_byte = 0;
 
     bool rumble_active = false;
+    
+    SPIColors preview_colors;
 
     Controller();
 };

@@ -1,6 +1,6 @@
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "this_is_imconfig.h"
+#include "ui_helpers.hpp"
 
 namespace ImGui {
     /**
@@ -29,5 +29,11 @@ namespace ImGui {
                 ImGui::Text("%s", headername.c_str());
             std::invoke(display_section);
         }
+    }
+
+    void ImageAutoFit(ImTextureID user_texture_id, const ImVec2& size_to_fit, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col, const ImVec4& border_col){
+        auto avail_size = ImGui::GetContentRegionAvail();
+        auto resize = resizeRectAToFitInRectB(size_to_fit, avail_size);
+        ImGui::Image(user_texture_id, resize, uv0, uv1, tint_col, border_col);
     }
 }

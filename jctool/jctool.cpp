@@ -34,8 +34,8 @@ const auto min = [](auto a, auto b){
 #include "FormJoy.h"
 #else
 #include "imgui.h"
-#include "ImGui/tools/this_is_imconfig.h"
 #include "ImGui/tools/Interface/ImGuiInterface.hpp"
+#include "ui_helpers.hpp"
 #include "jctool_ui.hpp"
 #endif
 
@@ -67,9 +67,9 @@ u8 ir_max_frag_no;
 #ifndef __jctool_cpp_API__
 hid_device *handle;
 using namespace System;
+hid_device *handle_l;
 #endif
 
-hid_device *handle_l;
 
 s16 uint16_to_int16(u16 a) {
     s16 b;
@@ -532,7 +532,7 @@ int dump_spi(controller_hid_handle_t handle, u8& timming_byte, bool& cancel_spi_
     errno_t err;
     if ((err = fopen_s(&f, file_dev_name.c_str(), "wb")) != 0) {
 #elif defined(__linux__)
-    if ((f = fopen(file_dev_name.c_str(), "wb")) != nullptr) {
+    if ((f = fopen(file_dev_name.c_str(), "wb")) == nullptr) {
 #endif
 #ifndef __jctool_cpp_API__
         MessageBox::Show(L"Cannot open file " + filename_sys + L" for writing!\n\nError: " + err, L"Error opening file!", MessageBoxButtons::OK ,MessageBoxIcon::Exclamation);
@@ -1761,15 +1761,12 @@ namespace IR {
     inline u8 frag_no(u8* packet_buf){
         return packet_buf[52];
     }
+    
+    const size_t FRAG_SIZE = 300;
+    const size_t FRAG_START_OFFSET = 59;
 
-    static const int BUF_SIZE_IMG = 19*4096;
-    struct Image {
-        u8* buf;
-        size_t buf_size;
-    };
-
-    inline void write_frag(Image& img){
-
+    inline size_t get_img_buf_size(u8 max_frag_no){
+        return FRAG_SIZE * (max_frag_no + 1);
     }
 
     /**
@@ -1859,7 +1856,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
     };
 #endif
 
-    int buf_size_img = (ir_max_frag_no+1) * 300;
+    int buf_size_img = IR::get_img_buf_size(ir_max_frag_no);
 
     u8 buf[49];
     u8 buf_reply[0x170];
@@ -1891,11 +1888,6 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
         missed_packet_no,
         ir_max_frag_no,
         missed_packet
-    };
-
-    IR::Image img {
-        buf_image,
-        buf_size_img
     };
 
     IR::acknowledge ack {
@@ -2036,7 +2028,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
             }
 
             if((pd.flags & IR::PacketFlags::WriteFrag) == IR::PacketFlags::WriteFrag){
-                memcpy(buf_image + (300 * got_frag_no), buf_reply + 59, 300);
+                memcpy(buf_image + (IR::FRAG_SIZE * got_frag_no), buf_reply + IR::FRAG_START_OFFSET, IR::FRAG_SIZE);
             }
 
             // Check if final fragment. Draw the frame.
@@ -3679,6 +3671,24 @@ std::string ir_sensorErrorToString(int errno_ir_sensor){
     default:
         return "UNDEFINED_ERR";
     }
+}
+
+SPIColors get_spi_colors(controller_hid_handle_t handle, u8& timming_byte){
+    unsigned char spi_colors[12];
+    memset(spi_colors, 0, 12);
+
+    int res = get_spi_data(handle, timming_byte, 0x6050, 12, spi_colors);
+
+    SPIColors colors;
+    memcpy(&colors, spi_colors, 12);
+    return colors;
+}
+
+int write_spi_colors(controller_hid_handle_t handle, u8& timming_byte, const SPIColors& colors){
+    unsigned char spi_colors[12];
+    memcpy(spi_colors, &colors.body, sizeof(colors));
+
+    return write_spi_data(handle, timming_byte, 0x6050, 12, spi_colors);
 }
 
 lut_amp lut_joy_amp{

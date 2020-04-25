@@ -29,8 +29,8 @@ SOFTWARE.
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
 #include "ImageLoad.hpp"
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -150,17 +150,22 @@ ImageResource::~ImageResource() {
     this->freeTexture();
 }
 
-ImageResource::ImageResource(const std::string& image_location, bool flip) {
+ImageResource::ImageResource(const std::string& image_location, bool to_gpu, bool flip) {
     this->load(image_location, flip);
 }
 
-void ImageResource::load(const std::string& image_location, bool flip) {
+void ImageResource::load(const std::string& image_location, bool to_gpu, bool flip) {
     FILE* image_file = fopen(image_location.c_str(), "rb");
     if(image_file == nullptr)
         return;
     this->loadFILE(image_file, flip);
     fclose(image_file);
 
+    if(to_gpu)
+        this->sendToGPU();
+}
+
+void ImageResource::sendToGPU() {
     if(!this->data.bytes)
         return; // There is no image data to upload to the gpu.
     GPUTexture::SideLoader::addJob([this](){
@@ -168,7 +173,6 @@ void ImageResource::load(const std::string& image_location, bool flip) {
         GPUTexture::openGLUpload(this->rid, this->data.width, this->data.height, this->data.num_channels, this->data.bytes);
         delete[] this->data.bytes;
     });
-    //GPUTexture::SideLoader::uploadTexture(this->rid, this->data);
 }
 
 /**

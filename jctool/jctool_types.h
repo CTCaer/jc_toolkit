@@ -217,3 +217,17 @@ struct Size2D {
         u16 y, height;
     };
 };
+
+#pragma pack(push, 1)
+struct SPIColors {
+    struct color_t {
+        u8 r;
+        u8 g;
+        u8 b;
+    };
+    color_t body;
+    color_t buttons;
+    color_t left_grip;
+    color_t right_grip;
+};
+#pragma pack(pop)

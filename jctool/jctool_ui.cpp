@@ -38,6 +38,7 @@ SOFTWARE.
 #include <iterator>
 #include <vector>
 #include <memory>
+#include <thread>
 
 // Open a file dialog window
 #ifdef WIN32
@@ -51,89 +52,122 @@ SOFTWARE.
 
 #include "hidapi.h"
 #include "imgui.h"
-#include "ImGui/tools/this_is_imconfig.h"
 #include "imgui_internal.h" // PushItemFlags
 #include "ui_helpers.hpp"
 #include "ImageLoad/ImageLoad.hpp"
 #include "Controller.hpp"
 #include "DirExplorer/ImGuiDirExplorer.hpp"
-#define BATTERY_INDICATORS_PATH "jctool/original_res/batt_"
-#define BATTERY_INDICATORS_COUNT 10
-#define BATTERY_INDICATOR_NAMES "0 0_chr 25 25_chr 50 50_chr 75 75_chr 100 100_chr"
-#define BATTERY_INDICATORS_EXT ".png"
+#define IMAGE_RES_PATH "jctool/original_res/"
+#define IMAGE_RES_EXT ".png"
 
 
 namespace JCToolkit {
     namespace Assets {
-        ImageResource battery_indicators[BATTERY_INDICATORS_COUNT];
+        ImageResource battery_indicators[] = {
+            {IMAGE_RES_PATH "batt_0" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_0_chr" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_25" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_25_chr" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_50" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_50_chr" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_75" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_75_chr" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_100" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "batt_100_chr" IMAGE_RES_EXT, false}
+        };
+        ImageResource left_joycon[] = {
+            {IMAGE_RES_PATH "l_joy_body" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "l_joy_buttons" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "l_joy_lines" IMAGE_RES_EXT, false},
+        };
+        ImageResource right_joycon[] = {
+            {IMAGE_RES_PATH "r_joy_body" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "r_joy_buttons" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "r_joy_lines" IMAGE_RES_EXT, false},
+        };
+        ImageResource pro_controller[] = {
+            {IMAGE_RES_PATH "pro_body" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "pro_buttons" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "pro_grips_l" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "pro_grips_r" IMAGE_RES_EXT, false},
+            {IMAGE_RES_PATH "pro_lines" IMAGE_RES_EXT, false},
+        };
+
+        enum ControllerPartIdx {
+            Body,
+            Buttons,
+            Lines,
+            SharedPartCount,
+            LeftGrip = Lines,
+            RightGrip,
+        };
+
+        static const char* default_rumbles[] = {
+            "Super Mario Bros - Main theme",
+            "Super Mario Odyssey - Jump Up, Super Star!"
+        };
+
+        enum RetailColorTuple : u8 {
+            RetailColLabel,
+            RetailColBody,
+            RetailColButton
+        };
+        using RGBColor = u32;
+        using RetailColor = std::tuple<const char*, const SPIColors::color_t, const SPIColors::color_t>;
+        // Extracted from original_res/retail_colors.xml
+        constexpr RetailColor retail_color_presets[] = {
+            {"Grey",        {0x82,0x82,0x82}, {0x0F,0x0F,0x0F}},
+            {"Neon Blue",   {0x0A,0xB9,0xE6}, {0x00,0x1E,0x1E}},
+            {"Neon Red",    {0xFF,0x3C,0x28}, {0x1E,0x0A,0x0A}},
+            {"Neon Yellow", {0xE6,0xFF,0x00}, {0x14,0x28,0x00}},
+            {"Neon Pink",   {0xFF,0x32,0x78}, {0x28,0x00,0x1E}},
+            {"Neon Green",  {0x1E,0xDC,0x00}, {0x00,0x28,0x00}},
+            {"Red",         {0xE1,0x0F,0x00}, {0x28,0x0A,0x0A}},
+            {"Pro Black",   {0x32,0x32,0x32}, {0xFF,0xFF,0xFF}}
+        };
     }
     namespace Helpers {
-        void loadBatteryImages(){
-            std::istringstream in(BATTERY_INDICATOR_NAMES);
-            std::vector<std::string> vec = std::vector<std::string>(std::istream_iterator<std::string>(in), std::istream_iterator<std::string>());
-
-            if(vec.size() != BATTERY_INDICATORS_COUNT)
-                return;
-
-            for(
-                int i=0, tokenize = NULL;
-                i<BATTERY_INDICATORS_COUNT;
-                i++
-            ){
-                Assets::battery_indicators[i].load(std::string(BATTERY_INDICATORS_PATH) + vec[i] + BATTERY_INDICATORS_EXT);
-            }
+        void load_image_res_gpu() {
+            for(int i = 0; i < IM_ARRAYSIZE(Assets::battery_indicators); i++)
+                Assets::battery_indicators[i].sendToGPU();
+            for(int i = 0; i < IM_ARRAYSIZE(Assets::left_joycon); i++)
+                Assets::left_joycon[i].sendToGPU();
+            for(int i = 0; i < IM_ARRAYSIZE(Assets::right_joycon); i++)
+                Assets::right_joycon[i].sendToGPU();
+            for(int i = 0; i < IM_ARRAYSIZE(Assets::pro_controller); i++)
+                Assets::pro_controller[i].sendToGPU();
         }
     }
     namespace UI {
         /**
+         * Firmware, MAC, S/N
+         * =============================
          * UI Port from jctool/FormJoy.h
          */
-        void showDeviceInfo(const unsigned char* device_info){
-            ImGui::Text("Device Info");
+        void show_controller_info(Controller& controller){
+            auto device_info = controller.deviceInfo();
+            ImGui::BeginGroup();
+
             ImGui::Text("Firmware: %X.%02X", device_info[0], device_info[1]);
             ImGui::Text(
                 "MAC: %02X:%02X:%02X:%02X:%02X:%02X",
                 device_info[4], device_info[5], device_info[6],
                 device_info[7], device_info[8], device_info[9]
             );
-            ImGui::Text("Bytes [2,3]: %X:%X", device_info[2], device_info[3]);
+            ImGui::Text("S/N: %s", controller.serialNumber().c_str());
+            if(ImGui::Button("Dump SPI")){
+                dump_spi(controller.handle(), controller.timming_byte, controller.cancel_spi_dump, "dump");
+            }
+            ImGui::EndGroup();
         }
 
-        void showControllerInfo(Controller& controller){
-            auto device_info = controller.deviceInfo();
-            auto controller_type = controller.type();
+        void show_controller_status(Controller& controller){
+            ImGui::BeginGroup();
 
-            if(controller_type == Controller::Type::None) {
-                ImGui::Text("No controller is connected.");
-                return;
-            }
-
-            // Show the controller's device information.
-            showDeviceInfo(device_info);
-
-            // Detect which controller type label to use.
-            const char* controller_type_label = "NONE";
-            switch (controller_type)
-            {
-            case Controller::Type::JoyConLeft:
-                controller_type_label = "Joy-Con (L)";
-                break;
-            case Controller::Type::JoyConRight:
-                    controller_type_label = "Joy-Con (R)";
-                break;
-            case Controller::Type::ProCon:
-                controller_type_label = "Pro Controller";
-                break;
-            default:
-                controller_type_label = "Unrecognized Controller";
-                break;
-            }
-
-            ImGui::Text("Controller Type: %s", controller_type_label);
             int battery_report = controller.batteryReport();
-            ImGui::Text("Battery");
+            ImGui::SameLine();
             if(battery_report < 0)
-                ImGui::Text("Invalid reading.");
+                ImGui::Text("Battery: Invalid reading.");
             else{
                 ImageResource& battery_img = Assets::battery_indicators[battery_report];
                 ImGui::Image(
@@ -143,12 +177,275 @@ namespace JCToolkit {
                         static_cast<float>(battery_img.getHeight())
                     )
                 );
-                ImGui::Text("%.2fV - %d", controller.batteryVoltage(), controller.batteryPercentage());
+                ImGui::SameLine();
+                ImGui::Text("%d%% [%.2fV]", controller.batteryPercentage(), controller.batteryVoltage());
             }
 
             ImGui::Text("Temperature: %.2fF / %.2fC ", controller.temperatureF(), controller.temperatureC());
+            
+            ImGui::EndGroup();
+        }
 
-            ImGui::Text("S/N: %s", controller.serialNumber().c_str());
+        void show_retail_colors(std::function<void(SPIColors::color_t)> show_color){
+            if(ImGui::BeginTable("Retail Colors",
+                3,
+                ImGuiTableFlags_Scroll | ImGuiTableFlags_ScrollFreezeLeftColumn | ImGuiTableFlags_ScrollFreezeTopRow | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInner)
+            ){
+                ImGui::TableNextCell();
+                ImGui::Text("Color Name");
+                ImGui::TableNextCell();
+                ImGui::Text("Body");
+                ImGui::TableNextCell();
+                ImGui::Text("Buttons");
+                int id = 0;
+                // Labels
+                for(auto& retail_color: Assets::retail_color_presets){
+                    ImGui::TableNextCell();
+                    ImGui::Text("%s", std::get<Assets::RetailColLabel>(retail_color));
+
+                    ImGui::TableNextCell();
+                    ImGui::PushID(id++);
+                    show_color(std::get<Assets::RetailColBody>(retail_color));
+                    ImGui::PopID();
+
+                    ImGui::TableNextCell();
+                    ImGui::PushID(id++);
+                    show_color(std::get<Assets::RetailColButton>(retail_color));
+                    ImGui::PopID();
+                }
+                ImGui::EndTable();
+            }
+        }
+
+        void show_color_editor(Controller& controller){
+            ImGui::BeginGroup();
+
+            static ImVec4 color = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);
+            // Generate a dummy default palette. The palette will persist and can be edited.
+            static bool saved_palette_init = true;
+            static ImVec4 saved_palette[32] = {
+                ImGui::ColorConvertU32ToFloat4(0x0AB9E6 + 0xff000000),
+                ImGui::ColorConvertU32ToFloat4(0x828282 + 0xff000000),
+                ImGui::ColorConvertU32ToFloat4(0x828282),
+                ImGui::ColorConvertU32ToFloat4(0x828282),
+            };
+            static ImVec4 backup_color;
+
+            static int selected_part = 0;
+            static const char* part_labels[] = {
+                "Body",
+                "Buttons",
+                "Left Grip",
+                "Right Grip"
+            };
+
+            bool color_changed = false;
+
+            auto _retailColorButton = [&color_changed](SPIColors::color_t spi_color){
+                auto conv_col = ImGui::ColorConvertU32ToFloat4(IM_COL32(spi_color.r, spi_color.g, spi_color.b, 255));
+                if(ImGui::ColorButton("##retail_palette",
+                        conv_col,
+                        ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip,
+                        ImVec2(20,20)
+                )){
+                    std::swap(color, backup_color);
+                    color = conv_col;
+                    color_changed |= true;
+                }
+            };
+
+            int j;
+            if((controller.type() != Controller::Type::ProCon)){
+                j = Assets::ControllerPartIdx::Lines;
+                if(!(selected_part < Assets::ControllerPartIdx::Lines))
+                    selected_part = 0;
+            } else {
+                j = IM_ARRAYSIZE(part_labels);
+            }
+            if(ImGui::BeginCombo("Part to color", part_labels[selected_part])){
+                for(int i = 0; i < j; i++){
+                    if(ImGui::Selectable(part_labels[i]))
+                        selected_part = i;
+                }
+                ImGui::EndCombo();
+            }
+            
+            if(ImGui::BeginTabBar("palettes")){
+                if(ImGui::BeginTabItem("Custom")){
+                    color_changed |= ImGui::ColorPicker3("##picker", (float*)&color, ImGuiColorEditFlags_NoSidePreview);
+                    ImGui::SameLine();
+
+                    ImGui::BeginGroup(); // Lock X position
+
+                    ImGui::Text("Current");
+                    ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker, ImVec2(60,40));
+
+                    ImGui::Text("Previous");
+                    if (ImGui::ColorButton("##previous", backup_color, ImGuiColorEditFlags_NoPicker, ImVec2(60,40)))
+                        std::swap(color, backup_color);
+
+                    for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+                    {
+                        ImGui::PushID(n);
+                        if ((n % 8) != 0)
+                            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+                        if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
+                            color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w); // Preserve alpha!
+
+                        // Allow user to drop colors into each palette entry
+                        // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
+                        if (ImGui::BeginDragDropTarget())
+                        {
+                            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+                                memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
+                            ImGui::EndDragDropTarget();
+                        }
+
+                        ImGui::PopID();
+                    }
+                    ImGui::EndTabItem();
+
+                    ImGui::EndGroup();
+                }
+                if(ImGui::BeginTabItem("Retail Colors")){
+                    if(!ImGui::BeginChild("retail colors body")) {
+                        ImGui::EndChild();
+                    } else {
+                        show_retail_colors(_retailColorButton);   
+                        ImGui::EndChild();
+                    }
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+
+            if(color_changed){
+                static auto _set_preview_color = [](SPIColors::color_t& prev_col, ImU32& col){
+                    memcpy(&prev_col, &col, 3);
+                };
+                auto x = ImGui::GetColorU32(color);
+                switch(selected_part){
+                    case Assets::Body:
+                    _set_preview_color(controller.preview_colors.body, x);
+                    break;
+                    case Assets::Buttons:
+                    _set_preview_color(controller.preview_colors.buttons, x);
+                    break;
+                    case Assets::LeftGrip:
+                    _set_preview_color(controller.preview_colors.left_grip, x);
+                    break;
+                    case Assets::RightGrip:
+                    _set_preview_color(controller.preview_colors.right_grip, x);
+                    break;
+                }
+            }
+
+            // Write the color that is being previewed to the SPI.
+            if(ImGui::Button("Write spi colors")){
+                int res = write_spi_colors(controller.handle(), controller.timming_byte, controller.preview_colors);
+                //controller.fetch_spi_colors();
+            }
+
+            ImGui::EndGroup();
+        }
+
+        void showController(Controller& controller){
+            auto controller_type = controller.type();
+
+            ImGui::BeginGroup();
+
+            if(controller_type == Controller::Type::None) {
+                ImGui::Text("No controller is connected.");
+                ImGui::EndGroup();
+                return;
+            }
+
+
+            // Detect which controller type label to use.
+            const char* controller_type_label = "NONE";
+            ImageResource* con_images = nullptr;
+            switch (controller_type)
+            {
+            case Controller::Type::JoyConLeft:
+                controller_type_label = "Joy-Con (L)";
+                con_images = Assets::left_joycon;
+                break;
+            case Controller::Type::JoyConRight:
+                controller_type_label = "Joy-Con (R)";
+                con_images = Assets::right_joycon;
+                break;
+            case Controller::Type::ProCon:
+                controller_type_label = "Pro Controller";
+                con_images = Assets::pro_controller;
+                break;
+            default:
+                controller_type_label = "Unrecognized Controller";
+                break;
+            }
+
+            ImGui::Columns(2);
+
+            ImGui::Text("%s", controller_type_label);
+            ImGui::SameLine();
+            show_controller_status(controller);
+
+            auto con_start = ImGui::GetCursorPos();
+  
+            for(int i = 0,
+                extra = ((controller.type() == Controller::Type::ProCon) ? 2 : 0);
+                i < (Assets::SharedPartCount + extra);
+                i++
+            ){
+                SPIColors::color_t col;
+                switch(i){
+                    case Assets::Body:{
+                        col = controller.preview_colors.body;
+                    }break;
+                    case Assets::Buttons:{
+                        col = controller.preview_colors.buttons;
+                    }break;
+                    case Assets::LeftGrip:{
+                        col = controller.preview_colors.left_grip;
+                    }break;
+                    case Assets::RightGrip:{
+                        col = controller.preview_colors.right_grip;
+                    }break;
+                    default:
+                        col.r = ~u8(0);
+                        col.g = ~u8(0);
+                        col.b = ~u8(0);
+                    break;
+                }
+                ImGui::SetCursorPos(con_start);
+                ImGui::ImageAutoFit(
+                    (ImTextureID)con_images[i].getRID(),
+                    {con_images[i].getWidth(), con_images[i].getHeight()},
+                    {0,0}, {1,1},
+                    ImGui::ColorConvertU32ToFloat4(IM_COL32(col.r,col.g,col.b,255))
+                );
+            }
+
+            ImGui::NextColumn();
+            
+            if(ImGui::BeginTabBar("controller")){
+                if(ImGui::BeginTabItem("Information")){
+                    // Show the controller's device information.
+                    show_controller_info(controller);
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Status")){
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Edit Colors")){
+                    show_color_editor(controller);
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+
+            ImGui::Columns(1);
+
+            ImGui::EndGroup();
         }
 
         void showRumblePlayer(Controller& controller, RumbleData& rumble_data) {
@@ -181,6 +478,25 @@ namespace JCToolkit {
 
             ImGui::ScopeDisableItems disable(controller.rumble_active);
 
+            static int selected_song = 0;
+            if(ImGui::BeginCombo("Default songs", Assets::default_rumbles[selected_song])){
+                for(int i = 0; i < IM_ARRAYSIZE(Assets::default_rumbles); i++){
+                    if(ImGui::Selectable(Assets::default_rumbles[i], selected_song == i))
+                        selected_song = i;
+                }
+                ImGui::EndCombo();
+            }
+            if(controller.handle() && ImGui::Button("Play selected song")){
+                controller.rumble_active = true;
+                std::thread tune_thread(
+                    [&](){
+                        play_tune(controller.handle(), controller.timming_byte, selected_song);
+                        controller.rumble_active = false;
+                    }
+                );
+                tune_thread.detach();
+            }
+
             if(ImGui::Button("Load Rumble Data"))
                 show_explorer = true;
             
@@ -212,11 +528,13 @@ namespace JCToolkit {
                     "File: %s\n"
                     "Rumble data type: %s\n"
                     "Sample rate: %u\n"
-                    "Samples: %d",
+                    "Samples: %d\n"
+                    "Play time: %.2f",
                     std::filesystem::path(rumble_data.from_file).filename().generic_string().c_str(),
                     type_label,
                     rumble_data.metadata.sample_rate,
-                    rumble_data.metadata.samples
+                    rumble_data.metadata.samples,
+                    ((float) rumble_data.metadata.sample_rate) / 1000 * rumble_data.metadata.samples
                 );
                 if(loop){
                     ImGui::SameLine();
@@ -231,8 +549,10 @@ namespace JCToolkit {
                         rumble_data.metadata.loop_times
                     );
                 }
-                if(controller.handle() && ImGui::Button("Play")){
-                    controller.rumble(rumble_data);
+                if(controller.handle()){
+                    if(ImGui::Button("Play loaded song")){
+                        controller.rumble(rumble_data);
+                    }
                 }
             }
         }
@@ -246,9 +566,7 @@ namespace JCToolkit {
 
         void showIRCameraFeed(Controller::IRSensor& ir_sensor){
             auto& size = std::get<2>(ir_resolutions[ir_sensor.res_idx_selected]);
-            auto avail_size = ImGui::GetContentRegionAvail();
-            auto resize = resizeRectAToFitInRectB(size, avail_size);
-            ImGui::Image((ImTextureID)ir_sensor.getCaptureTexID(), {(float)resize.width, (float)resize.height});
+            ImGui::ImageAutoFit((ImTextureID)ir_sensor.getCaptureTexID(), {size.x, size.y});
             ImGui::EndGroup();
         }
         
@@ -420,7 +738,7 @@ namespace JCToolkit {
             };
             static SectionHeader section_headers[] = {
                 {"Controller Status", [&](){
-                    showControllerInfo(controller);
+                    showController(controller);
                 }, ImGuiTreeNodeFlags_DefaultOpen, true},
                 {"HD Rumble Player", [&](){
                     showRumblePlayer(controller, rumble_data);
@@ -451,6 +769,6 @@ namespace JCToolkit {
     }
     void init() {
         GPUTexture::SideLoader::start();
-        Helpers::loadBatteryImages();
+        Helpers::load_image_res_gpu();
     }
 }

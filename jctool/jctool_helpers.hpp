@@ -2,7 +2,6 @@
 #include "jctool_types.h"
 #include "luts.h"
 
-
 /**
  * =======================================================================
  * The below code originated from the original Joy-Con Toolkit from CTCaer
@@ -153,36 +152,49 @@ void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, in
 
 std::string ir_sensorErrorToString(int errno_ir_sensor);
 
+SPIColors get_spi_colors(controller_hid_handle_t handle, u8& timming_byte);
+
+int write_spi_colors(controller_hid_handle_t handle, u8& timming_byte, const SPIColors& colors);
+
+
 /**
  * ===========================================================================
  * The code below was added for convienience to build off the original Joy-Con
  * Toolkit.
  * ===========================================================================
+ * Any color order derived from this namespace builds off ARGB order, where A
+ * contains the most signifigant bit, and B contains the least signifigant
+ * bit. 
  */
 namespace ColorOrder {
 
-    enum ShiftPos : u8 {
-        RedShiftPos = 4,
-        GreenShiftPos = 2,
-        BlueShiftPos = 0
+    enum OrderShiftPos : u8 {
+        BlueShiftPos    = 0 * 2,
+        GreenShiftPos   = 1 * 2,
+        RedShiftPos     = 2 * 2,
+        AlphaShiftPos   = 3 * 2,
     };
-    enum Mask : u8 {
+    enum OrderMask : u8 {
         RedMask = 0b11 << RedShiftPos,
         GreenMask = 0b11 << GreenShiftPos,
-        BlueMask = 0b11 << BlueShiftPos
+        BlueMask = 0b11 << BlueShiftPos,
+        AlphaMask = 0b11 << AlphaShiftPos
     };
-    constexpr u8 makeColorOrder(const u8 red_pos_idx, const u8 green_pos_idx, const u8 blue_pos_idx){
+    
+    constexpr u8 makeColorOrder(const u8 red_pos_idx, const u8 green_pos_idx, const u8 blue_pos_idx, const u8 alpha_pos_idx){
         return static_cast<u8>(
             ((red_pos_idx << RedShiftPos) & RedMask)
             |
             ((green_pos_idx << GreenShiftPos) & GreenMask)
             |
             ((blue_pos_idx << BlueShiftPos) & BlueMask)
+            |
+            ((alpha_pos_idx << AlphaShiftPos) & AlphaMask)
         );
     }
     
-    const u8 InRGBOrder = makeColorOrder(0,1,2);
-    const u8 InBGROrder = makeColorOrder(2,1,0);
+    const u8 InRGBOrder = makeColorOrder(0,1,2,3);
+    const u8 InBGROrder = makeColorOrder(2,1,0,3);
 
     inline u8 getRedPosIdx(const u8 color_order){
         return ((color_order & RedMask) >> RedShiftPos);
@@ -192,6 +204,21 @@ namespace ColorOrder {
     }
     inline u8 getBluePosIdx(const u8 color_order){
         return ((color_order & BlueMask) >> BlueShiftPos);
+    }
+    inline u8 getAlphaPosIdx(const u8 color_order){
+        return ((color_order & AlphaMask) >> AlphaShiftPos);
+    }
+
+    inline u32 reverse_bytes(const u32 color){
+        return {
+            (((color >> 0) & 0xFF) << 24)
+            |
+            (((color >> 8) & 0xFF) << 16)
+            |
+            (((color >> 16) & 0xFF) << 8)
+            |
+            (((color >> 24) & 0xFF) << 0)
+        };
     }
 }
 

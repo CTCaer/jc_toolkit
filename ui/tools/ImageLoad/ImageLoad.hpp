@@ -46,8 +46,11 @@ private:
 public:
     ~ImageResource();
     inline ImageResource(){}
-    ImageResource(const std::string& image_location, bool flip = false);
-    void load(const std::string& image_location, bool flip = false);
+    ImageResource(const std::string& image_location, bool to_gpu, bool flip = false);
+    void load(const std::string& image_location, bool to_gpu, bool flip = false);
+    
+    void sendToGPU();
+
     inline int getWidth() { return this->data.width; }
     inline int getHeight() { return this->data.height; }
     /**

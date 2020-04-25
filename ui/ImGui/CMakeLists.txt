@@ -5,7 +5,6 @@ project(ImGui)
 ##############################
 add_compile_options(
     -DIMGUI_IMPL_OPENGL_LOADER_GL3W
-    -DIMGUI_USER_CONFIG="${PROJECT_SOURCE_DIR}/tools/this_is_imconfig.h"
 )
 add_library(ImGui STATIC
     # Add ImGui source files.
