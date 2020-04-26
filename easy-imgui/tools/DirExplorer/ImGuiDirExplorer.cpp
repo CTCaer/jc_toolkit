@@ -4,7 +4,7 @@
 #include <stack>
 
 #include "ImGuiDirExplorer.hpp"
-#include "DirExplorer/dir_explorer.hpp"
+#include "dir_explorer.hpp"
 
 #include "imgui.h"
 #include "misc/cpp/imgui_stdlib.h"

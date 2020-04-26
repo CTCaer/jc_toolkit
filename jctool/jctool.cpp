@@ -34,7 +34,7 @@ const auto min = [](auto a, auto b){
 #include "FormJoy.h"
 #else
 #include "imgui.h"
-#include "ImGui/tools/Interface/ImGuiInterface.hpp"
+#include "easy-imgui/Interface/ImGuiInterface.hpp"
 #include "ui_helpers.hpp"
 #include "jctool_ui.hpp"
 #endif
