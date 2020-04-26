@@ -21,13 +21,20 @@ namespace ImGui {
         ImGui::PopStyleVar();
     }
 
-    void MakeSection(const std::string headername, Display display_section, bool* collapsable, int collapse_flags){
-        if((!collapsable) |
-            (collapsable && ImGui::CollapsingHeader(headername.c_str(), collapsable, collapse_flags))
-        ){
-            if(!collapsable)
-                ImGui::Text("%s", headername.c_str());
-            std::invoke(display_section);
+    void MakeSection(Display display_section, bool* collapsable, int collapse_flags){
+        if(!ImGui::BeginChild(display_section.first.c_str())){
+            ImGui::EndChild();
+        } else {
+            if((!collapsable) |
+                (collapsable && ImGui::CollapsingHeader(display_section.first.c_str(), collapsable, collapse_flags))
+            ){
+                if(!collapsable) {
+                    ImGui::Text("%s", display_section.first.c_str());
+                    ImGui::Separator();
+                }
+                std::invoke(display_section.second);
+            }
+            ImGui::EndChild();
         }
     }
 

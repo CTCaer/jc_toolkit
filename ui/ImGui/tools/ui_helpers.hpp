@@ -5,6 +5,7 @@
 #include <functional>
 #include <utility>
 #include <string>
+#include <stack>
 
 #include "imgui.h"
 
@@ -55,12 +56,14 @@ inline RectB centerRectAInRectB(const RectA& rect_a, const RectB& rect_b){
 }
 
 namespace ImGui {
-    using Display = std::function<void()>;
+    using Display = std::pair<std::string, std::function<void()>>;
+
+    using NavStack = std::stack<Display>;
 
     void DisableItems();
     void EnableItems();
 
-    void MakeSection(const std::string headername, Display display_section, bool* collapsable = nullptr, int collapse_flags = 0);
+    void MakeSection(Display display_section, bool* collapsable = nullptr, int collapse_flags = 0);
 
     class ScopeDisableItems {
         bool disabled;

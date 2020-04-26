@@ -34,6 +34,8 @@ public:
     inline const u8* deviceInfo() const{ return this->device_info; }
     inline const std::string serialNumber() const { return this->serial_number; }
     inline const controller_hid_handle_t handle() const { return this->hid_handle; }
+
+    inline const SPIColors& savedColors() const { return this->saved_colors; }
 private:
     u8 device_info[10] = {}; // Initialize to nulls.
     // The serial number of the controller.

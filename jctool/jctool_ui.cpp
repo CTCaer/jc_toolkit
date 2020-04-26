@@ -139,6 +139,311 @@ namespace JCToolkit {
         }
     }
     namespace UI {
+        void draw_controller(const Controller& controller, bool preview_colors = false){
+            const SPIColors* use_colors = &controller.savedColors();
+            if(preview_colors)
+                use_colors = &controller.preview_colors;
+
+            // Detect which controller type label to use.
+            const char* controller_type_label = "NONE";
+            ImageResource* con_images = nullptr;
+            switch (controller.type())
+            {
+            case Controller::Type::JoyConLeft:
+                controller_type_label = "Joy-Con (L)";
+                con_images = Assets::left_joycon;
+                break;
+            case Controller::Type::JoyConRight:
+                controller_type_label = "Joy-Con (R)";
+                con_images = Assets::right_joycon;
+                break;
+            case Controller::Type::ProCon:
+                controller_type_label = "Pro Controller";
+                con_images = Assets::pro_controller;
+                break;
+            default:
+                controller_type_label = "Unrecognized Controller";
+                break;
+            }
+
+            auto con_start = ImGui::GetCursorPos();
+  
+            for(int i = 0,
+                extra = ((controller.type() == Controller::Type::ProCon) ? 2 : 0);
+                i < (Assets::SharedPartCount + extra);
+                i++
+            ){
+                SPIColors::color_t col;
+                switch(i){
+                    case Assets::Body:{
+                        col = use_colors->body;
+                    }break;
+                    case Assets::Buttons:{
+                        col = use_colors->buttons;
+                    }break;
+                    case Assets::LeftGrip:{
+                        col = use_colors->left_grip;
+                    }break;
+                    case Assets::RightGrip:{
+                        col = use_colors->right_grip;
+                    }break;
+                    default:
+                        col.r = ~u8(0);
+                        col.g = ~u8(0);
+                        col.b = ~u8(0);
+                    break;
+                }
+                ImGui::SetCursorPos(con_start);
+                ImGui::ImageAutoFit(
+                    (ImTextureID)con_images[i].getRID(),
+                    {con_images[i].getWidth(), con_images[i].getHeight()},
+                    {0,0}, {1,1},
+                    ImGui::ColorConvertU32ToFloat4(IM_COL32(col.r,col.g,col.b,255))
+                );
+            }
+            if(ImGui::IsItemHovered()){
+                ImGui::SetTooltip("%s", controller_type_label);
+            }
+        }
+        namespace ModifyController {
+            void show_dump_spi(Controller& controller){
+                static bool dumping = false;
+                static size_t bytes_dumped = 0;
+                static const char* spi_dump_file = "spi_dump.bin";
+
+                ImGui::TextWrapped("ATTENTION: It is recommended that you backup your SPI before uploading any modifications to your controller! The only person to blame will be yourself if you choose to ignore this warning!");
+                
+                ImGui::ScopeDisableItems disable(dumping);
+                if(ImGui::Button("Dump SPI")){
+                    dumping = true;
+                    controller.cancel_spi_dump = false;
+                    std::thread dump_spi_thread(
+                        [&controller](){
+                            
+                            DumpSPICTX ctx{
+                                controller.cancel_spi_dump,
+                                bytes_dumped,
+                                spi_dump_file
+                            };
+                            bytes_dumped = 0;
+                            int res = dump_spi(controller.handle(), controller.timming_byte, ctx);
+                            if(res)
+                                printf("There was a problem backing up the SPI. Try again?");
+                            dumping = false;
+                        }
+                    );
+                    dump_spi_thread.detach();
+                }
+                ImGui::SameLine();
+                ImGui::TextWrapped("The output will be named %s", spi_dump_file);
+
+                if(dumping)
+                    disable.allowEnabled();
+                else
+                    disable.ensureDisabled();
+                
+                if(ImGui::Button("Cancel Dump"))
+                    controller.cancel_spi_dump = true;
+                ImGui::SameLine();
+                ImGui::ProgressBar((float) bytes_dumped / SPI_SIZE, {-1, 0},
+                    std::string(std::to_string(int((float) bytes_dumped / SPI_SIZE * 100)) + "%").c_str()
+                );
+                ImGui::Text("%.2f KB / %.2f KB", (float) bytes_dumped / 1024, float(SPI_SIZE / 1024));
+            }
+
+            void show_retail_colors(std::function<void(SPIColors::color_t)> show_color){
+                if(ImGui::BeginTable("Retail Colors",
+                    3,
+                    ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoHostExtendY | ImGuiTableFlags_ScrollFreezeLeftColumn | ImGuiTableFlags_ScrollFreezeTopRow | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInner)
+                ){
+                    ImGui::TableNextCell();
+                    ImGui::Text("Color Name");
+                    ImGui::TableNextCell();
+                    ImGui::Text("Body");
+                    ImGui::TableNextCell();
+                    ImGui::Text("Buttons");
+                    int id = 0;
+                    // Labels
+                    for(auto& retail_color: Assets::retail_color_presets){
+                        ImGui::TableNextCell();
+                        ImGui::Text("%s", std::get<Assets::RetailColLabel>(retail_color));
+
+                        ImGui::TableNextCell();
+                        ImGui::PushID(id++);
+                        show_color(std::get<Assets::RetailColBody>(retail_color));
+                        ImGui::PopID();
+
+                        ImGui::TableNextCell();
+                        ImGui::PushID(id++);
+                        show_color(std::get<Assets::RetailColButton>(retail_color));
+                        ImGui::PopID();
+                    }
+                    ImGui::EndTable();
+                }
+            }
+
+            bool show_color_editor(ImVec4& primary_color, ImVec4& secondary_color){
+                ImGui::BeginGroup();
+                // Generate a dummy default palette. The palette will persist and can be edited.
+                static bool saved_palette_init = true;
+                static ImVec4 saved_palette[32] = {
+                    ImGui::ColorConvertU32ToFloat4(0x0AB9E6 + 0xff000000),
+                    ImGui::ColorConvertU32ToFloat4(0x828282 + 0xff000000),
+                    ImGui::ColorConvertU32ToFloat4(0x828282),
+                    ImGui::ColorConvertU32ToFloat4(0x828282),
+                };
+
+                bool color_changed = false;
+
+                color_changed |= ImGui::ColorPicker3("##picker", (float*)&primary_color, ImGuiColorEditFlags_NoSidePreview);
+                ImGui::SameLine();
+
+                ImGui::BeginGroup(); // Lock X position
+
+                ImGui::Text("Current");
+                ImGui::ColorButton("##current", primary_color, ImGuiColorEditFlags_NoPicker, ImVec2(60,40));
+
+                ImGui::Text("Previous");
+                if (ImGui::ColorButton("##previous", secondary_color, ImGuiColorEditFlags_NoPicker, ImVec2(60,40)))
+                    std::swap(primary_color, secondary_color);
+
+                for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+                {
+                    ImGui::PushID(n);
+                    if ((n % 8) != 0)
+                        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+                    if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
+                        primary_color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, primary_color.w); // Preserve alpha!
+
+                    // Allow user to drop colors into each palette entry
+                    // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+                            memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
+                        ImGui::EndDragDropTarget();
+                    }
+
+                    ImGui::PopID();
+                }
+
+                ImGui::EndGroup();
+                
+                
+                ImGui::EndGroup();
+
+                return color_changed;
+            }
+
+            void color_editor_page(Controller& controller) {
+                static int selected_part = 0;
+                static const char* part_labels[] = {
+                    "Body",
+                    "Buttons",
+                    "Left Grip",
+                    "Right Grip"
+                };
+
+                ImGui::Columns(2);
+
+                int j;
+                if((controller.type() != Controller::Type::ProCon)){
+                    j = Assets::ControllerPartIdx::Lines;
+                    if(!(selected_part < Assets::ControllerPartIdx::Lines))
+                        selected_part = 0;
+                } else {
+                    j = IM_ARRAYSIZE(part_labels);
+                }
+                if(ImGui::BeginCombo("Part to color", part_labels[selected_part])){
+                    for(int i = 0; i < j; i++){
+                        if(ImGui::Selectable(part_labels[i]))
+                            selected_part = i;
+                    }
+                    ImGui::EndCombo();
+                }
+
+                draw_controller(controller, true); // Draw the controller color preview.
+
+                // Write the color that is being previewed to the SPI.
+                if(ImGui::Button("Write spi colors")){
+                    int res = write_spi_colors(controller.handle(), controller.timming_byte, controller.preview_colors);
+                    //controller.fetch_spi_colors();
+                }
+
+
+                ImGui::NextColumn();
+
+                ImGui::MakeSection({"Color Picker",
+                    [&](){
+                        static ImVec4 primary_color = ImGui::ColorConvertU32ToFloat4(IM_COL32_WHITE);
+                        static ImVec4 secondary_color = ImGui::ColorConvertU32ToFloat4(IM_COL32_BLACK);
+                        bool color_changed = false;
+
+                        {
+                            auto _retailColorButton = [&color_changed](SPIColors::color_t spi_color){
+                                auto conv_col = ImGui::ColorConvertU32ToFloat4(IM_COL32(spi_color.r, spi_color.g, spi_color.b, 255));
+                                if(ImGui::ColorButton("##retail_palette",
+                                        conv_col,
+                                        ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip,
+                                        ImVec2(20,20)
+                                )){
+                                    std::swap(primary_color, secondary_color);
+                                    primary_color = conv_col;
+                                    color_changed |= true;
+                                }
+                            };
+
+                            if(!ImGui::BeginChild("retail colors body")) {
+                                ImGui::EndChild();
+                            } else {
+                                ModifyController::show_retail_colors(_retailColorButton);   
+                                ImGui::EndChild();
+                            }
+                        }
+                        
+                        color_changed |= ModifyController::show_color_editor(primary_color, secondary_color);
+
+
+                        if(color_changed){
+                            static auto _set_preview_color = [](SPIColors::color_t& prev_col, ImU32& col){
+                                memcpy(&prev_col, &col, 3);
+                            };
+                            auto x = ImGui::GetColorU32(primary_color);
+                            switch(selected_part){
+                                case Assets::Body:
+                                _set_preview_color(controller.preview_colors.body, x);
+                                break;
+                                case Assets::Buttons:
+                                _set_preview_color(controller.preview_colors.buttons, x);
+                                break;
+                                case Assets::LeftGrip:
+                                _set_preview_color(controller.preview_colors.left_grip, x);
+                                break;
+                                case Assets::RightGrip:
+                                _set_preview_color(controller.preview_colors.right_grip, x);
+                                break;
+                            }
+                        }
+
+                        ImGui::Columns(1);
+                    }
+                });
+            }
+
+            void show(Controller& controller, ImGui::NavStack& nav_stack){
+                show_dump_spi(controller);
+
+                ImGui::Separator();
+
+                if(ImGui::Button("Edit Colors")){
+                    nav_stack.push({"Color Editor",
+                        [&](){
+                            color_editor_page(controller);
+                        }
+                    });
+                }
+            }
+        }
         /**
          * Firmware, MAC, S/N
          * =============================
@@ -155,49 +460,6 @@ namespace JCToolkit {
                 device_info[7], device_info[8], device_info[9]
             );
             ImGui::Text("S/N: %s", controller.serialNumber().c_str());
-
-            static bool dumping = false;
-            static size_t bytes_dumped = 0;
-            static const char* spi_dump_file = "spi_dump.bin";
-
-            ImGui::TextWrapped("ATTENTION: It is recommended that you backup your SPI before uploading any modifications to your controller! The only person to blame will be yourself if you choose to ignore this warning!");
-            
-            ImGui::ScopeDisableItems disable(dumping);
-            if(ImGui::Button("Dump SPI")){
-                dumping = true;
-                controller.cancel_spi_dump = false;
-                std::thread dump_spi_thread(
-                    [&controller](){
-                        
-                        DumpSPICTX ctx{
-                            controller.cancel_spi_dump,
-                            bytes_dumped,
-                            spi_dump_file
-                        };
-                        bytes_dumped = 0;
-                        int res = dump_spi(controller.handle(), controller.timming_byte, ctx);
-                        if(res)
-                            printf("There was a problem backing up the SPI. Try again?");
-                        dumping = false;
-                    }
-                );
-                dump_spi_thread.detach();
-            }
-            ImGui::SameLine();
-            ImGui::TextWrapped("The output will be named %s", spi_dump_file);
-
-            if(dumping)
-                disable.allowEnabled();
-            else
-                disable.ensureDisabled();
-            
-            if(ImGui::Button("Cancel Dump"))
-                controller.cancel_spi_dump = true;
-            ImGui::SameLine();
-            ImGui::ProgressBar((float) bytes_dumped / SPI_SIZE, {-1, 0},
-                std::string(std::to_string(bytes_dumped / SPI_SIZE) + "%").c_str()
-            );
-            ImGui::Text("%.2f KB / %.2f KB", (float) bytes_dumped / 1024, float(SPI_SIZE / 1024));
 
             ImGui::EndGroup();
         }
@@ -227,169 +489,6 @@ namespace JCToolkit {
             ImGui::EndGroup();
         }
 
-        void show_retail_colors(std::function<void(SPIColors::color_t)> show_color){
-            if(ImGui::BeginTable("Retail Colors",
-                3,
-                ImGuiTableFlags_Scroll | ImGuiTableFlags_ScrollFreezeLeftColumn | ImGuiTableFlags_ScrollFreezeTopRow | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInner)
-            ){
-                ImGui::TableNextCell();
-                ImGui::Text("Color Name");
-                ImGui::TableNextCell();
-                ImGui::Text("Body");
-                ImGui::TableNextCell();
-                ImGui::Text("Buttons");
-                int id = 0;
-                // Labels
-                for(auto& retail_color: Assets::retail_color_presets){
-                    ImGui::TableNextCell();
-                    ImGui::Text("%s", std::get<Assets::RetailColLabel>(retail_color));
-
-                    ImGui::TableNextCell();
-                    ImGui::PushID(id++);
-                    show_color(std::get<Assets::RetailColBody>(retail_color));
-                    ImGui::PopID();
-
-                    ImGui::TableNextCell();
-                    ImGui::PushID(id++);
-                    show_color(std::get<Assets::RetailColButton>(retail_color));
-                    ImGui::PopID();
-                }
-                ImGui::EndTable();
-            }
-        }
-
-        void show_color_editor(Controller& controller){
-            ImGui::BeginGroup();
-
-            static ImVec4 color = ImVec4(114.0f/255.0f, 144.0f/255.0f, 154.0f/255.0f, 1.0f);
-            // Generate a dummy default palette. The palette will persist and can be edited.
-            static bool saved_palette_init = true;
-            static ImVec4 saved_palette[32] = {
-                ImGui::ColorConvertU32ToFloat4(0x0AB9E6 + 0xff000000),
-                ImGui::ColorConvertU32ToFloat4(0x828282 + 0xff000000),
-                ImGui::ColorConvertU32ToFloat4(0x828282),
-                ImGui::ColorConvertU32ToFloat4(0x828282),
-            };
-            static ImVec4 backup_color;
-
-            static int selected_part = 0;
-            static const char* part_labels[] = {
-                "Body",
-                "Buttons",
-                "Left Grip",
-                "Right Grip"
-            };
-
-            bool color_changed = false;
-
-            auto _retailColorButton = [&color_changed](SPIColors::color_t spi_color){
-                auto conv_col = ImGui::ColorConvertU32ToFloat4(IM_COL32(spi_color.r, spi_color.g, spi_color.b, 255));
-                if(ImGui::ColorButton("##retail_palette",
-                        conv_col,
-                        ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip,
-                        ImVec2(20,20)
-                )){
-                    std::swap(color, backup_color);
-                    color = conv_col;
-                    color_changed |= true;
-                }
-            };
-
-            int j;
-            if((controller.type() != Controller::Type::ProCon)){
-                j = Assets::ControllerPartIdx::Lines;
-                if(!(selected_part < Assets::ControllerPartIdx::Lines))
-                    selected_part = 0;
-            } else {
-                j = IM_ARRAYSIZE(part_labels);
-            }
-            if(ImGui::BeginCombo("Part to color", part_labels[selected_part])){
-                for(int i = 0; i < j; i++){
-                    if(ImGui::Selectable(part_labels[i]))
-                        selected_part = i;
-                }
-                ImGui::EndCombo();
-            }
-            
-            if(ImGui::BeginTabBar("palettes")){
-                if(ImGui::BeginTabItem("Custom")){
-                    color_changed |= ImGui::ColorPicker3("##picker", (float*)&color, ImGuiColorEditFlags_NoSidePreview);
-                    ImGui::SameLine();
-
-                    ImGui::BeginGroup(); // Lock X position
-
-                    ImGui::Text("Current");
-                    ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker, ImVec2(60,40));
-
-                    ImGui::Text("Previous");
-                    if (ImGui::ColorButton("##previous", backup_color, ImGuiColorEditFlags_NoPicker, ImVec2(60,40)))
-                        std::swap(color, backup_color);
-
-                    for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
-                    {
-                        ImGui::PushID(n);
-                        if ((n % 8) != 0)
-                            ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
-                        if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
-                            color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w); // Preserve alpha!
-
-                        // Allow user to drop colors into each palette entry
-                        // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
-                        if (ImGui::BeginDragDropTarget())
-                        {
-                            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
-                                memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
-                            ImGui::EndDragDropTarget();
-                        }
-
-                        ImGui::PopID();
-                    }
-                    ImGui::EndTabItem();
-
-                    ImGui::EndGroup();
-                }
-                if(ImGui::BeginTabItem("Retail Colors")){
-                    if(!ImGui::BeginChild("retail colors body")) {
-                        ImGui::EndChild();
-                    } else {
-                        show_retail_colors(_retailColorButton);   
-                        ImGui::EndChild();
-                    }
-                    ImGui::EndTabItem();
-                }
-                ImGui::EndTabBar();
-            }
-
-            if(color_changed){
-                static auto _set_preview_color = [](SPIColors::color_t& prev_col, ImU32& col){
-                    memcpy(&prev_col, &col, 3);
-                };
-                auto x = ImGui::GetColorU32(color);
-                switch(selected_part){
-                    case Assets::Body:
-                    _set_preview_color(controller.preview_colors.body, x);
-                    break;
-                    case Assets::Buttons:
-                    _set_preview_color(controller.preview_colors.buttons, x);
-                    break;
-                    case Assets::LeftGrip:
-                    _set_preview_color(controller.preview_colors.left_grip, x);
-                    break;
-                    case Assets::RightGrip:
-                    _set_preview_color(controller.preview_colors.right_grip, x);
-                    break;
-                }
-            }
-
-            // Write the color that is being previewed to the SPI.
-            if(ImGui::Button("Write spi colors")){
-                int res = write_spi_colors(controller.handle(), controller.timming_byte, controller.preview_colors);
-                //controller.fetch_spi_colors();
-            }
-
-            ImGui::EndGroup();
-        }
-
         void showController(Controller& controller){
             auto controller_type = controller.type();
 
@@ -402,89 +501,16 @@ namespace JCToolkit {
             }
 
 
-            // Detect which controller type label to use.
-            const char* controller_type_label = "NONE";
-            ImageResource* con_images = nullptr;
-            switch (controller_type)
-            {
-            case Controller::Type::JoyConLeft:
-                controller_type_label = "Joy-Con (L)";
-                con_images = Assets::left_joycon;
-                break;
-            case Controller::Type::JoyConRight:
-                controller_type_label = "Joy-Con (R)";
-                con_images = Assets::right_joycon;
-                break;
-            case Controller::Type::ProCon:
-                controller_type_label = "Pro Controller";
-                con_images = Assets::pro_controller;
-                break;
-            default:
-                controller_type_label = "Unrecognized Controller";
-                break;
-            }
-
-            ImGui::Columns(2);
-
-            ImGui::Text("%s", controller_type_label);
-            ImGui::SameLine();
             show_controller_status(controller);
 
-            auto con_start = ImGui::GetCursorPos();
-  
-            for(int i = 0,
-                extra = ((controller.type() == Controller::Type::ProCon) ? 2 : 0);
-                i < (Assets::SharedPartCount + extra);
-                i++
-            ){
-                SPIColors::color_t col;
-                switch(i){
-                    case Assets::Body:{
-                        col = controller.preview_colors.body;
-                    }break;
-                    case Assets::Buttons:{
-                        col = controller.preview_colors.buttons;
-                    }break;
-                    case Assets::LeftGrip:{
-                        col = controller.preview_colors.left_grip;
-                    }break;
-                    case Assets::RightGrip:{
-                        col = controller.preview_colors.right_grip;
-                    }break;
-                    default:
-                        col.r = ~u8(0);
-                        col.g = ~u8(0);
-                        col.b = ~u8(0);
-                    break;
-                }
-                ImGui::SetCursorPos(con_start);
-                ImGui::ImageAutoFit(
-                    (ImTextureID)con_images[i].getRID(),
-                    {con_images[i].getWidth(), con_images[i].getHeight()},
-                    {0,0}, {1,1},
-                    ImGui::ColorConvertU32ToFloat4(IM_COL32(col.r,col.g,col.b,255))
-                );
-            }
+            ImGui::Separator();
 
-            ImGui::NextColumn();
-            
-            if(ImGui::BeginTabBar("controller")){
-                if(ImGui::BeginTabItem("Information")){
-                    // Show the controller's device information.
-                    show_controller_info(controller);
-                    ImGui::EndTabItem();
-                }
-                if(ImGui::BeginTabItem("Status")){
-                    ImGui::EndTabItem();
-                }
-                if(ImGui::BeginTabItem("Edit Colors")){
-                    show_color_editor(controller);
-                    ImGui::EndTabItem();
-                }
-                ImGui::EndTabBar();
-            }
+            // Show the controller's device information.
+            show_controller_info(controller);
 
-            ImGui::Columns(1);
+            ImGui::Separator();
+
+            draw_controller(controller);
 
             ImGui::EndGroup();
         }
@@ -620,7 +646,6 @@ namespace JCToolkit {
             // The controller's ir config
             ir_image_config& ir_config = ir_sensor.config;
 
-            ImGui::Columns(3);
             /* Stream/Capture */ {
                 ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
 
@@ -647,7 +672,6 @@ namespace JCToolkit {
                 showIRCameraFeed(ir_sensor);
             }
 
-            ImGui::NextColumn();
             /* IR Message Stream / Capture Information */ {
                 ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvailWidth());
                 ImGui::Text("%s", ir_sensor.capture_status.message_stream.rdbuf()->str().c_str());
@@ -664,8 +688,6 @@ namespace JCToolkit {
                 ImGui::Text("EXFilter Int: %d", capture_status.exf_int);
                 ImGui::Text("White Px: %d%%", capture_status.white_pixels_percent);
             }
-
-            ImGui::NextColumn();
             
             /* IR Camera Settings */ {
                 ImGui::BeginGroup();
@@ -767,49 +789,177 @@ namespace JCToolkit {
                 }
                 ImGui::EndGroup();
             }
-            ImGui::Columns(1);
         }
     
-        void show(Controller& controller, RumbleData& rumble_data){
-            struct SectionHeader {
-                const char* header_name;
-                ImGui::Display display;
-                ImGuiTreeNodeFlags flags;
-                bool show;
-            };
-            static SectionHeader section_headers[] = {
+        void show(Controller& controller, RumbleData& rumble_data, ImGui::NavStack& nav_stack){
+            static ImGui::Display sections[] = {
                 {"Controller Status", [&](){
                     showController(controller);
-                }, ImGuiTreeNodeFlags_DefaultOpen, true},
+                }},
                 {"HD Rumble Player", [&](){
                     showRumblePlayer(controller, rumble_data);
-                }, ImGuiTreeNodeFlags_DefaultOpen, false},
+                }},
                 {"IR Camera", [&](){
                     showIRCamera(controller);
-                }, ImGuiTreeNodeFlags_DefaultOpen, false}
+                }},
+                {"Modify Controller", [&](){
+                    ModifyController::show(controller, nav_stack);
+                }}
+            };
+            static ImGui::Display* selected_section = sections;
+
+            static auto _display_section_button = [](ImGui::Display& section, const ImVec2& use_region_size){
+                const float margin = 5.0f;
+                const float selection_indicator_width = 3.0f;
+                const auto button_start_offset = ImVec2{
+                    margin + selection_indicator_width,
+                    margin
+                };
+                bool selected = selected_section == &section;
+                auto draw_list = ImGui::GetWindowDrawList();
+
+                
+                auto cursor_pos = ImGui::GetCursorScreenPos();
+
+                /* Setup button style stack */ {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0,0,0,0));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0,0,0,0));
+                    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, {0.0f, 0.5f});
+                }
+
+                auto button_start_pos = ImVec2{
+                    cursor_pos.x + button_start_offset.x,
+                    cursor_pos.y + button_start_offset.y
+                };
+                auto size = ImVec2{
+                    use_region_size.x - button_start_offset.x*2,
+                    use_region_size.y - button_start_offset.y*2
+                };
+                ImGui::SetCursorScreenPos(button_start_pos);
+                if(ImGui::Button(section.first.c_str(), size)){
+                    selected_section = &section;
+                }
+
+                /* Remove Button style stack */{
+                    ImGui::PopStyleVar();
+                    ImGui::PopStyleColor();
+                    ImGui::PopStyleColor();
+                    ImGui::PopStyleColor();
+                }
+
+                /* Draw the button decoration (Hovering outline and is-selected indicator) */ {
+                    if(selected){
+                        auto pos = ImVec2{
+                            button_start_pos.x - selection_indicator_width,
+                            button_start_pos.y
+                        };
+                        draw_list->AddRectFilled(
+                            pos,
+                            {
+                                pos.x + selection_indicator_width,
+                                pos.y + size.y
+                            },
+                            ImGui::GetColorU32(ImGuiCol_Button)
+                        );
+                    }
+
+                    if(ImGui::IsItemHovered()){
+                        draw_list->AddRect(
+                            cursor_pos,
+                            {
+                                cursor_pos.x + use_region_size.x,
+                                cursor_pos.y + use_region_size.y
+                            },
+                            ImGui::GetColorU32(ImGuiCol_ButtonHovered),
+                            3.0f,
+                            ImDrawCornerFlags_All,
+                            3.0f
+                        );
+                    }
+                }
             };
 
-            if(ImGui::BeginMenuBar()){
-                if(ImGui::BeginMenu("View")){
-                    for(auto& section: section_headers){
-                        ImGui::MenuItem(section.header_name, "", &section.show);
-                    }
-                    ImGui::EndMenu();
+            auto avail_size = ImGui::GetContentRegionAvail();
+
+            if(!ImGui::BeginChild("Sections", {avail_size.x * (1/3.0f), avail_size.y})){
+                ImGui::EndChild();
+            } else {
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0.0f,0.0f});
+                ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+                for(auto& section: sections){
+                    _display_section_button(section, {avail_size.x * (1/3.0f), 20*2});
                 }
-                ImGui::EndMenuBar();
+                ImGui::PopItemWidth();
+                ImGui::PopStyleVar();
+
+                ImGui::EndChild();
             }
 
+            ImGui::SameLine(0.0f, 0.0f);
+
+            if(!ImGui::BeginChild("Section Content", {avail_size.x * (2/3.0f), avail_size.y})){
+                ImGui::EndChild();
+            } else{
+                auto& section = *selected_section;
+                section.second();
+                ImGui::EndChild();
+            }
+        }
+
+        void show(const char* window_name) {
+            static Controller controller;
+            static RumbleData rumble_data;
+            static ImGui::NavStack nav_stack;
+            static ImGui::Display default_page{window_name,
+                [](){
+                    JCToolkit::UI::show(controller, rumble_data, nav_stack);
+                }
+            };
+
+            auto avail_size = ImGui::GetContentRegionAvail();
+            auto bottom_bar_height = 32.0f; 
+            auto avail_size_page = ImVec2{avail_size.x, avail_size.y - bottom_bar_height};
+
+            if(!ImGui::BeginChild("current page", avail_size_page)){
+                ImGui::EndChild();
+            } else {
+                if(nav_stack.size() > 0){
+                    ImGui::MakeSection(nav_stack.top());
+                } else {
+                    ImGui::MakeSection(default_page);
+                }
+                ImGui::EndChild();
+            }
+            
+            ImGui::Separator();
+
+            if(controller.handle()){
+                draw_controller(controller);
+                ImGui::SameLine();
+            }
             // Try to establish a connection with a controller.
             if(ImGui::Button("Try Connection Attempt"))
                 controller.connection();
+            
+            ImGui::SameLine();
 
-            for(auto& section: section_headers){
-                ImGui::MakeSection(section.header_name, section.display, &section.show, section.flags);
+            if(nav_stack.size() > 0){
+                if(ImGui::ArrowButton("back navigation", ImGuiDir_Left))
+                    nav_stack.pop();
+                
+                ImGui::SameLine();
+                ImGui::Text("Back");
             }
         }
     }
     void init() {
         GPUTexture::SideLoader::start();
         Helpers::load_image_res_gpu();
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x46,0x46,0x46,255)));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x5D,0xFD,0xD9,155)));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x5D,0xFD,0xD9,255)));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, {}); // No rounding
     }
 }

@@ -3,7 +3,7 @@
 
 namespace JCToolkit {
     namespace UI {
-        void show(Controller& controller, RumbleData& rumble_data);
+        void show(const char* window_name);
     }
     void init();
 }

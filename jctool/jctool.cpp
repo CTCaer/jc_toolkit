@@ -3527,14 +3527,10 @@ int main(int argc, char** args) {
         ImGui::SetNextWindowPos({}, ImGuiCond_Once);
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
 
-        if(!ImGui::Begin(window_name, &window_still_open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar)){
+        if(!ImGui::Begin(window_name, &window_still_open, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove)){
             ImGui::End();
         } else {
-            ImGui::MakeSection(window_name, [](){
-                static Controller controller;
-                static RumbleData rumble_data;
-                JCToolkit::UI::show(controller, rumble_data);
-            });
+            JCToolkit::UI::show(window_name);
             ImGui::End();
         }
 
@@ -3550,13 +3546,7 @@ int main(int argc, char** args) {
             480 // The window height.
         },
         imgui_calls,
-        [](){ // This function object gets called once after the graphics framework (open gl) is initialized.
-            JCToolkit::init();
-            auto framebg_color = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
-            framebg_color.w = 1.0f;
-            ImGui::PushStyleColor(ImGuiCol_WindowBg, framebg_color);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, {}); // No rounding
-        },
+        JCToolkit::init,
         (ImGuiInitFlags)0
     );
 #endif
