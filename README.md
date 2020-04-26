@@ -11,7 +11,7 @@ TODOS:
     
   - [x] HD Rumble Player
   
-  - [ ] Device Colors
+  - [X] Device Colors
 
   - [ ] Playground Testing
     - [ ] Button Test
