@@ -791,35 +791,49 @@ namespace JCToolkit {
             }
         }
     
-        void show(Controller& controller, RumbleData& rumble_data, ImGui::NavStack& nav_stack){
+        void show_default_page(Controller& controller, RumbleData& rumble_data, ImGui::NavStack& nav_stack){
             static ImGui::Display sections[] = {
                 {"Controller Status", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
                     showController(controller);
                 }},
                 {"HD Rumble Player", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
                     showRumblePlayer(controller, rumble_data);
                 }},
                 {"IR Camera", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
                     showIRCamera(controller);
                 }},
                 {"Modify Controller", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
                     ModifyController::show(controller, nav_stack);
                 }}
             };
             static ImGui::Display* selected_section = sections;
 
-            static auto _display_section_button = [](ImGui::Display& section, const ImVec2& use_region_size){
-                const float margin = 5.0f;
-                const float selection_indicator_width = 3.0f;
-                const auto button_start_offset = ImVec2{
-                    margin + selection_indicator_width,
-                    margin
-                };
-                bool selected = selected_section == &section;
+            static const float btn_padding = 5.0f;
+            static const float btn_line_thickness = btn_padding / 2;
+            static const auto btn_button_start_offset = ImVec2{ // The start offset of the rect containing the label.
+                btn_padding + btn_line_thickness*2, // (1)Border and (2)selection indicator.
+                btn_padding + btn_line_thickness
+            };
+            static auto _display_section_button = [](ImGui::Display& section, bool selected, const ImVec2& use_region_size){
                 auto draw_list = ImGui::GetWindowDrawList();
 
                 
-                auto cursor_pos = ImGui::GetCursorScreenPos();
 
                 /* Setup button style stack */ {
                     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
@@ -828,13 +842,14 @@ namespace JCToolkit {
                     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, {0.0f, 0.5f});
                 }
 
+                auto cursor_pos = ImGui::GetCursorScreenPos();
                 auto button_start_pos = ImVec2{
-                    cursor_pos.x + button_start_offset.x,
-                    cursor_pos.y + button_start_offset.y
+                    cursor_pos.x + btn_button_start_offset.x,
+                    cursor_pos.y + btn_button_start_offset.y
                 };
                 auto size = ImVec2{
-                    use_region_size.x - button_start_offset.x*2,
-                    use_region_size.y - button_start_offset.y*2
+                    use_region_size.x,
+                    use_region_size.y - btn_button_start_offset.y*2
                 };
                 ImGui::SetCursorScreenPos(button_start_pos);
                 if(ImGui::Button(section.first.c_str(), size)){
@@ -851,30 +866,29 @@ namespace JCToolkit {
                 /* Draw the button decoration (Hovering outline and is-selected indicator) */ {
                     if(selected){
                         auto pos = ImVec2{
-                            button_start_pos.x - selection_indicator_width,
-                            button_start_pos.y
+                            cursor_pos.x + btn_padding + btn_line_thickness,
+                            cursor_pos.y + btn_padding + btn_line_thickness
                         };
                         draw_list->AddRectFilled(
                             pos,
                             {
-                                pos.x + selection_indicator_width,
-                                pos.y + size.y
+                                pos.x + btn_line_thickness,
+                                pos.y + (use_region_size.y - btn_button_start_offset.y*2)
                             },
                             ImGui::GetColorU32(ImGuiCol_Button)
                         );
                     }
 
+                    auto button_max = ImGui::GetItemRectMax();
+                    button_max.y += btn_padding + btn_line_thickness;
                     if(ImGui::IsItemHovered()){
                         draw_list->AddRect(
                             cursor_pos,
-                            {
-                                cursor_pos.x + use_region_size.x,
-                                cursor_pos.y + use_region_size.y
-                            },
+                            button_max,
                             ImGui::GetColorU32(ImGuiCol_ButtonHovered),
-                            3.0f,
+                            btn_line_thickness/2,
                             ImDrawCornerFlags_All,
-                            3.0f
+                            btn_line_thickness
                         );
                     }
                 }
@@ -882,28 +896,50 @@ namespace JCToolkit {
 
             auto avail_size = ImGui::GetContentRegionAvail();
 
-            if(!ImGui::BeginChild("Sections", {avail_size.x * (1/3.0f), avail_size.y})){
-                ImGui::EndChild();
-            } else {
-                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0.0f,0.0f});
-                ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-                for(auto& section: sections){
-                    _display_section_button(section, {avail_size.x * (1/3.0f), 20*2});
-                }
-                ImGui::PopItemWidth();
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {16.0f,16.0f});
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
+            // We use child frames so that we could have some padding,
+            // but we also disable the frame bg because we do not want it.
+            if(!ImGui::BeginChildFrame(ImGui::GetID("Section List"), {avail_size.x * (1/3.0f), avail_size.y})){
                 ImGui::PopStyleVar();
+                ImGui::PopStyleColor();
+                ImGui::EndChildFrame();
+            } else {
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor();
+                
+                for(auto& section: sections){
+                    _display_section_button(
+                        section,
+                        selected_section == &section,
+                        {-1,40} // {extend to end, 40}
+                    );
+                }
 
-                ImGui::EndChild();
+                ImGui::EndChildFrame();
             }
 
             ImGui::SameLine(0.0f, 0.0f);
 
-            if(!ImGui::BeginChild("Section Content", {avail_size.x * (2/3.0f), avail_size.y})){
-                ImGui::EndChild();
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {16.0f,16.0f});
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
+            if(!ImGui::BeginChildFrame(ImGui::GetID("Section Content"), {avail_size.x * (2/3.0f), avail_size.y})){
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor();
+                ImGui::EndChildFrame();
             } else{
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor();
+                
+                // Align to the first section label.
+                ImGui::Dummy({
+                    0,
+                    btn_button_start_offset.y
+                });
+
                 auto& section = *selected_section;
                 section.second();
-                ImGui::EndChild();
+                ImGui::EndChildFrame();
             }
         }
 
@@ -913,7 +949,7 @@ namespace JCToolkit {
             static ImGui::NavStack nav_stack;
             static ImGui::Display default_page{window_name,
                 [](){
-                    JCToolkit::UI::show(controller, rumble_data, nav_stack);
+                    JCToolkit::UI::show_default_page(controller, rumble_data, nav_stack);
                 }
             };
 
@@ -945,9 +981,12 @@ namespace JCToolkit {
             ImGui::SameLine();
 
             if(nav_stack.size() > 0){
+                auto pos = ImGui::GetCursorPos();
+
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0,0});
                 if(ImGui::ArrowButton("back navigation", ImGuiDir_Left))
                     nav_stack.pop();
-                
+                ImGui::PopStyleVar();
                 ImGui::SameLine();
                 ImGui::Text("Back");
             }
@@ -959,7 +998,7 @@ namespace JCToolkit {
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x46,0x46,0x46,255)));
         ImGui::PushStyleColor(ImGuiCol_Button, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x5D,0xFD,0xD9,155)));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x5D,0xFD,0xD9,255)));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x39,0x97,0xBD,155)));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, {}); // No rounding
     }
 }
