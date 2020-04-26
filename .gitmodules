@@ -1,9 +1,6 @@
 [submodule "hidapi"]
 	path = hidapi
 	url = https://github.com/libusb/hidapi
-[submodule "ui/imgui"]
-	path = easy-imgui/imgui
-	url = https://github.com/ocornut/imgui
-[submodule "stb"]
-	path = easy-imgui/tools/tools-squared/stb
-	url = https://github.com/nothings/stb
+[submodule "easy-imgui"]
+	path = easy-imgui
+	url = https://github.com/jon-dez/easy-imgui
