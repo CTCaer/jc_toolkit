@@ -15,7 +15,7 @@
 #include <chrono>
 #include <stdio.h>
 #include <unistd.h>
-int Sleep(uint64_t ms){
+inline int Sleep(uint64_t ms){
     return usleep(ms*1000);
 };
 #include <math.h> // for sqrt
@@ -32,24 +32,19 @@ const auto min = [](auto a, auto b){
 
 #ifndef __jctool_cpp_API__
 #include "FormJoy.h"
+using namespace CppWinFormJoy;
+#pragma comment(lib, "SetupAPI")
 #else
-#include "imgui.h"
-#include "easy-imgui/Interface/ImGuiInterface.hpp"
-#include "ui_helpers.hpp"
+#define EASY_HELPERS_UI
+#include "easy-imgui/easy_imgui.h"
 #include "jctool_ui.hpp"
 #endif
 
 #include "hidapi.h"
 
 #ifndef __jctool_cpp_API__
-using namespace CppWinFormJoy;
-#endif
-
-#pragma comment(lib, "SetupAPI")
-
 bool enable_traffic_dump = false;
 
-#ifndef __jctool_cpp_API__
 int  handle_ok;
 bool enable_button_test;
 bool enable_IRVideoPhoto;
@@ -59,12 +54,7 @@ bool cancel_spi_dump;
 bool check_connection_ok;
 
 u8 timming_byte;
-#endif
-#ifndef __jctool_cpp_API__
 u8 ir_max_frag_no;
-#endif
-
-#ifndef __jctool_cpp_API__
 hid_device *handle;
 using namespace System;
 hid_device *handle_l;
@@ -1863,7 +1853,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
 
     u8 buf[49];
     u8 buf_reply[0x170];
-    u8 *buf_image = new u8[buf_size_img]; // 8bpp greyscale image.
+    auto buf_image = std::unique_ptr<u8[]>(new u8[buf_size_img]); // 8bpp greyscale image.
 	uint16_t bad_signal = 0;
     int error_reading = 0;
     float noise_level = 0.0f;
@@ -1876,7 +1866,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
     //int max_pixels = ((ir_max_frag_no < 218 ? ir_max_frag_no : 217) + 1) * 300;
     int white_pixels_percent = 0;
 
-    memset(buf_image, 0, sizeof(buf_size_img));
+    memset(buf_image.get(), 0, sizeof(buf_size_img));
 
     memset(buf, 0, sizeof(buf));
     memset(buf_reply, 0, sizeof(buf_reply));
@@ -2031,7 +2021,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
             }
 
             if((pd.flags & IR::PacketFlags::WriteFrag) == IR::PacketFlags::WriteFrag){
-                memcpy(buf_image + (IR::FRAG_SIZE * got_frag_no), buf_reply + IR::FRAG_START_OFFSET, IR::FRAG_SIZE);
+                memcpy(buf_image.get() + (IR::FRAG_SIZE * got_frag_no), buf_reply + IR::FRAG_START_OFFSET, IR::FRAG_SIZE);
             }
 
             // Check if final fragment. Draw the frame.
@@ -2076,19 +2066,13 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
                 capture_context.capture_status.white_pixels_percent = white_pixels_percent;
                 capture_context.capture_status.exf_int = buf_reply[54];
                 
-                u8* buf_copy = new u8[buf_size_img];
-                memset(buf_copy, 0, buf_size_img);
-                memcpy(buf_copy, buf_image, buf_size_img);
-                store_capture_cb(std::shared_ptr<u8>(buf_copy, [](u8* d){ delete[] d; }));
+                store_capture_cb(buf_image.get(), buf_size_img);
 #endif
                 if (initialization)
                     initialization--;
             }
         }
     }
-    
-    delete[] buf_image;
-
     return 0;
 }
 

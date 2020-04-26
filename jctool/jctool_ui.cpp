@@ -51,12 +51,14 @@ SOFTWARE.
 #include "ir_sensor.h"
 
 #include "hidapi.h"
-#include "imgui.h"
+
+#define EASY_HELPERS_UI
+#define EASY_IMAGELOAD
+#define EASY_DIREXPLORER_UI
+#include "easy-imgui/easy_imgui.h"
 #include "imgui_internal.h" // PushItemFlags
-#include "ui_helpers.hpp"
-#include "ImageLoad/ImageLoad.hpp"
+
 #include "Controller.hpp"
-#include "DirExplorer/ImGuiDirExplorer.hpp"
 #define IMAGE_RES_PATH "jctool/original_res/"
 #define IMAGE_RES_EXT ".png"
 

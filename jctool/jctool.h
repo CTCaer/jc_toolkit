@@ -50,7 +50,7 @@ int set_led_busy(controller_hid_handle_t handle, u8& timming_byte);
 int button_test(controller_hid_handle_t handle, u8& timming_byte);
 int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
 int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
-using StoreRawCaptureCB = std::function<void(std::shared_ptr<u8>)>;
+using StoreRawCaptureCB = std::function<void(const u8*, size_t)>;
 int ir_sensor(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capture_cb);
 int ir_sensor_config_live(controller_hid_handle_t handle, u8& timming_byte, ir_image_config& ir_cfg);
 #endif

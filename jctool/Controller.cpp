@@ -146,9 +146,11 @@ void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& 
                     this->capture_status
             };
             int res = ir_sensor(capture_context,
-                [this](auto raw_capture){
+                [this](const u8* raw_capture, size_t size_raw_capture){
+                    auto raw_capture_copy = std::shared_ptr<u8>(new u8[size_raw_capture], [](u8* d){ delete[] d;});
+                    memcpy(raw_capture_copy.get(), raw_capture, size_raw_capture);
                     GPUTexture::SideLoader::addJob(
-                        [this, raw_capture](){
+                        [this, raw_capture_copy](){
                             auto& resolution = std::get<2>(ir_resolutions[this->res_idx_selected]);
                             ImageResourceData ird;
                             ird.width = resolution.width;
@@ -158,7 +160,7 @@ void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& 
 
                             // Colorize the raw capture.
                             colorizefrom8BitsPP(
-                                &*raw_capture,
+                                raw_capture_copy.get(),
                                 ird.bytes,
                                 ird.width,
                                 ird.height,
