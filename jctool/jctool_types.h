@@ -237,3 +237,16 @@ struct DumpSPICTX {
     size_t& bytes_dumped;
     const char* file_name;
 };
+
+namespace ConHID {
+    // Vendor ID
+    const inline u16 VID = 0x57e;
+
+    // Product IDs
+    enum ProdID : u16 {
+        JoyConLeft = 0x2006,
+        JoyConRight = 0x2007,
+        ProCon = 0x2009,
+        JoyConGrip = 0x200e,
+    };
+}

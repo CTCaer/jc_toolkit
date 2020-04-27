@@ -3395,18 +3395,23 @@ int device_connection(controller_hid_handle_t& handle){
         int handle_ok = 0;
 #endif
         // Joy-Con (L)
-        if (handle = hid_open(0x57e, 0x2006, nullptr)) {
+        if (handle = hid_open(ConHID::VID, ConHID::JoyConLeft, nullptr)) {
             handle_ok = 1;
             return handle_ok;
         }
         // Joy-Con (R)
-        if (handle = hid_open(0x57e, 0x2007, nullptr)) {
+        if (handle = hid_open(ConHID::VID, ConHID::JoyConRight, nullptr)) {
             handle_ok = 2;
             return handle_ok;
         }
         // Pro Controller
-        if (handle = hid_open(0x57e, 0x2009, nullptr)) {
+        if (handle = hid_open(ConHID::VID, ConHID::ProCon, nullptr)) {
             handle_ok = 3;
+            return handle_ok;
+        }
+        // Joy-Con Grip
+        if(handle = hid_open(ConHID::VID, ConHID::JoyConGrip, nullptr)){
+            handle_ok = 4;
             return handle_ok;
         }
         // Nothing found

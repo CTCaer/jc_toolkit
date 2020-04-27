@@ -165,7 +165,7 @@ namespace JCToolkit {
                 break;
             default:
                 controller_type_label = "Unrecognized Controller";
-                break;
+                return;
             }
 
             auto con_start = ImGui::GetCursorPos();
@@ -253,7 +253,7 @@ namespace JCToolkit {
                 ImGui::Text("%.2f KB / %.2f KB", (float) bytes_dumped / 1024, float(SPI_SIZE / 1024));
             }
 
-            void show_retail_colors(std::function<void(SPIColors::color_t)> show_color){
+            void show_retail_colors(std::function<void(SPIColors::color_t, float)> show_color){
                 if(ImGui::BeginTable("Retail Colors",
                     3,
                     ImGuiTableFlags_ScrollX | ImGuiTableFlags_NoHostExtendY | ImGuiTableFlags_ScrollFreezeLeftColumn | ImGuiTableFlags_ScrollFreezeTopRow | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInner)
@@ -265,6 +265,8 @@ namespace JCToolkit {
                     ImGui::TableNextCell();
                     ImGui::Text("Buttons");
                     int id = 0;
+
+                    const float radius = 10.0f;
                     // Labels
                     for(auto& retail_color: Assets::retail_color_presets){
                         ImGui::TableNextCell();
@@ -272,12 +274,12 @@ namespace JCToolkit {
 
                         ImGui::TableNextCell();
                         ImGui::PushID(id++);
-                        show_color(std::get<Assets::RetailColBody>(retail_color));
+                        show_color(std::get<Assets::RetailColBody>(retail_color), radius);
                         ImGui::PopID();
 
                         ImGui::TableNextCell();
                         ImGui::PushID(id++);
-                        show_color(std::get<Assets::RetailColButton>(retail_color));
+                        show_color(std::get<Assets::RetailColButton>(retail_color), radius);
                         ImGui::PopID();
                     }
                     ImGui::EndTable();
@@ -381,29 +383,41 @@ namespace JCToolkit {
                         static ImVec4 secondary_color = ImGui::ColorConvertU32ToFloat4(IM_COL32_BLACK);
                         bool color_changed = false;
 
-                        {
-                            auto _retailColorButton = [&color_changed](SPIColors::color_t spi_color){
-                                auto conv_col = ImGui::ColorConvertU32ToFloat4(IM_COL32(spi_color.r, spi_color.g, spi_color.b, 255));
-                                if(ImGui::ColorButton("##retail_palette",
-                                        conv_col,
-                                        ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip,
-                                        ImVec2(20,20)
-                                )){
-                                    std::swap(primary_color, secondary_color);
-                                    primary_color = conv_col;
-                                    color_changed |= true;
-                                }
-                            };
+                        if(ImGui::BeginTabBar("palletes")) {
+                            if(ImGui::BeginTabItem("Retail Colors")){
+                                auto _retailColorButton = [&color_changed](SPIColors::color_t spi_color, float radius){
+                                    auto conv_col = ImGui::ColorConvertU32ToFloat4(IM_COL32(spi_color.r, spi_color.g, spi_color.b, 255));
+                                    ImGui::PushStyleColor(ImGuiCol_Button, conv_col);
+                                    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, radius);
+                                    if(ImGui::Button("##retail_palette",
+                                            {radius*2, radius*2}
+                                    )){
+                                        std::swap(primary_color, secondary_color);
+                                        primary_color = conv_col;
+                                        color_changed |= true;
+                                    }
+                                    ImGui::PopStyleVar();
+                                    ImGui::PopStyleColor();
+                                };
 
-                            if(!ImGui::BeginChild("retail colors body")) {
-                                ImGui::EndChild();
-                            } else {
-                                ModifyController::show_retail_colors(_retailColorButton);   
-                                ImGui::EndChild();
+                                if(!ImGui::BeginChild("retail colors body")) {
+                                    ImGui::EndChild();
+                                } else {
+                                    ModifyController::show_retail_colors(_retailColorButton);   
+                                    ImGui::EndChild();
+                                }
+
+                                ImGui::EndTabItem();
                             }
+
+                            if(ImGui::BeginTabItem("Custom Colors")){
+                                color_changed |= ModifyController::show_color_editor(primary_color, secondary_color);
+                                ImGui::EndTabItem();
+                            }
+
+                            ImGui::EndTabBar();
                         }
                         
-                        color_changed |= ModifyController::show_color_editor(primary_color, secondary_color);
 
 
                         if(color_changed){
@@ -979,7 +993,7 @@ namespace JCToolkit {
             // Try to establish a connection with a controller.
             if(ImGui::Button("Try Connection Attempt"))
                 controller.connection();
-            
+
             ImGui::SameLine();
 
             if(nav_stack.size() > 0){
