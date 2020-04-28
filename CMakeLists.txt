@@ -34,6 +34,8 @@ set(SOURCES
     jctool/jctool.cpp
     jctool/jctool_ui.cpp
     jctool/Controller.cpp
+
+    jctool/session/controller_session.cpp
 )
 
 if (JCTOOL_API_ONLY)

@@ -244,6 +244,7 @@ namespace ConHID {
 
     // Product IDs
     enum ProdID : u16 {
+        NoCon = 0x0000,
         JoyConLeft = 0x2006,
         JoyConRight = 0x2007,
         ProCon = 0x2009,

@@ -62,6 +62,8 @@ SOFTWARE.
 #define IMAGE_RES_PATH "jctool/original_res/"
 #define IMAGE_RES_EXT ".png"
 
+#include "session/controller_session.hpp"
+
 
 namespace JCToolkit {
     namespace Assets {
@@ -836,6 +838,80 @@ namespace JCToolkit {
                         return;
                     }
                     ModifyController::show(controller, nav_stack);
+                }},
+                {"Test Sessions", [&](){
+                    static std::vector<ConSess> sessions;
+                    static std::stringstream dispatch_msg_stream;
+                    static std::vector<Con> cons_found;
+
+                    if(ImGui::Button("Scan for Controllers")){
+                        hid_device_info *devs, *curr;
+                        devs = hid_enumerate(ConHID::VID, 0);
+
+                        curr = devs;
+                        cons_found.clear();
+                        while(curr){
+                            cons_found.push_back(Con(curr));
+                            curr = curr->next;
+                        }
+                    }
+                    
+                    if(ImGui::BeginTable("devices", 5)){
+                        ImGui::TableNextCell();
+                        ImGui::Text(""); ImGui::TableNextCell();
+                        ImGui::Text("ProdID"); ImGui::TableNextCell();
+                        ImGui::Text("HID S/N"); ImGui::TableNextCell();
+                        ImGui::Text("Man. String"); ImGui::TableNextCell();
+                        ImGui::Text("Prod. String"); ImGui::TableNextCell();
+
+                        for(auto& con: cons_found){
+                            ImGui::PushID(&con);
+                            if(ImGui::Button("Start Session")){
+                                sessions.push_back(ConSess(con)); // (1) Contruct from a const ref Con.
+                                sessions.back().startSession(); // (2) start the session.
+                            } ImGui::TableNextCell();
+                            ImGui::Text("%X", con.prod_id); ImGui::TableNextCell();
+                            ImGui::Text("%s", con.hid_sn.c_str()); ImGui::TableNextCell();
+                            ImGui::Text("%s", con.manu_string.c_str()); ImGui::TableNextCell();
+                            ImGui::Text("%s", con.prod_string.c_str()); ImGui::TableNextCell();
+                            ImGui::PopID();
+                        }
+                        ImGui::EndTable();
+                    }
+
+                    if(ImGui::Button("Start session dispatcher")){
+                        ConSessManager::start_session_dispatcher(dispatch_msg_stream);
+                    }
+
+                    if(ImGui::BeginTabBar("Sessions")){
+                        for(auto& session: sessions){
+                            ImGui::PushID(&session);
+                            if(ImGui::BeginTabItem(std::to_string((uintptr_t)session.getHandle()).c_str())){
+                                switch(session.getLastStatus()){
+                                    case ConSess::SESS_OK:
+                                    if(ImGui::Button("Set Led Busy")){
+                                        session.testSetLedBusy();
+                                    }
+                                    break;
+                                    case ConSess::WAITING_SESS:
+                                    ImGui::Text("Waiting for \"session OK\".");
+                                    break;
+                                }
+                                ImGui::Columns(2);
+                                ImGui::Text("Message stream:\n%s", session.messageStream().str().c_str());
+
+                                ImGui::NextColumn();
+                                ImGui::Text("Error stream:\n%s", session.errorStream().str().c_str());
+
+                                ImGui::Columns(1);
+                                ImGui::EndTabItem();
+                            }
+                            ImGui::PopID();
+                        }
+                        ImGui::EndTabBar();
+                    }
+
+                    ImGui::Text("Session Dispatch Output:\n%s", dispatch_msg_stream.str().c_str());
                 }}
             };
             static ImGui::Display* selected_section = sections;
