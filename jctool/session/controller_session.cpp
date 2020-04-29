@@ -144,25 +144,22 @@ dev_path(dev->path)
 {}
 
 /**
- * Populate the controller, and optionally start the session.
+ * Populate the controller, and optionally start the session in conjuction with a status delay.
  */
-ConSess::ConSess(const Con& con, bool start_session) :
+ConSess::ConSess(const Con& con, bool start_session, StatusDelay status_delay) :
 ConSess()
 {
-    this->con = con;
+    *this->con = con; // The default constructor allocated space for a new con.
     if(start_session)
-        this->startSession();
+        this->startSession(status_delay);
 }
 
 /**
- * TODO: Prevent a move if the session was started, or create a workaround.
- *       The consensus for this is a reference to the status variable is passed to the session thread
- *       so when the move happens updates to the status are "lost."
- *       Perhaps call checkConnection() after the move so that the status is "found."
+ * It is OK to move a session once it has been started.
  */
 ConSess::ConSess(ConSess&& sess_move) :
-last_status(std::move(sess_move.last_status)),
-last_got_status(sess_move.last_got_status),
+last_future_status(std::move(sess_move.last_future_status)),
+last_status_get(sess_move.last_status_get),
 con(std::move(sess_move.con)),
 msg_str(std::move(sess_move.msg_str)),
 err_str(std::move(sess_move.err_str))
@@ -179,31 +176,31 @@ ConSess::~ConSess() {
  * Start the session.
  */
 ConSess::Status ConSess::startSession(StatusDelay status_delay){
-    this->last_status = ConSessManager::enqueue_session(this->con, this->msg_str, this->err_str);
+    this->last_future_status = ConSessManager::enqueue_session(*this->con, *this->msg_str, *this->err_str);
     return this->getStatus(status_delay);
 }
 
 ConSess::Status ConSess::endSession(StatusDelay status_delay){
     // TODO:
-    this->last_status = this->getDummyStatus(NO_RESPONSE);// = ConSessManager::kill_session(this->con, this->msg_str, this->err_str);
+    this->last_future_status = this->getDummyStatus(NO_RESPONSE);// = ConSessManager::kill_session(this->con, this->msg_str, this->err_str);
     return this->getStatus(status_delay);
 }
 
 /**
- * Blocks if the value of future is checked before the connection check has been completed.
+ * TODO: Ping the controller.
  */
-ConSess::Status ConSess::getConnectionStatus(StatusDelay status_delay){
+ConSess::Status ConSess::checkConnectionStatus(StatusDelay status_delay){
     // TODO: assign a new future to last_status.
-    this->last_status = this->getDummyStatus(NO_RESPONSE);
+    this->last_future_status = this->getDummyStatus(NO_RESPONSE);
     return this->getStatus(status_delay);
 }
 
 void ConSess::testSetLedBusy(){
-    ConSessManager::add_job(this->con,
+    ConSessManager::add_job(*this->con,
         [this](controller_hid_handle_t handle, u8& timming_byte){
             // Convert ConHID::ProdID to Controller::Type for the sake of how set_led_busy works.
             Controller::Type con_type;
-            switch(this->con.prod_id){
+            switch(this->con->prod_id){
                 case ConHID::JoyConLeft:
                     con_type = Controller::Type::JoyConLeft;
                 break;
@@ -218,7 +215,7 @@ void ConSess::testSetLedBusy(){
                     con_type = Controller::Type::Undefined;
             }
             
-            msg_str << this->con.hid_sn << " set_led_busy" << std::endl;
+            *msg_str << this->con->hid_sn << " set_led_busy" << std::endl;
             
             set_led_busy(handle, timming_byte, con_type); // Always returns 0, so no error checking.
         }

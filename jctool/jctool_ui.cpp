@@ -870,8 +870,14 @@ namespace JCToolkit {
                         for(auto& con: cons_found){
                             ImGui::PushID(&con);
                             if(ImGui::Button("Start Session")){
-                                sessions.push_back(ConSess(con)); // (1) Contruct from a const ref Con.
-                                sessions.back().startSession(); // (2) start the session.
+                                //sessions.push_back(ConSess(con)); // (1) Contruct from a const ref Con.
+                                //sessions.back().startSession(ConSess::StatusDelay::DelayedManual); // (2) start the session, but delay the status.
+                                /**
+                                 * (p1) construct from a const ref con
+                                 * (p2) start the session on constructor
+                                 * (p3) delay getting status until it is done manually.
+                                 */
+                                sessions.push_back(ConSess(con, true, ConSess::StatusDelay::DelayedManual));
                             } ImGui::TableNextCell();
                             ImGui::Text("%X", con.prod_id); ImGui::TableNextCell();
                             ImGui::Text("%s", con.hid_sn.c_str()); ImGui::TableNextCell();
@@ -886,14 +892,18 @@ namespace JCToolkit {
                         for(auto& session: sessions){
                             ImGui::PushID(&session);
                             if(ImGui::BeginTabItem(session.getHIDSN().c_str())){
-                                switch(session.getLastStatus()){
+                                switch(session.getLastStatus(ConSess::LastStatusFrom::LastStatusGet)){
                                     case ConSess::SESS_OK:
                                     if(ImGui::Button("Set Led Busy")){
                                         session.testSetLedBusy();
                                     }
                                     break;
-                                    case ConSess::DELAYED_STATUS:
-                                    ImGui::Text("Waiting for \"session OK\".");
+                                    case ConSess::DELAYED_STATUS_MANUAL:
+                                    ImGui::Text("[StatusDelay::DelayedManual]");
+                                    if(ImGui::Button("Click me to get the session status of the controller.")){
+                                        session.getLastStatus();
+                                    }
+                                    ImGui::Text("Waiting for \"session OK.\"");
                                     break;
                                 }
 
