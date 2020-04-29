@@ -3,6 +3,7 @@
  * See controller_session.cpp for License information.
  */
 #pragma once
+#include <future>
 #include <sstream>
 #include "jctool_types.h"
 
@@ -21,33 +22,36 @@ struct Con {
 
 class ConSess {
 public:
+    using StatusDelay = bool;
+    static const StatusDelay STATUS_NOW = true;
+    static const StatusDelay STATUS_DELAYED = false;
 
     enum Status {
         NO_RESPONSE = -3,
         SESS_EXISTS_ERR = -2,
         SESS_ERR = -1,
         NO_SESS,
-        WAITING_SESS,
-        SESS_OK
+        SESS_OK,
+        DELAYED_STATUS, // Call getLastStatus()
     };
 
-    inline ConSess() :
-    handle(nullptr),
-    status(NO_SESS)
+    inline ConSess():
+    last_status{this->getDummyStatus(NO_SESS)}
     {}
 
-    ConSess(const Con& con); //, bool start_session = false);
+    ConSess(const Con& con, bool start_session = false);
     ConSess(ConSess&& sess_move);
     ~ConSess();
 
     /**
      * Return the last known status.
-     * This should not be relied on to provide an accurate status of the controller.
-     * If the controller spontaneously disconnects there is no way of getting a
-     * disconnected status without explicitly calling checkConnection().
+     * Getting the value from the future may block if the status was not yet updated.
      */
-    inline controller_hid_handle_t getHandle() { return this->handle; }
-    inline Status getLastStatus() { return this->status; }
+    inline Status getLastStatus() {
+        if (this->last_status.valid())
+            this->last_got_status = this->last_status.get();
+        return this->last_got_status;
+    }
     inline const std::stringstream& errorStream() const { return this->err_str; }
     inline const std::stringstream& messageStream() const { return this->msg_str; }
 
@@ -57,19 +61,30 @@ public:
     inline const std::string& getProdStr() { return this->con.prod_string; }
     inline const std::string& getDevPath() { return this->con.dev_path; }
 
-    void startSession();
-    Status endSession();
-    Status checkConnection();
+    Status startSession(StatusDelay status_delay = STATUS_NOW);
+    Status endSession(StatusDelay status_delay = STATUS_NOW);
+    Status getConnectionStatus(StatusDelay status_delay = STATUS_NOW);
     
     void testSetLedBusy();
 private:
-    controller_hid_handle_t handle; // TODO: let only the session thread know about the handle
-    Status status;
+    std::future<Status> last_status;
+    Status last_got_status;
 
     std::stringstream err_str;
     std::stringstream msg_str;
 
     Con con;
+
+    inline std::future<Status> getDummyStatus(Status dummy_status){
+        std::promise<Status> p;
+        p.set_value(NO_SESS);
+        return p.get_future();
+    }
+    inline Status getStatus(StatusDelay status_delay){
+        if(status_delay == STATUS_NOW)
+            this->last_got_status = this->last_status.get();
+        return this->last_got_status;
+    }
 };
  
 

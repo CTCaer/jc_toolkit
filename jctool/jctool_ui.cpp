@@ -63,6 +63,7 @@ SOFTWARE.
 #define IMAGE_RES_EXT ".png"
 
 #include "session/controller_session.hpp"
+#include "TP/TP.hpp"
 
 
 namespace JCToolkit {
@@ -854,6 +855,8 @@ namespace JCToolkit {
                             cons_found.push_back(Con(curr));
                             curr = curr->next;
                         }
+
+                        hid_free_enumeration(devs);
                     }
                     
                     if(ImGui::BeginTable("devices", 5)){
@@ -879,31 +882,34 @@ namespace JCToolkit {
                         ImGui::EndTable();
                     }
 
-                    if(ImGui::Button("Start session dispatcher")){
-                        ConSessManager::start_session_dispatcher(dispatch_msg_stream);
-                    }
-
                     if(ImGui::BeginTabBar("Sessions")){
                         for(auto& session: sessions){
                             ImGui::PushID(&session);
-                            if(ImGui::BeginTabItem(std::to_string((uintptr_t)session.getHandle()).c_str())){
+                            if(ImGui::BeginTabItem(session.getHIDSN().c_str())){
                                 switch(session.getLastStatus()){
                                     case ConSess::SESS_OK:
                                     if(ImGui::Button("Set Led Busy")){
                                         session.testSetLedBusy();
                                     }
                                     break;
-                                    case ConSess::WAITING_SESS:
+                                    case ConSess::DELAYED_STATUS:
                                     ImGui::Text("Waiting for \"session OK\".");
                                     break;
                                 }
-                                ImGui::Columns(2);
-                                ImGui::Text("Message stream:\n%s", session.messageStream().str().c_str());
 
-                                ImGui::NextColumn();
-                                ImGui::Text("Error stream:\n%s", session.errorStream().str().c_str());
+                                auto avail_size = ImGui::GetContentRegionAvail();
+                                ImGui::MakeSection({"Message stream",
+                                    [&](){
+                                        ImGui::Text("%s", session.messageStream().str().c_str());
+                                    }
+                                }, {avail_size.x/2, avail_size.y/2});
+                                ImGui::SameLine(0,0);
+                                ImGui::MakeSection({"Error stream",
+                                    [&](){
+                                        ImGui::Text("%s", session.errorStream().str().c_str());
+                                    }
+                                }, {avail_size.x/2, avail_size.y/2});
 
-                                ImGui::Columns(1);
                                 ImGui::EndTabItem();
                             }
                             ImGui::PopID();
@@ -911,7 +917,13 @@ namespace JCToolkit {
                         ImGui::EndTabBar();
                     }
 
-                    ImGui::Text("Session Dispatch Output:\n%s", dispatch_msg_stream.str().c_str());
+                    ImGui::Separator();
+
+                    ImGui::MakeSection({"Session Dispatcher Output",
+                        [&](){
+                            ImGui::Text("%s", dispatch_msg_stream.str().c_str());
+                        }
+                    });
                 }}
             };
             static ImGui::Display* selected_section = sections;
@@ -1085,7 +1097,8 @@ namespace JCToolkit {
         }
     }
     void init() {
-        GPUTexture::SideLoader::start();
+        GPUTexture::SideLoader::create_context();
+        TP::prepare_pool();
         Helpers::load_image_res_gpu();
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x46,0x46,0x46,255)));

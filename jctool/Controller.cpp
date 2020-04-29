@@ -149,7 +149,7 @@ void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& 
                 [this](const u8* raw_capture, size_t size_raw_capture){
                     auto raw_capture_copy = std::shared_ptr<u8>(new u8[size_raw_capture], [](u8* d){ delete[] d;});
                     memcpy(raw_capture_copy.get(), raw_capture, size_raw_capture);
-                    GPUTexture::SideLoader::addJob(
+                    GPUTexture::SideLoader::add_job(
                         [this, raw_capture_copy](){
                             auto& resolution = std::get<2>(ir_resolutions[this->res_idx_selected]);
                             ImageResourceData ird;
@@ -195,7 +195,7 @@ uintptr_t Controller::IRSensor::getCaptureTexID() {
         // 3. Get the new texture from the swap, and replace the swap with the old texture.
         std::swap(frame_dat.idx_swap, frame_dat.idx_display);
         frame_dat.updated = false;
-        GPUTexture::SideLoader::addJob([this](){
+        GPUTexture::SideLoader::add_job([this](){
             // 4. Free the old texture from the swap.
             GPUTexture::openGLFree(this->vstream_frame_dat.textures[this->vstream_frame_dat.idx_swap]);
         });
