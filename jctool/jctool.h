@@ -4,7 +4,6 @@
 
 #ifdef __jctool_cpp_API__
 #include <functional> // for storeCapture
-#include "Controller.hpp"
 #endif
 
 s16 uint16_to_int16(u16 a);
@@ -43,7 +42,7 @@ int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no);
 int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, const RumbleData& rumble_data);
 int device_connection(controller_hid_handle_t& handle);
 int button_test(controller_hid_handle_t handle, u8& timming_byte);
-int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, Controller::Type con_type);
+int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type);
 int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
 int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
 int button_test(controller_hid_handle_t handle, u8& timming_byte);

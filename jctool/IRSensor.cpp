@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-#include "Controller.hpp"
+#include "IRSensor.hpp"
 
 #include "jctool.h"
 #include "jctool_helpers.hpp"
@@ -37,7 +37,7 @@ SOFTWARE.
 
 #include "TP/TP.hpp"
 
-Controller::IRSensor::IRSensor(){
+IRSensor::IRSensor(){
     this->capture_status.message_stream << "IR Message:" << std::endl;
     memset(&this->config, 0, sizeof(this->config));
     ir_image_config& ir_config = this->config;
@@ -51,67 +51,7 @@ Controller::IRSensor::IRSensor(){
     ir_image_config_Sets::denoise_color_intrpl(ir_config.ir_denoise, 68);
 }
 
-/**
- * Updates the battery information with the value read from the controller.
- */
-void Controller::updateBatteryData(){
-    unsigned char battery_data[3];
-    memset(battery_data, 0, sizeof(battery_data));
-    get_battery(this->hid_handle, this->timming_byte, battery_data);
-
-    this->battery = parseBatteryData(battery_data);
-}
-
-void Controller::updateTemperatureData(){
-    unsigned char temperature_data[2];
-    memset(temperature_data, 0, sizeof(temperature_data));
-    get_temperature(this->hid_handle, this->timming_byte, temperature_data);
-    
-    this->temperature = parseTemperatureData(temperature_data);
-}
-
-void Controller::connection(){
-    int handle_ok = 0;
-    if((handle_ok = device_connection(this->hid_handle)) == 0) {// TODO: , this->hid_serial_number)) == 0)
-#ifdef __linux__
-        memcpy(this->device_info, "NONE", 5);
-#else
-        memcpy_s(this->device_info, 10, "NONE", 5);
-#endif
-        this->controller_type = Controller::Type::None;
-        this->hid_handle = nullptr;
-        return;
-    }
-    else {
-        get_device_info(this->hid_handle, this->timming_byte, reinterpret_cast<unsigned char*>(this->device_info));
-        this->updateBatteryData();
-        this->updateTemperatureData();
-
-        this->serial_number = get_sn(this->hid_handle, this->timming_byte);
-
-        // Get the controller colors
-        this->saved_colors = this->preview_colors = get_spi_colors(this->hid_handle, this->timming_byte);
-    }
-
-    // Set the controller type based on the return value.
-    switch (handle_ok)
-    {
-        case 1:
-            this->controller_type = Controller::Type::JoyConLeft;
-            break;
-        case 2:
-            this->controller_type = Controller::Type::JoyConRight;
-            break;
-        case 3:
-            this->controller_type = Controller::Type::ProCon;
-            break;
-        default:
-            this->controller_type = Controller::Type::Undefined;
-            break;
-    }
-}
-
-void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& timming_byte){
+void IRSensor::capture(controller_hid_handle_t host_controller, u8& timming_byte){
     if(host_controller == nullptr)
         return; // There is no controller
     
@@ -180,7 +120,7 @@ void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& 
         this->capture_status.message_stream << ir_sensorErrorToString(res);
 }
 
-uintptr_t Controller::IRSensor::getCaptureTexID() {
+uintptr_t IRSensor::getCaptureTexID() {
     auto& frame_dat = this->vstream_frame_dat;
     std::lock_guard<std::mutex> lock(frame_dat.texture_mutex);
     if(frame_dat.updated){
@@ -193,10 +133,4 @@ uintptr_t Controller::IRSensor::getCaptureTexID() {
         });
     }
     return frame_dat.textures[frame_dat.idx_display];
-}
-
-void Controller::rumble(RumbleData& rumble_data){
-    this->rumble_active = true;
-    int res = play_hd_rumble_file(this->hid_handle, this->timming_byte, rumble_data);
-    this->rumble_active = false;
 }

@@ -33,7 +33,7 @@ add_compile_options(
 set(SOURCES
     jctool/jctool.cpp
     jctool/jctool_ui.cpp
-    jctool/Controller.cpp
+    jctool/IRSensor.cpp
 
     jctool/session/controller_session.cpp
 )

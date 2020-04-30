@@ -150,7 +150,7 @@ void AnalogStickCalc(
 #ifndef __jctool_cpp_API__
 int set_led_busy() {
 #else
-int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, Controller::Type controller_type) {
+int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type) {
 #endif
     int res;
     u8 buf[49];
@@ -169,7 +169,7 @@ int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, Controller::T
 #ifndef __jctool_cpp_API__
     if (handle_ok != 1)
 #else
-    if(controller_type != Controller::Type::JoyConLeft)
+    if(con_type != ConHID::JoyConLeft)
 #endif
     {
         memset(buf, 0, sizeof(buf));
@@ -593,7 +593,7 @@ int dump_spi(controller_hid_handle_t handle, u8& timming_byte, DumpSPICTX& dump_
 #ifndef __jctool_cpp_API__
 int send_rumble() {
 #else
-int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Type controller_type) {
+int send_rumble(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type) {
 #endif
     int res;
     u8 buf[49];
@@ -684,7 +684,7 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, Controller::Ty
 #ifndef __jctool_cpp_API__
     if (handle_ok != 1)
 #else
-    if(controller_type != Controller::Type::JoyConLeft)
+    if(con_type != ConHID::JoyConLeft)
 #endif
     {
         memset(buf, 0, sizeof(buf));
@@ -3542,6 +3542,7 @@ int main(int argc, char** args) {
         JCToolkit::init,
         (ImGuiInitFlags)0
     );
+    JCToolkit::exit();
 #endif
 
     return 0;

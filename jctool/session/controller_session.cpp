@@ -50,7 +50,7 @@ namespace ConSessManager {
 
     namespace {
         static std::mutex cons_with_sessions_mutex;
-        static std::map<Con, SessionContext, ConCmp> cons_with_sessions;
+        static std::unordered_map<Con, SessionContext, ConHash, ConEqual> cons_with_sessions;
 
         static ConSess::Status session_dispatcher(const Con& con, std::stringstream& msg_str, std::stringstream& err_str){
             SessionContext sc;
@@ -196,34 +196,17 @@ ConSess::Status ConSess::checkConnectionStatus(StatusDelay status_delay){
 void ConSess::testSetLedBusy(){
     ConSessManager::add_job(*this->con,
         CON_JOB(this){
-            // Convert ConHID::ProdID to Controller::Type for the sake of how set_led_busy works.
-            Controller::Type con_type;
-            switch(this->con->prod_id){
-                case ConHID::JoyConLeft:
-                    con_type = Controller::Type::JoyConLeft;
-                break;
-                case ConHID::JoyConRight:
-                    con_type = Controller::Type::JoyConRight;
-                break;
-                case ConHID::ProCon:
-                    con_type = Controller::Type::ProCon;
-                break;
-                case ConHID::JoyConGrip:
-                default:
-                    con_type = Controller::Type::Undefined;
-            }
-            
             *msg_str << this->con->hid_sn << " set_led_busy" << std::endl;
             
-            set_led_busy(handle, timming_byte, con_type); // Always returns 0, so no error checking.
+            set_led_busy(handle, timming_byte, this->getProdID()); // Always returns 0, so no error checking.
         }
     );
 }
 
-void ConSess::testIRCapture(Controller::IRSensor& ir){
+void ConSess::testIRCapture(IRSensor& ir){
     ConSessManager::add_job(*this->con,
         CON_JOB(&){
-            *msg_str << this->con->hid_sn << " Controller::IRSensor::capture" << std::endl;
+            *msg_str << this->con->hid_sn << " IRSensor::capture" << std::endl;
             ir.capture(handle, timming_byte);
         }
     );

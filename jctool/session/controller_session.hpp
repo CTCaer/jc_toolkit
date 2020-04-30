@@ -6,13 +6,8 @@
 #include <future>
 #include <sstream>
 #include "jctool_types.h"
-/**
- * ==============================
- * TESTING: REMOVE AFTER TESTING.
- * Controller.hpp
- * ==============================
- */
-#include "Controller.hpp"
+
+#include "IRSensor.hpp"
 
 
 struct Con {
@@ -28,14 +23,9 @@ struct Con {
     Con(const hid_device_info* dev);
 };
 
-
-struct ConCmp {
-    bool operator()(const Con& l, const Con& r) const {
-        return l.dev_path.compare(r.dev_path) < 0;
-    }
-};
-
 class ConSess {
+    friend struct ConEqual;
+    friend struct ConHash;
 public:
     enum class StatusDelay {
         None,
@@ -92,7 +82,7 @@ public:
     Status checkConnectionStatus(StatusDelay status_delay = StatusDelay::None);
     
     void testSetLedBusy();
-    void testIRCapture(Controller::IRSensor& ir);
+    void testIRCapture(IRSensor& ir);
     void testHDRumble(RumbleData& rumble_data, bool& is_active);
 
     void getTemperature(TemperatureData& fill_temp_data);
@@ -121,5 +111,17 @@ private:
         else
             this->last_status_get = DELAYED_STATUS_MANUAL;
         return this->last_status_get;
+    }
+};
+
+struct ConHash {
+    size_t operator()(const Con& c) const noexcept {
+        return  std::hash<std::string>{}(c.dev_path);
+    }
+};
+
+struct ConEqual {
+    bool operator()(const Con& l, const Con& r) const noexcept {
+        return l.dev_path == r.dev_path;
     }
 };

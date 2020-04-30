@@ -37,6 +37,7 @@ SOFTWARE.
 #include <string>
 #include <iterator>
 #include <vector>
+#include <map>
 #include <memory>
 
 // Open a file dialog window
@@ -57,7 +58,7 @@ SOFTWARE.
 #include "easy-imgui/easy_imgui.h"
 #include "imgui_internal.h" // PushItemFlags
 
-#include "Controller.hpp"
+#include "IRSensor.hpp"
 #define IMAGE_RES_PATH "jctool/original_res/"
 #define IMAGE_RES_EXT ".png"
 
@@ -165,7 +166,7 @@ namespace JCToolkit {
             bool is_rumble_active = false;
             SPIColors preview_col;
             RumbleData rd;
-            std::unique_ptr<Controller::IRSensor> ir = std::unique_ptr<Controller::IRSensor>(new Controller::IRSensor());
+            std::unique_ptr<IRSensor> ir = std::unique_ptr<IRSensor>(new IRSensor());
         };
         struct State {
             u8 device_info[10];
@@ -240,30 +241,8 @@ namespace JCToolkit {
                 ImGui::SetTooltip("%s", controller_type_label);
             }
         }
-        
-        void draw_controller(const Controller& controller, bool preview_colors = false){
-            ConHID::ProdID con_type;
-            switch (controller.type())
-            {
-            case Controller::Type::JoyConLeft:
-                con_type = ConHID::JoyConLeft;
-                break;
-            case Controller::Type::JoyConRight:
-                con_type = ConHID::JoyConRight;
-                break;
-            case Controller::Type::ProCon:
-                con_type = ConHID::ProCon;
-                break;
-            default:
-                con_type = ConHID::NoCon;
-                return;
-            }
-            draw_controller(con_type, (preview_colors) ? controller.preview_colors : controller.savedColors() );
-        }
 
         namespace ModifyController {
-            void show_dump_spi(Controller& controller){
-            }
             enum class SPIDumpAction {
                 None,
                 DoDump,
@@ -380,9 +359,6 @@ namespace JCToolkit {
                 return color_changed;
             }
 
-            void color_editor_page(Controller& controller) {
-            }
-
             void color_editor_page(ConHID::ProdID con_type, SPIColors& preview_colors) {
                 static int selected_part = 0;
                 static const char* part_labels[] = {
@@ -480,15 +456,11 @@ namespace JCToolkit {
                     }
                 });
             }
-
-            void show(Controller& controller, ImGui::NavStack& nav_stack){
-            }
         }
         /**
          * Firmware, MAC, S/N
          * =============================
          * UI Port from jctool/FormJoy.h
-         */
         void show_controller_info(Controller& controller){
             auto device_info = controller.deviceInfo();
             ImGui::BeginGroup();
@@ -503,31 +475,7 @@ namespace JCToolkit {
 
             ImGui::EndGroup();
         }
-
-        void show_controller_status(Controller& controller){
-            ImGui::BeginGroup();
-
-            int battery_report = controller.batteryReport();
-            ImGui::SameLine();
-            if(battery_report < 0)
-                ImGui::Text("Battery: Invalid reading.");
-            else{
-                ImageResource& battery_img = Assets::battery_indicators[battery_report];
-                ImGui::Image(
-                    reinterpret_cast<ImTextureID>(battery_img.getRID()),
-                    ImVec2(
-                        static_cast<float>(battery_img.getWidth()),
-                        static_cast<float>(battery_img.getHeight())
-                    )
-                );
-                ImGui::SameLine();
-                ImGui::Text("%d%% [%.2fV]", controller.batteryPercentage(), controller.batteryVoltage());
-            }
-
-            ImGui::Text("Temperature: %.2fF / %.2fC ", controller.temperatureF(), controller.temperatureC());
-            
-            ImGui::EndGroup();
-        }
+        */
 
         void showBattery(BatteryData& batt){
             auto report = ((batt.report >= 0) && (batt.report < 10)) ? batt.report : -1;
@@ -549,32 +497,6 @@ namespace JCToolkit {
 
         void showTemperature(TemperatureData& temp){
             ImGui::Text("Temperature: %.2fF / %.2fC ", temp.farenheight, temp.celsius);
-        }
-
-        void showController(Controller& controller){
-            auto controller_type = controller.type();
-
-            ImGui::BeginGroup();
-
-            if(controller_type == Controller::Type::None) {
-                ImGui::Text("No controller is connected.");
-                ImGui::EndGroup();
-                return;
-            }
-
-
-            show_controller_status(controller);
-
-            ImGui::Separator();
-
-            // Show the controller's device information.
-            show_controller_info(controller);
-
-            ImGui::Separator();
-
-            draw_controller(controller);
-
-            ImGui::EndGroup();
         }
 
         int showSelectDefaultTune(){
@@ -676,34 +598,6 @@ namespace JCToolkit {
                 show_explorer = true;
         }
 
-        void showRumblePlayer(Controller& controller, RumbleData& rumble_data) {
-            ImGui::ScopeDisableItems disable(controller.rumble_active);
-
-            int t;
-            if(((t = showSelectDefaultTune()) > 0) && controller.handle()){
-                controller.rumble_active = true;
-                TP::add_job([&](){
-                        play_tune(controller.handle(), controller.timming_byte, t);
-                        controller.rumble_active = false;
-                    }
-                );
-            }
-
-            showSelectRumbleFile(rumble_data);
-            
-            showRumbleData(rumble_data);
-
-            if((rumble_data.data != nullptr) && controller.handle()){
-                if(ImGui::Button("Play loaded song")){
-                    TP::add_job(
-                        [&](){
-                            controller.rumble(rumble_data);
-                        }
-                    );
-                }
-            }
-        }
-
         static const char* col_fils[] = {
             "Greyscale",
             "Night Vision",
@@ -711,7 +605,7 @@ namespace JCToolkit {
             "Infrared"
         };
 
-        void showIRCameraFeed(Controller::IRSensor& ir_sensor){
+        void showIRCameraFeed(IRSensor& ir_sensor){
             auto& size = std::get<2>(ir_resolutions[ir_sensor.res_idx_selected]);
             ImGui::ImageAutoFit((ImTextureID)ir_sensor.getCaptureTexID(), {size.x, size.y});
         }
@@ -720,7 +614,7 @@ namespace JCToolkit {
             None,
             Capture
         };
-        IRFeedControl showIRCameraFeedControl(Controller::IRSensor& ir){
+        IRFeedControl showIRCameraFeedControl(IRSensor& ir){
             ir_image_config& ir_config = ir.config;
             IRFeedControl res = IRFeedControl::None;
             ImGui::ScopeDisableItems disable(ir.capture_in_progress);
@@ -747,7 +641,7 @@ namespace JCToolkit {
             return res;
         }
 
-        void showIRCaptureSettings(Controller::IRSensor& ir){
+        void showIRCaptureSettings(IRSensor& ir){
             static u16 exposure_amt = 300;
             static int denoise_edge_smooth = 35;
             static int denoise_color_intrpl = 68; // Color Interpolation
@@ -853,7 +747,7 @@ namespace JCToolkit {
             ImGui::EndGroup();
         }
 
-        void showIRCaptureInfo(Controller::IRSensor& ir){
+        void showIRCaptureInfo(IRSensor& ir){
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvailWidth());
             ImGui::Text("%s", ir.capture_status.message_stream.rdbuf()->str().c_str());
             ImGui::PopTextWrapPos();
@@ -868,29 +762,6 @@ namespace JCToolkit {
             ImGui::Text("EXFilter: %d", capture_status.exfilter);
             ImGui::Text("EXFilter Int: %d", capture_status.exf_int);
             ImGui::Text("White Px: %d%%", capture_status.white_pixels_percent);
-        }
-        
-        void showIRCamera(Controller& controller) {
-            Controller::IRSensor& ir_sensor = controller.ir;
-
-            /* Stream/Capture */ {
-                ImGui::BeginGroup();
-                if(showIRCameraFeedControl(ir_sensor) == IRFeedControl::Capture){
-                    TP::add_job([&](){
-                        ir_sensor.capture(controller.handle(), controller.timming_byte);
-                    });
-                }
-                showIRCameraFeed(ir_sensor);
-                ImGui::EndGroup();
-            }
-
-            /* IR Message Stream / Capture Information */ {
-                showIRCaptureInfo(ir_sensor);
-            }
-            
-            /* IR Camera Settings */ {
-                showIRCaptureSettings(ir_sensor);
-            }
         }
 
         void show_as_sections_page(ImGui::Display* sections, int section_count, ImGui::Display*& selected_section, ImGui::NavStack& nav_stack){
@@ -1085,6 +956,7 @@ namespace JCToolkit {
                             con.dumpSPI("spi_dump.bin", sess_data.user.spi_dumping, sess_data.user.spi_bytes_dumped, sess_data.user.spi_cancel_dump);
                         break;
                         case ModifyController::SPIDumpAction::CancelDump:
+                            sess_data.user.spi_cancel_dump = true;
                         break;
                     }
 
@@ -1123,7 +995,7 @@ namespace JCToolkit {
         }
 
         void show_default_page_sessions(ImGui::NavStack& nav_stack){
-            static std::vector<std::pair<ConSess, ConSessData>> sessions;
+            static std::unordered_map<Con, std::pair<ConSess, ConSessData>, ConHash, ConEqual> sessions;
             static std::vector<Con> cons_found;
 
             if(ImGui::Button("Scan for Controllers")){
@@ -1173,8 +1045,8 @@ namespace JCToolkit {
                      * (p2) start the session on constructor
                      * (p3) delay getting status until it is done manually.
                      */
-                    sessions.push_back(std::make_pair(ConSess(con, true, ConSess::StatusDelay::DelayedManual), ConSessData()));
-                    auto& session = sessions.back();
+                    auto sess_insert = sessions.insert(std::make_pair(con, std::make_pair(ConSess(con, true, ConSess::StatusDelay::DelayedManual), ConSessData())));
+                    auto& session = sess_insert.first->second;
                     nav_stack.push({session.first.getProdStr() + " " + session.first.getHIDSN(),
                         [&](){
                             show_session_page(session, nav_stack);
@@ -1182,42 +1054,6 @@ namespace JCToolkit {
                     });
                 }
             }
-        }
-
-        void show_default_page(Controller& controller, RumbleData& rumble_data, ImGui::NavStack& nav_stack){
-            static ImGui::Display sections[] = {
-                {"Controller Status", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    showController(controller);
-                }},
-                {"HD Rumble Player", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    showRumblePlayer(controller, rumble_data);
-                }},
-                {"IR Camera", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    showIRCamera(controller);
-                }},
-                {"Modify Controller", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    ModifyController::show(controller, nav_stack);
-                }}
-            };
-            static ImGui::Display* selected_section = sections;
-
-            show_as_sections_page(sections, IM_ARRAYSIZE(sections), selected_section, nav_stack);
         }
 
         void show(const char* window_name) {
@@ -1278,5 +1114,9 @@ namespace JCToolkit {
         ImGui::PushStyleColor(ImGuiCol_Button, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x5D,0xFD,0xD9,155)));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::ColorConvertU32ToFloat4(IM_COL32(0x39,0x97,0xBD,155)));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, {}); // No rounding
+    }
+
+    void exit(){
+        TP::join_pool();
     }
 }
