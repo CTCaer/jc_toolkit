@@ -28,7 +28,9 @@ TODOS:
 
 **Alpha API** with ImGui Screen shot:
 
-![](./jctoolkit_ubuntu.png)
+![](./screenshots/jctoolkit_4.png)
+
+[More Screenshots Here](./screenshots/screenshots.md)
 
 Build the project with with CMake to get the above result.
 
