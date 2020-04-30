@@ -6,6 +6,14 @@
 #include <future>
 #include <sstream>
 #include "jctool_types.h"
+/**
+ * ==============================
+ * TESTING: REMOVE AFTER TESTING.
+ * Controller.hpp
+ * ==============================
+ */
+#include "Controller.hpp"
+
 
 struct Con {
     // Information provided by hid_device_info
@@ -18,6 +26,13 @@ struct Con {
     prod_id(ConHID::NoCon)
     {}
     Con(const hid_device_info* dev);
+};
+
+
+struct ConCmp {
+    bool operator()(const Con& l, const Con& r) const {
+        return l.dev_path.compare(r.dev_path) < 0;
+    }
 };
 
 class ConSess {
@@ -77,6 +92,15 @@ public:
     Status checkConnectionStatus(StatusDelay status_delay = StatusDelay::None);
     
     void testSetLedBusy();
+    void testIRCapture(Controller::IRSensor& ir);
+    void testHDRumble(RumbleData& rumble_data, bool& is_active);
+
+    void getTemperature(TemperatureData& fill_temp_data);
+    void getBattery(BatteryData& fill_batt_data);
+    void getColors(SPIColors& fill_spi_colors);
+    void dumpSPI(const std::string& to_file, bool& is_dumping, size_t& bytes_dumped, bool& cancel_spi_dump);
+
+    void writeColorsToSPI(const SPIColors& colors);
 private:
     std::future<Status> last_future_status;
     Status last_status_get; // Last status got from calling last_future_status.get()

@@ -66,6 +66,8 @@ public:
 
         void capture(controller_hid_handle_t host_controller, u8& timming_byte);
         uintptr_t getCaptureTexID();
+
+        IRSensor();
     private:
         u8 ir_max_frag_no;
         struct VideoStreamFrameData {
@@ -86,5 +88,5 @@ public:
     
     SPIColors preview_colors;
 
-    Controller();
+    inline Controller(){}
 };

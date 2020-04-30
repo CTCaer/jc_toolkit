@@ -38,7 +38,6 @@ SOFTWARE.
 #include <iterator>
 #include <vector>
 #include <memory>
-#include <thread>
 
 // Open a file dialog window
 #ifdef WIN32
@@ -107,6 +106,20 @@ namespace JCToolkit {
             RightGrip,
         };
 
+        constexpr ImageResource* get_con_lines(ConHID::ProdID con_prod_id){
+            #define ARRAY_LAST(x) x[IM_ARRAYSIZE(x) - 1]
+            switch(con_prod_id){
+                case ConHID::JoyConLeft:
+                    return &ARRAY_LAST(left_joycon);
+                case ConHID::JoyConRight:
+                    return &ARRAY_LAST(right_joycon);
+                case ConHID::ProCon:
+                    return &ARRAY_LAST(pro_controller);
+                default:
+                    return nullptr;
+            }
+        }
+
         static const char* default_rumbles[] = {
             "Super Mario Bros - Main theme",
             "Super Mario Odyssey - Jump Up, Super Star!"
@@ -143,26 +156,43 @@ namespace JCToolkit {
                 Assets::pro_controller[i].sendToGPU();
         }
     }
-    namespace UI {
-        void draw_controller(const Controller& controller, bool preview_colors = false){
-            const SPIColors* use_colors = &controller.savedColors();
-            if(preview_colors)
-                use_colors = &controller.preview_colors;
 
+    struct ConSessData {
+        struct User {
+            bool spi_dumping = false;
+            bool spi_cancel_dump = false;
+            size_t spi_bytes_dumped = 0;
+            bool is_rumble_active = false;
+            SPIColors preview_col;
+            RumbleData rd;
+            std::unique_ptr<Controller::IRSensor> ir = std::unique_ptr<Controller::IRSensor>(new Controller::IRSensor());
+        };
+        struct State {
+            u8 device_info[10];
+            TemperatureData temp_data;
+            BatteryData batt_data;
+            SPIColors saved_col;
+            std::string sn;
+        };
+        State state;
+        User user;
+    };
+    namespace UI {
+        void draw_controller(ConHID::ProdID con_type, const SPIColors& use_colors){
             // Detect which controller type label to use.
             const char* controller_type_label = "NONE";
             ImageResource* con_images = nullptr;
-            switch (controller.type())
+            switch (con_type)
             {
-            case Controller::Type::JoyConLeft:
+            case ConHID::JoyConLeft:
                 controller_type_label = "Joy-Con (L)";
                 con_images = Assets::left_joycon;
                 break;
-            case Controller::Type::JoyConRight:
+            case ConHID::JoyConRight:
                 controller_type_label = "Joy-Con (R)";
                 con_images = Assets::right_joycon;
                 break;
-            case Controller::Type::ProCon:
+            case ConHID::ProCon:
                 controller_type_label = "Pro Controller";
                 con_images = Assets::pro_controller;
                 break;
@@ -174,23 +204,23 @@ namespace JCToolkit {
             auto con_start = ImGui::GetCursorPos();
   
             for(int i = 0,
-                extra = ((controller.type() == Controller::Type::ProCon) ? 2 : 0);
+                extra = ((con_type == ConHID::ProCon) ? 2 : 0);
                 i < (Assets::SharedPartCount + extra);
                 i++
             ){
                 SPIColors::color_t col;
                 switch(i){
                     case Assets::Body:{
-                        col = use_colors->body;
+                        col = use_colors.body;
                     }break;
                     case Assets::Buttons:{
-                        col = use_colors->buttons;
+                        col = use_colors.buttons;
                     }break;
                     case Assets::LeftGrip:{
-                        col = use_colors->left_grip;
+                        col = use_colors.left_grip;
                     }break;
                     case Assets::RightGrip:{
-                        col = use_colors->right_grip;
+                        col = use_colors.right_grip;
                     }break;
                     default:
                         col.r = ~u8(0);
@@ -210,37 +240,43 @@ namespace JCToolkit {
                 ImGui::SetTooltip("%s", controller_type_label);
             }
         }
+        
+        void draw_controller(const Controller& controller, bool preview_colors = false){
+            ConHID::ProdID con_type;
+            switch (controller.type())
+            {
+            case Controller::Type::JoyConLeft:
+                con_type = ConHID::JoyConLeft;
+                break;
+            case Controller::Type::JoyConRight:
+                con_type = ConHID::JoyConRight;
+                break;
+            case Controller::Type::ProCon:
+                con_type = ConHID::ProCon;
+                break;
+            default:
+                con_type = ConHID::NoCon;
+                return;
+            }
+            draw_controller(con_type, (preview_colors) ? controller.preview_colors : controller.savedColors() );
+        }
+
         namespace ModifyController {
             void show_dump_spi(Controller& controller){
-                static bool dumping = false;
-                static size_t bytes_dumped = 0;
-                static const char* spi_dump_file = "spi_dump.bin";
+            }
+            enum class SPIDumpAction {
+                None,
+                DoDump,
+                CancelDump
+            };
+            SPIDumpAction show_dump_spi(bool dumping, size_t bytes_dumped){
+                SPIDumpAction res = SPIDumpAction::None;
 
                 ImGui::TextWrapped("ATTENTION: It is recommended that you backup your SPI before uploading any modifications to your controller! The only person to blame will be yourself if you choose to ignore this warning!");
                 
                 ImGui::ScopeDisableItems disable(dumping);
-                if(ImGui::Button("Dump SPI")){
-                    dumping = true;
-                    controller.cancel_spi_dump = false;
-                    std::thread dump_spi_thread(
-                        [&controller](){
-                            
-                            DumpSPICTX ctx{
-                                controller.cancel_spi_dump,
-                                bytes_dumped,
-                                spi_dump_file
-                            };
-                            bytes_dumped = 0;
-                            int res = dump_spi(controller.handle(), controller.timming_byte, ctx);
-                            if(res)
-                                printf("There was a problem backing up the SPI. Try again?");
-                            dumping = false;
-                        }
-                    );
-                    dump_spi_thread.detach();
-                }
-                ImGui::SameLine();
-                ImGui::TextWrapped("The output will be named %s", spi_dump_file);
+                if(ImGui::Button("Dump SPI"))
+                    res = SPIDumpAction::DoDump;
 
                 if(dumping)
                     disable.allowEnabled();
@@ -248,12 +284,14 @@ namespace JCToolkit {
                     disable.ensureDisabled();
                 
                 if(ImGui::Button("Cancel Dump"))
-                    controller.cancel_spi_dump = true;
+                    res = SPIDumpAction::CancelDump;
                 ImGui::SameLine();
                 ImGui::ProgressBar((float) bytes_dumped / SPI_SIZE, {-1, 0},
                     std::string(std::to_string(int((float) bytes_dumped / SPI_SIZE * 100)) + "%").c_str()
                 );
                 ImGui::Text("%.2f KB / %.2f KB", (float) bytes_dumped / 1024, float(SPI_SIZE / 1024));
+
+                return res;
             }
 
             void show_retail_colors(std::function<void(SPIColors::color_t, float)> show_color){
@@ -343,6 +381,9 @@ namespace JCToolkit {
             }
 
             void color_editor_page(Controller& controller) {
+            }
+
+            void color_editor_page(ConHID::ProdID con_type, SPIColors& preview_colors) {
                 static int selected_part = 0;
                 static const char* part_labels[] = {
                     "Body",
@@ -354,7 +395,7 @@ namespace JCToolkit {
                 ImGui::Columns(2);
 
                 int j;
-                if((controller.type() != Controller::Type::ProCon)){
+                if((con_type != ConHID::ProCon)){
                     j = Assets::ControllerPartIdx::Lines;
                     if(!(selected_part < Assets::ControllerPartIdx::Lines))
                         selected_part = 0;
@@ -369,14 +410,7 @@ namespace JCToolkit {
                     ImGui::EndCombo();
                 }
 
-                draw_controller(controller, true); // Draw the controller color preview.
-
-                // Write the color that is being previewed to the SPI.
-                if(ImGui::Button("Write spi colors")){
-                    int res = write_spi_colors(controller.handle(), controller.timming_byte, controller.preview_colors);
-                    //controller.fetch_spi_colors();
-                }
-
+                draw_controller(con_type, preview_colors); // Draw the controller color preview.
 
                 ImGui::NextColumn();
 
@@ -420,8 +454,6 @@ namespace JCToolkit {
 
                             ImGui::EndTabBar();
                         }
-                        
-
 
                         if(color_changed){
                             static auto _set_preview_color = [](SPIColors::color_t& prev_col, ImU32& col){
@@ -430,16 +462,16 @@ namespace JCToolkit {
                             auto x = ImGui::GetColorU32(primary_color);
                             switch(selected_part){
                                 case Assets::Body:
-                                _set_preview_color(controller.preview_colors.body, x);
+                                _set_preview_color(preview_colors.body, x);
                                 break;
                                 case Assets::Buttons:
-                                _set_preview_color(controller.preview_colors.buttons, x);
+                                _set_preview_color(preview_colors.buttons, x);
                                 break;
                                 case Assets::LeftGrip:
-                                _set_preview_color(controller.preview_colors.left_grip, x);
+                                _set_preview_color(preview_colors.left_grip, x);
                                 break;
                                 case Assets::RightGrip:
-                                _set_preview_color(controller.preview_colors.right_grip, x);
+                                _set_preview_color(preview_colors.right_grip, x);
                                 break;
                             }
                         }
@@ -450,17 +482,6 @@ namespace JCToolkit {
             }
 
             void show(Controller& controller, ImGui::NavStack& nav_stack){
-                show_dump_spi(controller);
-
-                ImGui::Separator();
-
-                if(ImGui::Button("Edit Colors")){
-                    nav_stack.push({"Color Editor",
-                        [&](){
-                            color_editor_page(controller);
-                        }
-                    });
-                }
             }
         }
         /**
@@ -508,6 +529,28 @@ namespace JCToolkit {
             ImGui::EndGroup();
         }
 
+        void showBattery(BatteryData& batt){
+            auto report = ((batt.report >= 0) && (batt.report < 10)) ? batt.report : -1;
+            if(report < 0)
+                ImGui::Text("Battery: Invalid reading.");
+            else{
+                ImageResource& battery_img = Assets::battery_indicators[report];
+                ImGui::Image(
+                    reinterpret_cast<ImTextureID>(battery_img.getRID()),
+                    ImVec2(
+                        static_cast<float>(battery_img.getWidth()),
+                        static_cast<float>(battery_img.getHeight())
+                    )
+                );
+                ImGui::SameLine();
+                ImGui::Text("%d%% [%.2fV]", batt.percent, batt.voltage);
+            }
+        }
+
+        void showTemperature(TemperatureData& temp){
+            ImGui::Text("Temperature: %.2fF / %.2fC ", temp.farenheight, temp.celsius);
+        }
+
         void showController(Controller& controller){
             auto controller_type = controller.type();
 
@@ -534,36 +577,7 @@ namespace JCToolkit {
             ImGui::EndGroup();
         }
 
-        void showRumblePlayer(Controller& controller, RumbleData& rumble_data) {
-            static bool show_explorer = false;
-            static const char* explorer_name = "Choose HD Rumble File";
-            static ImGuiID dir_exp = ImGui::DirectoryExplorer::NewDirExplorer(explorer_name, std::filesystem::current_path().string());
-            static std::string selected;
-
-            if(ImGui::DirectoryExplorer::OpenFileDialog(dir_exp, selected, show_explorer, ".jcvib,.bnvib")) {
-                const char* file_name = selected.c_str();
-                if(file_name) {
-                    std::ifstream rumble_fstream = std::ifstream(file_name, std::ios_base::binary);
-                    if(!rumble_fstream.bad()){
-                        RumbleData new_rumble_data;
-                        // Calculate the size of the file.
-                        size_t rumble_data_size = std::filesystem::file_size(file_name);
-                        u8* read_buf = new u8[rumble_data_size];
-                        rumble_fstream.read((char*)read_buf, rumble_data_size);
-
-                        new_rumble_data.from_file = file_name;
-                        new_rumble_data.metadata = getVIBMetadata(read_buf);
-                        new_rumble_data.data.reset(read_buf, [](u8* p){
-                            delete[] p;
-                        }); // Allocate enough space for the rumble data.
-
-                        rumble_data = new_rumble_data;
-                    }
-                }
-            }
-
-            ImGui::ScopeDisableItems disable(controller.rumble_active);
-
+        int showSelectDefaultTune(){
             static int selected_song = 0;
             if(ImGui::BeginCombo("Default songs", Assets::default_rumbles[selected_song])){
                 for(int i = 0; i < IM_ARRAYSIZE(Assets::default_rumbles); i++){
@@ -572,20 +586,12 @@ namespace JCToolkit {
                 }
                 ImGui::EndCombo();
             }
-            if(controller.handle() && ImGui::Button("Play selected song")){
-                controller.rumble_active = true;
-                std::thread tune_thread(
-                    [&](){
-                        play_tune(controller.handle(), controller.timming_byte, selected_song);
-                        controller.rumble_active = false;
-                    }
-                );
-                tune_thread.detach();
-            }
+            if(ImGui::Button("Play selected song"))
+                return selected_song;
+            return -1;
+        }
 
-            if(ImGui::Button("Load Rumble Data"))
-                show_explorer = true;
-            
+        void showRumbleData(RumbleData& rumble_data){
             if(rumble_data.data == nullptr)
                 ImGui::Text("There is no rumble data loaded.");
             else {
@@ -635,10 +641,65 @@ namespace JCToolkit {
                         rumble_data.metadata.loop_times
                     );
                 }
-                if(controller.handle()){
-                    if(ImGui::Button("Play loaded song")){
-                        controller.rumble(rumble_data);
+            }
+        }
+
+        void showSelectRumbleFile(RumbleData& rumble_data){
+            static bool show_explorer = false;
+            static const char* explorer_name = "Choose HD Rumble File";
+            static ImGuiID dir_exp = ImGui::DirectoryExplorer::NewDirExplorer(explorer_name, std::filesystem::current_path().string());
+            static std::string selected;
+
+            if(ImGui::DirectoryExplorer::OpenFileDialog(dir_exp, selected, show_explorer, ".jcvib,.bnvib")) {
+                const char* file_name = selected.c_str();
+                if(file_name) {
+                    std::ifstream rumble_fstream = std::ifstream(file_name, std::ios_base::binary);
+                    if(!rumble_fstream.bad()){
+                        RumbleData new_rumble_data;
+                        // Calculate the size of the file.
+                        size_t rumble_data_size = std::filesystem::file_size(file_name);
+                        u8* read_buf = new u8[rumble_data_size];
+                        rumble_fstream.read((char*)read_buf, rumble_data_size);
+
+                        new_rumble_data.from_file = file_name;
+                        new_rumble_data.metadata = getVIBMetadata(read_buf);
+                        new_rumble_data.data.reset(read_buf, [](u8* p){
+                            delete[] p;
+                        }); // Allocate enough space for the rumble data.
+
+                        rumble_data = new_rumble_data;
                     }
+                }
+            }
+
+            if(ImGui::Button("Load Rumble Data"))
+                show_explorer = true;
+        }
+
+        void showRumblePlayer(Controller& controller, RumbleData& rumble_data) {
+            ImGui::ScopeDisableItems disable(controller.rumble_active);
+
+            int t;
+            if(((t = showSelectDefaultTune()) > 0) && controller.handle()){
+                controller.rumble_active = true;
+                TP::add_job([&](){
+                        play_tune(controller.handle(), controller.timming_byte, t);
+                        controller.rumble_active = false;
+                    }
+                );
+            }
+
+            showSelectRumbleFile(rumble_data);
+            
+            showRumbleData(rumble_data);
+
+            if((rumble_data.data != nullptr) && controller.handle()){
+                if(ImGui::Button("Play loaded song")){
+                    TP::add_job(
+                        [&](){
+                            controller.rumble(rumble_data);
+                        }
+                    );
                 }
             }
         }
@@ -653,290 +714,186 @@ namespace JCToolkit {
         void showIRCameraFeed(Controller::IRSensor& ir_sensor){
             auto& size = std::get<2>(ir_resolutions[ir_sensor.res_idx_selected]);
             ImGui::ImageAutoFit((ImTextureID)ir_sensor.getCaptureTexID(), {size.x, size.y});
-            ImGui::EndGroup();
         }
-        
-        void showIRCamera(Controller& controller) {
+
+        enum class IRFeedControl {
+            None,
+            Capture
+        };
+        IRFeedControl showIRCameraFeedControl(Controller::IRSensor& ir){
+            ir_image_config& ir_config = ir.config;
+            IRFeedControl res = IRFeedControl::None;
+            ImGui::ScopeDisableItems disable(ir.capture_in_progress);
+
+            ImGui::BeginGroup();
+            ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config.ir_flip, flip_dir_0);
+            if(ImGui::Button("Capture Image")){
+                ir.capture_mode = IRCaptureMode::Image;
+                res = IRFeedControl::Capture;
+            }
+            ImGui::SameLine();
+            bool video_in_progress = ir.capture_mode == IRCaptureMode::Video;
+            if(video_in_progress)
+                disable.allowEnabled();
+            if(ImGui::Button(video_in_progress ? "Stop" : "Stream Video")){
+                if(!video_in_progress) {
+                    ir.capture_mode = IRCaptureMode::Video;
+                    res = IRFeedControl::Capture;
+                } else {
+                    ir.capture_mode = IRCaptureMode::Off; // For stopping the video stream
+                }
+            }
+            ImGui::EndGroup();
+            return res;
+        }
+
+        void showIRCaptureSettings(Controller::IRSensor& ir){
             static u16 exposure_amt = 300;
             static int denoise_edge_smooth = 35;
             static int denoise_color_intrpl = 68; // Color Interpolation
 
-            Controller::IRSensor& ir_sensor = controller.ir;
-            // The controller's ir config
-            ir_image_config& ir_config = ir_sensor.config;
-
-            /* Stream/Capture */ {
-                ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
-
+            ir_image_config& ir_config = ir.config;
+            ImGui::BeginGroup();
+            ImGui::Text("IR Camera Settings");
+            /* Output Frame Settings */ {
                 ImGui::BeginGroup();
-                ImGui::CheckboxFlags("Flip Capture", (uint32_t*)&ir_config.ir_flip, flip_dir_0);
-                if(ImGui::Button("Capture Image")) {
-                    ir_sensor.capture_mode = IRCaptureMode::Image;
-                    // Initialize the IR Sensor AND Take a photo with the ir sensor configs store in Controller::ir_sensor.
-                    ir_sensor.capture(controller.handle(), controller.timming_byte);
-                    disable.ensureDisabled();
-                }
-                ImGui::SameLine();
-                bool video_in_progress = ir_sensor.capture_mode == IRCaptureMode::Video;
-                if(video_in_progress)
-                    disable.allowEnabled();
-                if(ImGui::Button(video_in_progress ? "Stop" : "Stream Video")){
-                    if(!video_in_progress) {
-                        ir_sensor.capture_mode = IRCaptureMode::Video;
-                        ir_sensor.capture(controller.handle(), controller.timming_byte);
-                    } else
-                        ir_sensor.capture_mode = IRCaptureMode::Off; // For stopping the video stream
-                }
-                disable.ensureDisabled();
-                showIRCameraFeed(ir_sensor);
-            }
+                if(ImGui::CollapsingHeader("Frame Display Settings")){
+                    ImGui::ScopeDisableItems disable(ir.capture_in_progress);
 
-            /* IR Message Stream / Capture Information */ {
-                ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvailWidth());
-                ImGui::Text("%s", ir_sensor.capture_status.message_stream.rdbuf()->str().c_str());
-                ImGui::PopTextWrapPos();
-
-                auto& capture_status = ir_sensor.capture_status;
-                ImGui::Text("FPS: %.2f (%d ms)", capture_status.fps, (int) ((capture_status.fps > 0.0f) ? (1/capture_status.fps) : NAN));
-                ImGui::Text("Frame counter: %d", capture_status.frame_counter);
-                ImGui::Text("Last frag no: %d", capture_status.last_frag_no);
-                ImGui::Text("Duration: %f (seconds)", capture_status.duration);
-                ImGui::Text("Ambient Noise: %.2f", capture_status.noise_level);
-                ImGui::Text("Intensity: %d%%", capture_status.avg_intensity_percent);
-                ImGui::Text("EXFilter: %d", capture_status.exfilter);
-                ImGui::Text("EXFilter Int: %d", capture_status.exf_int);
-                ImGui::Text("White Px: %d%%", capture_status.white_pixels_percent);
-            }
-            
-            /* IR Camera Settings */ {
-                ImGui::BeginGroup();
-                ImGui::Text("IR Camera Settings");
-                /* Output Frame Settings */ {
+                    // Resolution settings
                     ImGui::BeginGroup();
-                    if(ImGui::CollapsingHeader("Frame Display Settings")){
-                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
+                    ImGui::Text("Resolution");
 
-                        // Resolution settings
-                        ImGui::BeginGroup();
-                        ImGui::Text("Resolution");
-
-                        const int res_count = IM_ARRAYSIZE(ir_resolutions);
-                        for(int i=0; i < res_count; i++){
-                            auto& res_tuple = ir_resolutions[i];
-                            bool selected = std::get<1>(res_tuple) == std::get<1>(ir_resolutions[ir_sensor.res_idx_selected]);
-                            if(ImGui::RadioButton(std::get<0>(res_tuple), selected)){
-                                ir_sensor.res_idx_selected = i;
-                                // Set the resolution value on the config.
-                                ir_config.ir_res_reg = std::get<1>(res_tuple);
-                            }
-                        }
-                        ImGui::EndGroup();
-
-                        ImGui::SameLine();
-                        // Color filter settings
-                        ImGui::BeginGroup();
-                        ImGui::Text("Color Filter");
-
-                        for(int i = 0; i < IRColorCount; i++){
-                            if(ImGui::RadioButton(col_fils[i], i == ir_sensor.colorize_with))
-                                ir_sensor.colorize_with = (IRColor)i;
-                        }
-                        ImGui::EndGroup();
-                    }
-                    ImGui::EndGroup();
-
-                    ImGui::BeginGroup();
-                    if(ImGui::CollapsingHeader("Advanced Settings")){
-                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
-
-                        static const u8 min_x = 1;
-                        static const u8 max_x = 20;
-                        ImGui::SliderScalar("Digital Gain (lossy)", ImGuiDataType_U8, &ir_config.ir_digital_gain, &min_x, &max_x, "x%d");
-                        /* Exposure */ {
-                            ImGui::BeginGroup();
-                            if(ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt))
-                                ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
-                            if(ImGui::Checkbox("Auto Exposure (experimental)", &ir_sensor.auto_exposure)){
-                                if(!ir_sensor.auto_exposure && (ir_sensor.capture_mode == IRCaptureMode::Video)) {
-                                    ir_sensor.auto_exposure = false;
-                                    ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
-                                } else {
-                                    ir_config.ir_digital_gain = 1;
-                                }
-                            }
-                            ImGui::EndGroup();
-                        }
-                        /* Denoise */ {
-                            ImGui::BeginGroup();
-                            ImGui::CheckboxFlags("Enable", &ir_config.ir_denoise, ir_denoise_Enable);
-                            if(ImGui::InputInt("Edge Smoothing", &denoise_edge_smooth))
-                                ir_image_config_Sets::denoise_edge_smooth(ir_config.ir_denoise, denoise_edge_smooth); // TODO: Clamp to 0-256
-                            if(ImGui::InputInt("Color Interpolation", &denoise_color_intrpl))
-                                ir_image_config_Sets::denoise_color_intrpl(ir_config.ir_denoise, denoise_color_intrpl); // TODO: Clamp to 0-256
-                            ImGui::EndGroup();
+                    const int res_count = IM_ARRAYSIZE(ir_resolutions);
+                    for(int i=0; i < res_count; i++){
+                        auto& res_tuple = ir_resolutions[i];
+                        bool selected = std::get<1>(res_tuple) == std::get<1>(ir_resolutions[ir.res_idx_selected]);
+                        if(ImGui::RadioButton(std::get<0>(res_tuple), selected)){
+                            ir.res_idx_selected = i;
+                            // Set the resolution value on the config.
+                            ir_config.ir_res_reg = std::get<1>(res_tuple);
                         }
                     }
                     ImGui::EndGroup();
-                }
-                /* Near-Infrared Light Settings */ {
+
+                    ImGui::SameLine();
+                    // Color filter settings
                     ImGui::BeginGroup();
-                    if(ImGui::CollapsingHeader("Near-Infrared Light")){
-                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
+                    ImGui::Text("Color Filter");
 
-                        static constexpr u8 max_intensity = ~u8(0);
-                        static constexpr u8 min_intensity = 0;
-                        ImGui::CheckboxFlags("(Disable) Far/Narrow (75*) Leds 1-2", (uint32_t*)&ir_config.ir_leds, ir_leds_NarrowDisable);
-                        ImGui::SliderScalar("Intensity##narrow", ImGuiDataType_U8, &ir_config.ir_leds_intensity, &min_intensity, &max_intensity, "%u");
-                        ImGui::CheckboxFlags("(Disable) Near/Wide (130*) Leds 3-4", (uint32_t*)&ir_config.ir_leds, ir_leds_WideDisable);
-                        ImGui::SliderScalar("Intensity##wide", ImGuiDataType_U8, (u8*)&ir_config.ir_leds_intensity + 1, &min_intensity, &max_intensity, "%u");
-                        ImGui::CheckboxFlags("Flashlight Mode", (uint32_t*)&ir_config.ir_leds, ir_leds_FlashlightMode);
-                        ImGui::CheckboxFlags("Strobe Flash Mode", (uint32_t*)&ir_config.ir_leds, ir_leds_StrobeFlashMode);
-                        ImGui::CheckboxFlags("External IR Filter", (uint32_t*)&ir_config.ir_ex_light_filter, ir_ex_light_fliter_0);
-                    }
-                    ImGui::EndGroup();
-
-                }
-                /* IR Sensor Register/Value */ {
-                    ImGui::BeginGroup();
-                    if(ImGui::CollapsingHeader("Custom IR Sensor Register/Value")){
-                        ImGui::ScopeDisableItems disable(ir_sensor.capture_in_progress);
-
-                        ImGui::InputInt("Register", (int*)&ir_config.ir_custom_register); // TODO: clamp to 0x5FF
-                        ImGui::InputInt("Value", (int *)((uint16_t*)&ir_config.ir_custom_register + 1)); // TODO: clamp to 0xFF
+                    for(int i = 0; i < IRColorCount; i++){
+                        if(ImGui::RadioButton(col_fils[i], i == ir.colorize_with))
+                            ir.colorize_with = (IRColor)i;
                     }
                     ImGui::EndGroup();
                 }
                 ImGui::EndGroup();
+
+                ImGui::BeginGroup();
+                if(ImGui::CollapsingHeader("Advanced Settings")){
+                    ImGui::ScopeDisableItems disable(ir.capture_in_progress);
+
+                    static const u8 min_x = 1;
+                    static const u8 max_x = 20;
+                    ImGui::SliderScalar("Digital Gain (lossy)", ImGuiDataType_U8, &ir_config.ir_digital_gain, &min_x, &max_x, "x%d");
+                    /* Exposure */ {
+                        ImGui::BeginGroup();
+                        if(ImGui::InputScalar("Exposure (us | micro-seconds)", ImGuiDataType_U16, &exposure_amt))
+                            ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
+                        if(ImGui::Checkbox("Auto Exposure (experimental)", &ir.auto_exposure)){
+                            if(!ir.auto_exposure && (ir.capture_mode == IRCaptureMode::Video)) {
+                                ir.auto_exposure = false;
+                                ir_image_config_Sets::exposure(ir_config.ir_exposure, exposure_amt);
+                            } else {
+                                ir_config.ir_digital_gain = 1;
+                            }
+                        }
+                        ImGui::EndGroup();
+                    }
+                    /* Denoise */ {
+                        ImGui::BeginGroup();
+                        ImGui::CheckboxFlags("Enable", &ir_config.ir_denoise, ir_denoise_Enable);
+                        if(ImGui::InputInt("Edge Smoothing", &denoise_edge_smooth))
+                            ir_image_config_Sets::denoise_edge_smooth(ir_config.ir_denoise, denoise_edge_smooth); // TODO: Clamp to 0-256
+                        if(ImGui::InputInt("Color Interpolation", &denoise_color_intrpl))
+                            ir_image_config_Sets::denoise_color_intrpl(ir_config.ir_denoise, denoise_color_intrpl); // TODO: Clamp to 0-256
+                        ImGui::EndGroup();
+                    }
+                }
+                ImGui::EndGroup();
+            }
+            /* Near-Infrared Light Settings */ {
+                ImGui::BeginGroup();
+                if(ImGui::CollapsingHeader("Near-Infrared Light")){
+                    ImGui::ScopeDisableItems disable(ir.capture_in_progress);
+
+                    static constexpr u8 max_intensity = ~u8(0);
+                    static constexpr u8 min_intensity = 0;
+                    ImGui::CheckboxFlags("(Disable) Far/Narrow (75*) Leds 1-2", (uint32_t*)&ir_config.ir_leds, ir_leds_NarrowDisable);
+                    ImGui::SliderScalar("Intensity##narrow", ImGuiDataType_U8, &ir_config.ir_leds_intensity, &min_intensity, &max_intensity, "%u");
+                    ImGui::CheckboxFlags("(Disable) Near/Wide (130*) Leds 3-4", (uint32_t*)&ir_config.ir_leds, ir_leds_WideDisable);
+                    ImGui::SliderScalar("Intensity##wide", ImGuiDataType_U8, (u8*)&ir_config.ir_leds_intensity + 1, &min_intensity, &max_intensity, "%u");
+                    ImGui::CheckboxFlags("Flashlight Mode", (uint32_t*)&ir_config.ir_leds, ir_leds_FlashlightMode);
+                    ImGui::CheckboxFlags("Strobe Flash Mode", (uint32_t*)&ir_config.ir_leds, ir_leds_StrobeFlashMode);
+                    ImGui::CheckboxFlags("External IR Filter", (uint32_t*)&ir_config.ir_ex_light_filter, ir_ex_light_fliter_0);
+                }
+                ImGui::EndGroup();
+
+            }
+            /* IR Sensor Register/Value */ {
+                ImGui::BeginGroup();
+                if(ImGui::CollapsingHeader("Custom IR Sensor Register/Value")){
+                    ImGui::ScopeDisableItems disable(ir.capture_in_progress);
+
+                    ImGui::InputInt("Register", (int*)&ir_config.ir_custom_register); // TODO: clamp to 0x5FF
+                    ImGui::InputInt("Value", (int *)((uint16_t*)&ir_config.ir_custom_register + 1)); // TODO: clamp to 0xFF
+                }
+                ImGui::EndGroup();
+            }
+            ImGui::EndGroup();
+        }
+
+        void showIRCaptureInfo(Controller::IRSensor& ir){
+            ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvailWidth());
+            ImGui::Text("%s", ir.capture_status.message_stream.rdbuf()->str().c_str());
+            ImGui::PopTextWrapPos();
+
+            auto& capture_status = ir.capture_status;
+            ImGui::Text("FPS: %.2f (%d ms)", capture_status.fps, (int) ((capture_status.fps > 0.0f) ? (1/capture_status.fps) : NAN));
+            ImGui::Text("Frame counter: %d", capture_status.frame_counter);
+            ImGui::Text("Last frag no: %d", capture_status.last_frag_no);
+            ImGui::Text("Duration: %f (seconds)", capture_status.duration);
+            ImGui::Text("Ambient Noise: %.2f", capture_status.noise_level);
+            ImGui::Text("Intensity: %d%%", capture_status.avg_intensity_percent);
+            ImGui::Text("EXFilter: %d", capture_status.exfilter);
+            ImGui::Text("EXFilter Int: %d", capture_status.exf_int);
+            ImGui::Text("White Px: %d%%", capture_status.white_pixels_percent);
+        }
+        
+        void showIRCamera(Controller& controller) {
+            Controller::IRSensor& ir_sensor = controller.ir;
+
+            /* Stream/Capture */ {
+                ImGui::BeginGroup();
+                if(showIRCameraFeedControl(ir_sensor) == IRFeedControl::Capture){
+                    TP::add_job([&](){
+                        ir_sensor.capture(controller.handle(), controller.timming_byte);
+                    });
+                }
+                showIRCameraFeed(ir_sensor);
+                ImGui::EndGroup();
+            }
+
+            /* IR Message Stream / Capture Information */ {
+                showIRCaptureInfo(ir_sensor);
+            }
+            
+            /* IR Camera Settings */ {
+                showIRCaptureSettings(ir_sensor);
             }
         }
-    
-        void show_default_page(Controller& controller, RumbleData& rumble_data, ImGui::NavStack& nav_stack){
-            static ImGui::Display sections[] = {
-                {"Controller Status", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    showController(controller);
-                }},
-                {"HD Rumble Player", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    showRumblePlayer(controller, rumble_data);
-                }},
-                {"IR Camera", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    showIRCamera(controller);
-                }},
-                {"Modify Controller", [&](){
-                    if(!controller.handle()){
-                        ImGui::Text("Connect a controller first!");
-                        return;
-                    }
-                    ModifyController::show(controller, nav_stack);
-                }},
-                {"Test Sessions", [&](){
-                    static std::vector<ConSess> sessions;
-                    static std::stringstream dispatch_msg_stream;
-                    static std::vector<Con> cons_found;
 
-                    if(ImGui::Button("Scan for Controllers")){
-                        hid_device_info *devs, *curr;
-                        devs = hid_enumerate(ConHID::VID, 0);
-
-                        curr = devs;
-                        cons_found.clear();
-                        while(curr){
-                            cons_found.push_back(Con(curr));
-                            curr = curr->next;
-                        }
-
-                        hid_free_enumeration(devs);
-                    }
-                    
-                    if(ImGui::BeginTable("devices", 5)){
-                        ImGui::TableNextCell();
-                        ImGui::Text(""); ImGui::TableNextCell();
-                        ImGui::Text("ProdID"); ImGui::TableNextCell();
-                        ImGui::Text("HID S/N"); ImGui::TableNextCell();
-                        ImGui::Text("Man. String"); ImGui::TableNextCell();
-                        ImGui::Text("Prod. String"); ImGui::TableNextCell();
-
-                        for(auto& con: cons_found){
-                            ImGui::PushID(&con);
-                            if(ImGui::Button("Start Session")){
-                                //sessions.push_back(ConSess(con)); // (1) Contruct from a const ref Con.
-                                //sessions.back().startSession(ConSess::StatusDelay::DelayedManual); // (2) start the session, but delay the status.
-                                /**
-                                 * (p1) construct from a const ref con
-                                 * (p2) start the session on constructor
-                                 * (p3) delay getting status until it is done manually.
-                                 */
-                                sessions.push_back(ConSess(con, true, ConSess::StatusDelay::DelayedManual));
-                            } ImGui::TableNextCell();
-                            ImGui::Text("%X", con.prod_id); ImGui::TableNextCell();
-                            ImGui::Text("%s", con.hid_sn.c_str()); ImGui::TableNextCell();
-                            ImGui::Text("%s", con.manu_string.c_str()); ImGui::TableNextCell();
-                            ImGui::Text("%s", con.prod_string.c_str()); ImGui::TableNextCell();
-                            ImGui::PopID();
-                        }
-                        ImGui::EndTable();
-                    }
-
-                    if(ImGui::BeginTabBar("Sessions")){
-                        for(auto& session: sessions){
-                            ImGui::PushID(&session);
-                            if(ImGui::BeginTabItem(session.getHIDSN().c_str())){
-                                switch(session.getLastStatus(ConSess::LastStatusFrom::LastStatusGet)){
-                                    case ConSess::SESS_OK:
-                                    if(ImGui::Button("Set Led Busy")){
-                                        session.testSetLedBusy();
-                                    }
-                                    break;
-                                    case ConSess::DELAYED_STATUS_MANUAL:
-                                    ImGui::Text("[StatusDelay::DelayedManual]");
-                                    if(ImGui::Button("Click me to get the session status of the controller.")){
-                                        session.getLastStatus();
-                                    }
-                                    ImGui::Text("Waiting for \"session OK.\"");
-                                    break;
-                                }
-
-                                auto avail_size = ImGui::GetContentRegionAvail();
-                                ImGui::MakeSection({"Message stream",
-                                    [&](){
-                                        ImGui::Text("%s", session.messageStream().str().c_str());
-                                    }
-                                }, {avail_size.x/2, avail_size.y/2});
-                                ImGui::SameLine(0,0);
-                                ImGui::MakeSection({"Error stream",
-                                    [&](){
-                                        ImGui::Text("%s", session.errorStream().str().c_str());
-                                    }
-                                }, {avail_size.x/2, avail_size.y/2});
-
-                                ImGui::EndTabItem();
-                            }
-                            ImGui::PopID();
-                        }
-                        ImGui::EndTabBar();
-                    }
-
-                    ImGui::Separator();
-
-                    ImGui::MakeSection({"Session Dispatcher Output",
-                        [&](){
-                            ImGui::Text("%s", dispatch_msg_stream.str().c_str());
-                        }
-                    });
-                }}
-            };
-            static ImGui::Display* selected_section = sections;
+        void show_as_sections_page(ImGui::Display* sections, int section_count, ImGui::Display*& selected_section, ImGui::NavStack& nav_stack){
 
             static const float btn_padding = 5.0f;
             static const float btn_line_thickness = btn_padding / 2;
@@ -944,10 +901,8 @@ namespace JCToolkit {
                 btn_padding + btn_line_thickness*2, // (1)Border and (2)selection indicator.
                 btn_padding + btn_line_thickness
             };
-            static auto _display_section_button = [](ImGui::Display& section, bool selected, const ImVec2& use_region_size){
+            static auto _display_section_button = [&](ImGui::Display& section, bool selected, const ImVec2& use_region_size){
                 auto draw_list = ImGui::GetWindowDrawList();
-
-                
 
                 /* Setup button style stack */ {
                     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
@@ -1022,7 +977,8 @@ namespace JCToolkit {
                 ImGui::PopStyleVar();
                 ImGui::PopStyleColor();
                 
-                for(auto& section: sections){
+                for(int i=0; i < section_count; i++){
+                    auto& section = sections[i];
                     _display_section_button(
                         section,
                         selected_section == &section,
@@ -1057,13 +1013,220 @@ namespace JCToolkit {
             }
         }
 
+        void show_session_page(std::pair<ConSess, ConSessData>& session, ImGui::NavStack& nav_stack){
+            ConSess& con = session.first;
+            ConSessData& sess_data = session.second;
+            static auto _sess_ok = [&](){
+                switch(session.first.getLastStatus(ConSess::LastStatusFrom::LastStatusGet)){
+                    case ConSess::SESS_OK:
+                    return true;
+                    case ConSess::DELAYED_STATUS_MANUAL:
+                    ImGui::Text("[StatusDelay::DelayedManual]");
+                    if(ImGui::Button("Click me to get the session status of the controller.")){
+                        con.getLastStatus();
+                    }
+                    ImGui::Text("Waiting for \"session OK.\"");
+                    break;
+                }
+                return false;
+            };
+            static ImGui::Display sections[] = {
+                {"Controller", [&](){
+                    if(!_sess_ok())
+                        return;
+                    draw_controller(con.getProdID(), sess_data.state.saved_col);
+                    if(ImGui::Button("Get Colors")){
+                        con.getColors(sess_data.state.saved_col);
+                    }
+                }},
+                {"Basic Stuff", [&](){
+                    if(!_sess_ok())
+                        return;
+                    if(ImGui::Button("Set Led Busy")){
+                        con.testSetLedBusy();
+                    }
+                    showTemperature(sess_data.state.temp_data);
+                    if(ImGui::Button("Update Temperature")){
+                        con.getTemperature(sess_data.state.temp_data);
+                    }
+                    showBattery(sess_data.state.batt_data);
+                    if(ImGui::Button("Update Battery")){
+                        con.getBattery(sess_data.state.batt_data);
+                    }
+                }},
+                {"HD Rumble Player", [&](){
+                    if(!_sess_ok())
+                        return;
+                    auto& rd = sess_data.user.rd;
+                    ImGui::ScopeDisableItems disable(sess_data.user.is_rumble_active);
+                    showSelectRumbleFile(rd);
+                    showRumbleData(rd);
+                    if((rd.data != nullptr) && ImGui::Button("Play")){
+                        con.testHDRumble(rd, sess_data.user.is_rumble_active);
+                    }
+                }},
+                {"IR Camera", [&](){
+                    if(!_sess_ok())
+                        return;
+                    auto& ir = sess_data.user.ir;
+                    if(showIRCameraFeedControl(*ir) == IRFeedControl::Capture)
+                        con.testIRCapture(*ir);
+                    showIRCameraFeed(*ir);
+                    showIRCaptureInfo(*ir);
+                    showIRCaptureSettings(*ir);
+                }},
+                {"Modify Controller", [&](){
+                    if(!_sess_ok())
+                        return;
+                    auto that_res = ModifyController::show_dump_spi(sess_data.user.spi_dumping, sess_data.user.spi_bytes_dumped);
+                    
+                    switch(that_res){
+                        case ModifyController::SPIDumpAction::DoDump:
+                            con.dumpSPI("spi_dump.bin", sess_data.user.spi_dumping, sess_data.user.spi_bytes_dumped, sess_data.user.spi_cancel_dump);
+                        break;
+                        case ModifyController::SPIDumpAction::CancelDump:
+                        break;
+                    }
+
+                    if(ImGui::Button("Edit Colors")){
+                        nav_stack.push({"Color Editor",
+                            [&](){
+                                ModifyController::color_editor_page(con.getProdID(), sess_data.user.preview_col);
+                            }
+                        });
+                    }
+
+                    draw_controller(con.getProdID(), sess_data.user.preview_col);
+                    if(ImGui::Button("Write colors to SPI")){
+                        con.writeColorsToSPI(sess_data.user.preview_col);
+                    }
+                }},
+                {"Session Messages", [&](){
+                    if(!_sess_ok())
+                        return;
+                    auto avail_size = ImGui::GetContentRegionAvail();
+                    ImGui::MakeSection({"Message stream",
+                        [&](){
+                            ImGui::Text("%s", con.messageStream().str().c_str());
+                        }
+                    }, {avail_size.x, avail_size.y/2});
+                    
+                    ImGui::MakeSection({"Error stream",
+                        [&](){
+                            ImGui::Text("%s", con.errorStream().str().c_str());
+                        }
+                    }, {avail_size.x, avail_size.y/2});
+                }}
+            };
+            static ImGui::Display* selected_section = sections;
+            show_as_sections_page(sections, IM_ARRAYSIZE(sections), selected_section, nav_stack);
+        }
+
+        void show_default_page_sessions(ImGui::NavStack& nav_stack){
+            static std::vector<std::pair<ConSess, ConSessData>> sessions;
+            static std::vector<Con> cons_found;
+
+            if(ImGui::Button("Scan for Controllers")){
+                hid_device_info *devs, *curr;
+                devs = hid_enumerate(ConHID::VID, 0);
+
+                curr = devs;
+                cons_found.clear();
+                while(curr){
+                    cons_found.push_back(Con(curr));
+                    curr = curr->next;
+                }
+
+                hid_free_enumeration(devs);
+            }
+            
+            for(auto& con: cons_found){
+                ImGui::PushID(&con);
+
+                ImTextureID icon_rid = 0;
+                auto icon_size = ImVec2();
+                ImageResource* icon;
+                if(icon = Assets::get_con_lines(con.prod_id)){
+                    icon_rid = (ImTextureID)icon->getRID();
+                    icon_size.x = icon->getWidth();
+                    icon_size.y = icon->getHeight();
+                }
+                ImGui::MakeSection({con.prod_string,
+                    [&](){
+                        ImGui::ImageAutoFit(icon_rid, icon_size);
+                    }
+                }, {100, 100});
+                ImGui::PopID();
+
+                if(ImGui::IsItemHovered()){
+                    ImGui::BeginTooltip();
+                    ImGui::Text("ProdID: %X", con.prod_id);
+                    ImGui::Text("HID S/N: %s", con.hid_sn.c_str());
+                    ImGui::Text("Man. String: %s", con.manu_string.c_str());
+                    ImGui::Text("Prod. String: %s", con.prod_string.c_str());
+                    ImGui::EndTooltip();
+                }
+
+                if(ImGui::IsItemClicked()){
+                    /**
+                     * (p1) construct from a const ref con
+                     * (p2) start the session on constructor
+                     * (p3) delay getting status until it is done manually.
+                     */
+                    sessions.push_back(std::make_pair(ConSess(con, true, ConSess::StatusDelay::DelayedManual), ConSessData()));
+                    auto& session = sessions.back();
+                    nav_stack.push({session.first.getProdStr() + " " + session.first.getHIDSN(),
+                        [&](){
+                            show_session_page(session, nav_stack);
+                        }
+                    });
+                }
+            }
+        }
+
+        void show_default_page(Controller& controller, RumbleData& rumble_data, ImGui::NavStack& nav_stack){
+            static ImGui::Display sections[] = {
+                {"Controller Status", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
+                    showController(controller);
+                }},
+                {"HD Rumble Player", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
+                    showRumblePlayer(controller, rumble_data);
+                }},
+                {"IR Camera", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
+                    showIRCamera(controller);
+                }},
+                {"Modify Controller", [&](){
+                    if(!controller.handle()){
+                        ImGui::Text("Connect a controller first!");
+                        return;
+                    }
+                    ModifyController::show(controller, nav_stack);
+                }}
+            };
+            static ImGui::Display* selected_section = sections;
+
+            show_as_sections_page(sections, IM_ARRAYSIZE(sections), selected_section, nav_stack);
+        }
+
         void show(const char* window_name) {
-            static Controller controller;
-            static RumbleData rumble_data;
+            //static Controller controller;
+            //static RumbleData rumble_data;
             static ImGui::NavStack nav_stack;
             static ImGui::Display default_page{window_name,
                 [](){
-                    JCToolkit::UI::show_default_page(controller, rumble_data, nav_stack);
+                    JCToolkit::UI::show_default_page_sessions(nav_stack);
                 }
             };
 
@@ -1084,13 +1247,13 @@ namespace JCToolkit {
             
             ImGui::Separator();
 
-            if(controller.handle()){
-                draw_controller(controller);
-                ImGui::SameLine();
-            }
+            //if(controller.handle()){
+            //    draw_controller(controller);
+            //    ImGui::SameLine();
+            //}
             // Try to establish a connection with a controller.
-            if(ImGui::Button("Try Connection Attempt"))
-                controller.connection();
+            //if(ImGui::Button("Try Connection Attempt"))
+            //    controller.connection();
 
             ImGui::SameLine();
 

@@ -23,8 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-#include <thread>
-
 #include "Controller.hpp"
 
 #include "jctool.h"
@@ -37,13 +35,12 @@ SOFTWARE.
 #include <unistd.h>
 #endif
 
-Controller::Controller() {
-    // Set up an IR Sensor with a default configuration scheme.
-    //memset(&ir_sensor, 0, sizeof(ir_sensor)); // Set all values to zero.
-    //memmove(&ir_sensor.message_stream, new std::stringstream(), sizeof(std::stringstream));
-    ir.capture_status.message_stream << "IR Message:" << std::endl;
+#include "TP/TP.hpp"
 
-    ir_image_config& ir_config = ir.config;
+Controller::IRSensor::IRSensor(){
+    this->capture_status.message_stream << "IR Message:" << std::endl;
+    memset(&this->config, 0, sizeof(this->config));
+    ir_image_config& ir_config = this->config;
     ir_config.ir_leds_intensity = ~ir_config.ir_leds_intensity; // Max intensity.
     ir_config.ir_ex_light_filter = ir_ex_light_fliter_0;
     ir_config.ir_denoise = ir_denoise_Enable;
@@ -134,58 +131,53 @@ void Controller::IRSensor::capture(controller_hid_handle_t host_controller, u8& 
             this->ir_max_frag_no = 0x03;
             break;
     }
+    
+    IRCaptureCTX capture_context{
+            host_controller,
+            timming_byte,
+            this->config,
+            this->ir_max_frag_no,
+            this->capture_mode,
+            this->capture_status
+    };
+    int res = ir_sensor(capture_context,
+        [this](const u8* raw_capture, size_t size_raw_capture){
+            auto raw_capture_copy = std::shared_ptr<u8>(new u8[size_raw_capture], [](u8* d){ delete[] d;});
+            memcpy(raw_capture_copy.get(), raw_capture, size_raw_capture);
+            GPUTexture::SideLoader::add_job(
+                [this, raw_capture_copy](){
+                    auto& resolution = std::get<2>(ir_resolutions[this->res_idx_selected]);
+                    ImageResourceData ird;
+                    ird.width = resolution.width;
+                    ird.height = resolution.height;
+                    ird.num_channels = 3;
+                    ird.bytes = new u8[ird.width*ird.height*ird.num_channels];
 
-    std::thread ir_sensor_thread(
-        [this, host_controller, &timming_byte](){
-            IRCaptureCTX capture_context{
-                    host_controller,
-                    timming_byte,
-                    this->config,
-                    this->ir_max_frag_no,
-                    this->capture_mode,
-                    this->capture_status
-            };
-            int res = ir_sensor(capture_context,
-                [this](const u8* raw_capture, size_t size_raw_capture){
-                    auto raw_capture_copy = std::shared_ptr<u8>(new u8[size_raw_capture], [](u8* d){ delete[] d;});
-                    memcpy(raw_capture_copy.get(), raw_capture, size_raw_capture);
-                    GPUTexture::SideLoader::add_job(
-                        [this, raw_capture_copy](){
-                            auto& resolution = std::get<2>(ir_resolutions[this->res_idx_selected]);
-                            ImageResourceData ird;
-                            ird.width = resolution.width;
-                            ird.height = resolution.height;
-                            ird.num_channels = 3;
-                            ird.bytes = new u8[ird.width*ird.height*ird.num_channels];
-
-                            // Colorize the raw capture.
-                            colorizefrom8BitsPP(
-                                raw_capture_copy.get(),
-                                ird.bytes,
-                                ird.width,
-                                ird.height,
-                                ird.num_channels,
-                                this->colorize_with,
-                                ColorOrder::InRGBOrder
-                            );
-
-                            std::lock_guard<std::mutex> lock(this->vstream_frame_dat.texture_mutex);
-                            this->vstream_frame_dat.updated = true;
-                            // 1. Render to the texture.
-                            GPUTexture::openGLUpload(this->vstream_frame_dat.textures[this->vstream_frame_dat.idx_render], ird.width, ird.height, ird.num_channels, ird.bytes);
-                            // 2. The texture was rendered so put it in the swap,
-                            // so that the new texture could be swapped out for the old texture.
-                            std::swap(this->vstream_frame_dat.idx_swap, this->vstream_frame_dat.idx_render);
-                        }
+                    // Colorize the raw capture.
+                    colorizefrom8BitsPP(
+                        raw_capture_copy.get(),
+                        ird.bytes,
+                        ird.width,
+                        ird.height,
+                        ird.num_channels,
+                        this->colorize_with,
+                        ColorOrder::InRGBOrder
                     );
+
+                    std::lock_guard<std::mutex> lock(this->vstream_frame_dat.texture_mutex);
+                    this->vstream_frame_dat.updated = true;
+                    // 1. Render to the texture.
+                    GPUTexture::openGLUpload(this->vstream_frame_dat.textures[this->vstream_frame_dat.idx_render], ird.width, ird.height, ird.num_channels, ird.bytes);
+                    // 2. The texture was rendered so put it in the swap,
+                    // so that the new texture could be swapped out for the old texture.
+                    std::swap(this->vstream_frame_dat.idx_swap, this->vstream_frame_dat.idx_render);
                 }
             );
-            this->capture_in_progress = false;
-            if(res > 0)
-                this->capture_status.message_stream << ir_sensorErrorToString(res);
         }
-    ); // Dispatch the thread.
-    ir_sensor_thread.detach(); // Detach the thread so it does not have to be joined.
+    );
+    this->capture_in_progress = false;
+    if(res > 0)
+        this->capture_status.message_stream << ir_sensorErrorToString(res);
 }
 
 uintptr_t Controller::IRSensor::getCaptureTexID() {
@@ -205,9 +197,6 @@ uintptr_t Controller::IRSensor::getCaptureTexID() {
 
 void Controller::rumble(RumbleData& rumble_data){
     this->rumble_active = true;
-    std::thread hd_rumble_thread([this, rumble_data](){
-        int res = play_hd_rumble_file(this->hid_handle, this->timming_byte, rumble_data);
-        this->rumble_active = false;
-    });
-    hd_rumble_thread.detach();
+    int res = play_hd_rumble_file(this->hid_handle, this->timming_byte, rumble_data);
+    this->rumble_active = false;
 }

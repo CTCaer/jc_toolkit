@@ -1853,7 +1853,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
 
     u8 buf[49];
     u8 buf_reply[0x170];
-    auto buf_image = std::unique_ptr<u8[]>(new u8[buf_size_img]); // 8bpp greyscale image.
+    auto buf_image = std::make_unique<u8[]>(buf_size_img); // 8bpp greyscale image.
 	uint16_t bad_signal = 0;
     int error_reading = 0;
     float noise_level = 0.0f;
@@ -1866,7 +1866,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
     //int max_pixels = ((ir_max_frag_no < 218 ? ir_max_frag_no : 217) + 1) * 300;
     int white_pixels_percent = 0;
 
-    memset(buf_image.get(), 0, sizeof(buf_size_img));
+    memset(buf_image.get(), 0, buf_size_img);
 
     memset(buf, 0, sizeof(buf));
     memset(buf_reply, 0, sizeof(buf_reply));
@@ -2021,7 +2021,11 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
             }
 
             if((pd.flags & IR::PacketFlags::WriteFrag) == IR::PacketFlags::WriteFrag){
-                memcpy(buf_image.get() + (IR::FRAG_SIZE * got_frag_no), buf_reply + IR::FRAG_START_OFFSET, IR::FRAG_SIZE);
+                //assert(got_frag_no <= ir_max_frag_no);
+                if(!(got_frag_no <= ir_max_frag_no))
+                    std::cout << "Got frag #" << got_frag_no << ", but the max frag # is " << (int)ir_max_frag_no << std::endl;
+                else
+                    memcpy(buf_image.get() + (IR::FRAG_SIZE * got_frag_no), buf_reply + IR::FRAG_START_OFFSET, IR::FRAG_SIZE);
             }
 
             // Check if final fragment. Draw the frame.

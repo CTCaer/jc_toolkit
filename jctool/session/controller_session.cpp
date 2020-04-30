@@ -37,6 +37,7 @@ SOFTWARE.
 #include "TP/TP.hpp"
 
 #include "jctool.h"
+#include "jctool_helpers.hpp"
 
 namespace ConSessManager {
     /**
@@ -47,14 +48,9 @@ namespace ConSessManager {
         u8 timming_byte = 0;
     };
 
-    struct compCon {
-        bool operator()(const Con& l, const Con& r) const {
-            return l.dev_path.compare(r.dev_path) < 0;
-        }
-    };
     namespace {
         static std::mutex cons_with_sessions_mutex;
-        static std::map<Con, SessionContext, compCon> cons_with_sessions;
+        static std::map<Con, SessionContext, ConCmp> cons_with_sessions;
 
         static ConSess::Status session_dispatcher(const Con& con, std::stringstream& msg_str, std::stringstream& err_str){
             SessionContext sc;
@@ -195,9 +191,11 @@ ConSess::Status ConSess::checkConnectionStatus(StatusDelay status_delay){
     return this->getStatus(status_delay);
 }
 
+#define CON_JOB(lbda_captures...) [lbda_captures](controller_hid_handle_t handle, u8& timming_byte)
+
 void ConSess::testSetLedBusy(){
     ConSessManager::add_job(*this->con,
-        [this](controller_hid_handle_t handle, u8& timming_byte){
+        CON_JOB(this){
             // Convert ConHID::ProdID to Controller::Type for the sake of how set_led_busy works.
             Controller::Type con_type;
             switch(this->con->prod_id){
@@ -218,6 +216,89 @@ void ConSess::testSetLedBusy(){
             *msg_str << this->con->hid_sn << " set_led_busy" << std::endl;
             
             set_led_busy(handle, timming_byte, con_type); // Always returns 0, so no error checking.
+        }
+    );
+}
+
+void ConSess::testIRCapture(Controller::IRSensor& ir){
+    ConSessManager::add_job(*this->con,
+        CON_JOB(&){
+            *msg_str << this->con->hid_sn << " Controller::IRSensor::capture" << std::endl;
+            ir.capture(handle, timming_byte);
+        }
+    );
+}
+
+void ConSess::testHDRumble(RumbleData& rumble_data, bool& is_active){
+    is_active = true;
+    ConSessManager::add_job(*this->con,
+        CON_JOB(&){
+            *msg_str << this->con->hid_sn << " play_hd_rumble_file" << std::endl;
+            int res = play_hd_rumble_file(handle, timming_byte, rumble_data);
+            is_active = false;
+        }
+    );
+}
+
+void ConSess::getTemperature(TemperatureData& fill_temp_data){
+    ConSessManager::add_job(*this->con,
+        CON_JOB(&){
+            *msg_str << this->con->hid_sn << " get_temperature, parseTemperatureData" << std::endl;
+            unsigned char temperature_data[2] = {};
+            get_temperature(handle, timming_byte, temperature_data);
+            fill_temp_data = parseTemperatureData(temperature_data);
+        }
+    );
+}
+
+void ConSess::getBattery(BatteryData& fill_batt_data){
+    ConSessManager::add_job(*this->con,
+        CON_JOB(&){
+            *msg_str << this->con->hid_sn << " get_battery, parseBatteryData" << std::endl;
+            unsigned char battery_data[3] = {};
+            get_battery(handle, timming_byte, battery_data);
+            fill_batt_data = parseBatteryData(battery_data);
+        }
+    );
+}
+
+void ConSess::getColors(SPIColors& fill_spi_colors){
+    ConSessManager::add_job(*this->con,
+        CON_JOB(&){
+            *msg_str << this->con->hid_sn << " get_spi_colors" << std::endl;
+            fill_spi_colors = get_spi_colors(handle, timming_byte);
+        }
+    );
+}
+
+void ConSess::dumpSPI(const std::string& to_file, bool& is_dumping, size_t& bytes_dumped, bool& cancel_spi_dump){
+    is_dumping = true;
+    cancel_spi_dump = false;
+    ConSessManager::add_job(*this->con,
+        CON_JOB(&, spi_dump_file = to_file){
+            *msg_str << this->con->hid_sn << " dump_spi" << std::endl;
+            DumpSPICTX ctx{
+                cancel_spi_dump,
+                bytes_dumped,
+                spi_dump_file.c_str()
+            };
+            bytes_dumped = 0;
+            int res = dump_spi(handle, timming_byte, ctx);
+            if(res)
+                *msg_str << this->con->hid_sn << " There was a problem backing up the SPI. Try again?" << std::endl;
+
+            is_dumping = false;      
+        }
+    );
+}
+
+void ConSess::writeColorsToSPI(const SPIColors& colors){
+    ConSessManager::add_job(*this->con,
+        CON_JOB(&, colors = colors){
+            *msg_str << this->con->hid_sn << " write_spi_colors" << std::endl;
+            int res = write_spi_colors(handle, timming_byte, colors);
+            if(res)
+                *msg_str << this->con->hid_sn << " There was a problem writing the colors. Try again?" << std::endl;
         }
     );
 }
