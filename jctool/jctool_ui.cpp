@@ -496,7 +496,7 @@ namespace JCToolkit {
         }
 
         void showTemperature(TemperatureData& temp){
-            ImGui::Text("Temperature: %.2fF / %.2fC ", temp.farenheight, temp.celsius);
+            ImGui::Text("Temperature: %.2fF / %.2fC ", temp.fahrenheit, temp.celsius);
         }
 
         int showSelectDefaultTune(){

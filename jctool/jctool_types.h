@@ -132,7 +132,7 @@ struct BatteryData {
 
 struct TemperatureData {
     float celsius;
-    float farenheight;
+    float fahrenheit;
 };
 
 
