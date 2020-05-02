@@ -36,7 +36,7 @@ int get_device_info(controller_hid_handle_t handle, u8& timming_byte, u8* test_b
 int get_battery(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
 int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
 int dump_spi(controller_hid_handle_t handle, u8& timming_byte, DumpSPICTX& dump_spi_ctx);
-int send_rumble(controller_hid_handle_t handle, u8& timming_byte);
+int send_rumble(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type);
 int send_custom_command(controller_hid_handle_t handle, u8& timming_byte, u8* arg);
 int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no);
 int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, const RumbleData& rumble_data);

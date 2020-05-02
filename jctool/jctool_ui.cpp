@@ -166,7 +166,7 @@ namespace JCToolkit {
             bool is_rumble_active = false;
             SPIColors preview_col;
             RumbleData rd;
-            std::unique_ptr<IRSensor> ir = std::unique_ptr<IRSensor>(new IRSensor());
+            std::unique_ptr<IRSensor> ir{new IRSensor()};
         };
         struct State {
             u8 device_info[10];
@@ -885,8 +885,8 @@ namespace JCToolkit {
         }
 
         void show_session_page(std::pair<ConSess, ConSessData>& session, ImGui::NavStack& nav_stack){
-            ConSess& con = session.first;
-            ConSessData& sess_data = session.second;
+            static ConSess* con_p{nullptr};
+            static ConSessData* sess_data_p{nullptr};
             static auto _sess_ok = [&](){
                 switch(session.first.getLastStatus(ConSess::LastStatusFrom::LastStatusGet)){
                     case ConSess::SESS_OK:
@@ -894,7 +894,7 @@ namespace JCToolkit {
                     case ConSess::DELAYED_STATUS_MANUAL:
                     ImGui::Text("[StatusDelay::DelayedManual]");
                     if(ImGui::Button("Click me to get the session status of the controller.")){
-                        con.getLastStatus();
+                        con_p->getLastStatus();
                     }
                     ImGui::Text("Waiting for \"session OK.\"");
                     break;
@@ -905,43 +905,46 @@ namespace JCToolkit {
                 {"Controller", [&](){
                     if(!_sess_ok())
                         return;
-                    draw_controller(con.getProdID(), sess_data.state.saved_col);
+                    draw_controller(con_p->getProdID(), sess_data_p->state.saved_col);
                     if(ImGui::Button("Get Colors")){
-                        con.getColors(sess_data.state.saved_col);
+                        con_p->getColors(sess_data_p->state.saved_col);
                     }
                 }},
                 {"Basic Stuff", [&](){
                     if(!_sess_ok())
                         return;
                     if(ImGui::Button("Set Led Busy")){
-                        con.testSetLedBusy();
+                        con_p->testSetLedBusy();
                     }
-                    showTemperature(sess_data.state.temp_data);
+                    if(ImGui::Button("Send Rumble")){
+                        con_p->testSendRumble();
+                    }
+                    showTemperature(sess_data_p->state.temp_data);
                     if(ImGui::Button("Update Temperature")){
-                        con.getTemperature(sess_data.state.temp_data);
+                        con_p->getTemperature(sess_data_p->state.temp_data);
                     }
-                    showBattery(sess_data.state.batt_data);
+                    showBattery(sess_data_p->state.batt_data);
                     if(ImGui::Button("Update Battery")){
-                        con.getBattery(sess_data.state.batt_data);
+                        con_p->getBattery(sess_data_p->state.batt_data);
                     }
                 }},
                 {"HD Rumble Player", [&](){
                     if(!_sess_ok())
                         return;
-                    auto& rd = sess_data.user.rd;
-                    ImGui::ScopeDisableItems disable(sess_data.user.is_rumble_active);
+                    auto& rd = sess_data_p->user.rd;
+                    ImGui::ScopeDisableItems disable(sess_data_p->user.is_rumble_active);
                     showSelectRumbleFile(rd);
                     showRumbleData(rd);
                     if((rd.data != nullptr) && ImGui::Button("Play")){
-                        con.testHDRumble(rd, sess_data.user.is_rumble_active);
+                        con_p->testHDRumble(rd, sess_data_p->user.is_rumble_active);
                     }
                 }},
                 {"IR Camera", [&](){
                     if(!_sess_ok())
                         return;
-                    auto& ir = sess_data.user.ir;
+                    auto& ir = sess_data_p->user.ir;
                     if(showIRCameraFeedControl(*ir) == IRFeedControl::Capture)
-                        con.testIRCapture(*ir);
+                        con_p->testIRCapture(*ir);
                     showIRCameraFeed(*ir);
                     showIRCaptureInfo(*ir);
                     showIRCaptureSettings(*ir);
@@ -949,28 +952,28 @@ namespace JCToolkit {
                 {"Modify Controller", [&](){
                     if(!_sess_ok())
                         return;
-                    auto that_res = ModifyController::show_dump_spi(sess_data.user.spi_dumping, sess_data.user.spi_bytes_dumped);
+                    auto that_res = ModifyController::show_dump_spi(sess_data_p->user.spi_dumping, sess_data_p->user.spi_bytes_dumped);
                     
                     switch(that_res){
                         case ModifyController::SPIDumpAction::DoDump:
-                            con.dumpSPI("spi_dump.bin", sess_data.user.spi_dumping, sess_data.user.spi_bytes_dumped, sess_data.user.spi_cancel_dump);
+                            con_p->dumpSPI("spi_dump.bin", sess_data_p->user.spi_dumping, sess_data_p->user.spi_bytes_dumped, sess_data_p->user.spi_cancel_dump);
                         break;
                         case ModifyController::SPIDumpAction::CancelDump:
-                            sess_data.user.spi_cancel_dump = true;
+                            sess_data_p->user.spi_cancel_dump = true;
                         break;
                     }
 
                     if(ImGui::Button("Edit Colors")){
                         nav_stack.push({"Color Editor",
                             [&](){
-                                ModifyController::color_editor_page(con.getProdID(), sess_data.user.preview_col);
+                                ModifyController::color_editor_page(con_p->getProdID(), sess_data_p->user.preview_col);
                             }
                         });
                     }
 
-                    draw_controller(con.getProdID(), sess_data.user.preview_col);
+                    draw_controller(con_p->getProdID(), sess_data_p->user.preview_col);
                     if(ImGui::Button("Write colors to SPI")){
-                        con.writeColorsToSPI(sess_data.user.preview_col);
+                        con_p->writeColorsToSPI(sess_data_p->user.preview_col);
                     }
                 }},
                 {"Session Messages", [&](){
@@ -979,24 +982,28 @@ namespace JCToolkit {
                     auto avail_size = ImGui::GetContentRegionAvail();
                     ImGui::MakeSection({"Message stream",
                         [&](){
-                            ImGui::Text("%s", con.messageStream().str().c_str());
+                            ImGui::Text("%s", con_p->messageStream().str().c_str());
                         }
                     }, {avail_size.x, avail_size.y/2});
                     
                     ImGui::MakeSection({"Error stream",
                         [&](){
-                            ImGui::Text("%s", con.errorStream().str().c_str());
+                            ImGui::Text("%s", con_p->errorStream().str().c_str());
                         }
                     }, {avail_size.x, avail_size.y/2});
                 }}
             };
-            static ImGui::Display* selected_section = sections;
+            static ImGui::Display* selected_section{sections};
+            con_p = &session.first;
+            sess_data_p = &session.second;
             show_as_sections_page(sections, IM_ARRAYSIZE(sections), selected_section, nav_stack);
         }
 
         void show_default_page_sessions(ImGui::NavStack& nav_stack){
             static std::unordered_map<Con, std::pair<ConSess, ConSessData>, ConHash, ConEqual> sessions;
             static std::vector<Con> cons_found;
+
+            ImGui::BeginGroup();
 
             if(ImGui::Button("Scan for Controllers")){
                 hid_device_info *devs, *curr;
@@ -1054,6 +1061,21 @@ namespace JCToolkit {
                     });
                 }
             }
+            
+            ImGui::EndGroup();
+
+            ImGui::SameLine();
+
+            static const ImVec2 feed_size{160,120};
+            // Show all IR Feeds
+            for(auto& session: sessions){
+                ImGui::MakeSection({session.first.hid_sn,
+                    [&](){
+                        showIRCameraFeed(*session.second.second.user.ir);
+                    }
+                }, feed_size);
+                ImGui::SameLine();
+            }
         }
 
         void show(const char* window_name) {
@@ -1082,14 +1104,6 @@ namespace JCToolkit {
             }
             
             ImGui::Separator();
-
-            //if(controller.handle()){
-            //    draw_controller(controller);
-            //    ImGui::SameLine();
-            //}
-            // Try to establish a connection with a controller.
-            //if(ImGui::Button("Try Connection Attempt"))
-            //    controller.connection();
 
             ImGui::SameLine();
 

@@ -84,6 +84,7 @@ public:
     void testSetLedBusy();
     void testIRCapture(IRSensor& ir);
     void testHDRumble(RumbleData& rumble_data, bool& is_active);
+    void testSendRumble();
 
     void getTemperature(TemperatureData& fill_temp_data);
     void getBattery(BatteryData& fill_batt_data);
@@ -92,6 +93,7 @@ public:
 
     void writeColorsToSPI(const SPIColors& colors);
 private:
+    std::promise<Status> status_promise;
     std::future<Status> last_future_status;
     Status last_status_get; // Last status got from calling last_future_status.get()
 

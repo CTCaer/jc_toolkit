@@ -37,9 +37,9 @@ SOFTWARE.
 
 #include "TP/TP.hpp"
 
-IRSensor::IRSensor(){
+IRSensor::IRSensor()
+{
     this->capture_status.message_stream << "IR Message:" << std::endl;
-    memset(&this->config, 0, sizeof(this->config));
     ir_image_config& ir_config = this->config;
     ir_config.ir_leds_intensity = ~ir_config.ir_leds_intensity; // Max intensity.
     ir_config.ir_ex_light_filter = ir_ex_light_fliter_0;
