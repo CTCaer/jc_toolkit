@@ -7,6 +7,11 @@ if(UNIX AND NOT APPLE) # Linux
     set(LINUX TRUE)
 endif()
 
+if(WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:msvcrt.lib")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL$<$<CONFIG:Debug>:Debug>")
+endif()
+
 ###########################
 # We will be using hidapi #
 ###########################
@@ -25,6 +30,12 @@ add_library(hidapi STATIC
 target_include_directories(hidapi PRIVATE
     hidapi/hidapi
 )
+
+if(WIN32)
+    target_link_libraries(hidapi
+        setupapi
+    )
+endif()
 
 add_compile_options(
     -D__jctool_cpp_API__

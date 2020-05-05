@@ -12,7 +12,7 @@ public:
 
     bool capture_in_progress{};
     IRCaptureMode capture_mode{};
-    IRCaptureStatus capture_status{};
+    IRCaptureStatus capture_status;
 
     int res_idx_selected{}; /** The index number of the resolution selected.
     * See ir_sensor.h.

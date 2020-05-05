@@ -192,7 +192,7 @@ ConSess::Status ConSess::checkConnectionStatus(StatusDelay status_delay){
     return this->getStatus(status_delay);
 }
 
-#define CON_JOB(lbda_captures...) [lbda_captures](controller_hid_handle_t handle, u8& timming_byte)
+#define CON_JOB(...) [__VA_ARGS__](controller_hid_handle_t handle, u8& timming_byte)
 
 void ConSess::testSetLedBusy(){
     ConSessManager::add_job(*this->con,

@@ -9,11 +9,11 @@
 #include <iomanip>
 #include <sstream>
 // #define NOMINMAX
+#include <chrono>
 #ifdef WIN32
 #include <cstdio>
 #include <Windows.h>
 #else
-#include <chrono>
 #include <stdio.h>
 #include <unistd.h>
 inline int Sleep(uint64_t ms){

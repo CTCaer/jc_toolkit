@@ -188,15 +188,15 @@ enum IRCaptureMode : u8 {
 };
 
 struct IRCaptureStatus {
-    float fps;
-    int frame_counter;
-    int last_frag_no;
-    float duration;
-    float noise_level;
-    int avg_intensity_percent;
-    int white_pixels_percent;
-    u16 exfilter;
-    u8 exf_int;
+    float fps{};
+    int frame_counter{};
+    int last_frag_no{};
+    float duration{};
+    float noise_level{};
+    int avg_intensity_percent{};
+    int white_pixels_percent{};
+    u16 exfilter{};
+    u8 exf_int{};
     std::stringstream message_stream;
 };
 

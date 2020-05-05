@@ -68,7 +68,7 @@ SOFTWARE.
 
 namespace JCToolkit {
     namespace Assets {
-        ImageResource battery_indicators[] = {
+        static ImageResource battery_indicators[] = {
             {IMAGE_RES_PATH "batt_0" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "batt_0_chr" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "batt_25" IMAGE_RES_EXT, false},
@@ -80,17 +80,17 @@ namespace JCToolkit {
             {IMAGE_RES_PATH "batt_100" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "batt_100_chr" IMAGE_RES_EXT, false}
         };
-        ImageResource left_joycon[] = {
+        static ImageResource left_joycon[] = {
             {IMAGE_RES_PATH "l_joy_body" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "l_joy_buttons" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "l_joy_lines" IMAGE_RES_EXT, false},
         };
-        ImageResource right_joycon[] = {
+        static ImageResource right_joycon[] = {
             {IMAGE_RES_PATH "r_joy_body" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "r_joy_buttons" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "r_joy_lines" IMAGE_RES_EXT, false},
         };
-        ImageResource pro_controller[] = {
+        static ImageResource pro_controller[] = {
             {IMAGE_RES_PATH "pro_body" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "pro_buttons" IMAGE_RES_EXT, false},
             {IMAGE_RES_PATH "pro_grips_l" IMAGE_RES_EXT, false},
@@ -232,7 +232,7 @@ namespace JCToolkit {
                 ImGui::SetCursorPos(con_start);
                 ImGui::ImageAutoFit(
                     (ImTextureID)con_images[i].getRID(),
-                    {con_images[i].getWidth(), con_images[i].getHeight()},
+                    {(float)con_images[i].getWidth(), (float)con_images[i].getHeight()},
                     {0,0}, {1,1},
                     ImGui::ColorConvertU32ToFloat4(IM_COL32(col.r,col.g,col.b,255))
                 );
@@ -607,7 +607,7 @@ namespace JCToolkit {
 
         void showIRCameraFeed(IRSensor& ir_sensor){
             auto& size = std::get<2>(ir_resolutions[ir_sensor.res_idx_selected]);
-            ImGui::ImageAutoFit((ImTextureID)ir_sensor.getCaptureTexID(), {size.x, size.y});
+            ImGui::ImageAutoFit((ImTextureID)ir_sensor.getCaptureTexID(), {(float)size.x, (float)size.y});
         }
 
         enum class IRFeedControl {
