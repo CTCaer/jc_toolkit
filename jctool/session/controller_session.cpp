@@ -100,21 +100,22 @@ namespace ConSessManager {
         return res;
     }
 
-    static std::future<ConSess::Status> add_job(const Con& con, std::function<ConSess::Status(controller_hid_handle_t, u8&)> job, std::promise<ConSess::Status>& promise){
-        promise = std::promise<ConSess::Status>{};
-        auto res = promise.get_future();
+    static std::future<ConSess::Status> add_job(const Con& con, std::function<ConSess::Status(CT&)> job){
+        auto promise = std::shared_ptr<std::promise<ConSess::Status>>(new std::promise<ConSess::Status>());
+        auto res = promise->get_future();
         TP::add_job(
-            [&, job] (){
+            [&, job, promise] (){
                 cons_with_sessions_mutex.lock();
                 auto find_res = cons_with_sessions.find(con);
                 cons_with_sessions_mutex.unlock();
                 if(find_res == cons_with_sessions.end())
-                    return promise.set_value(ConSess::NO_SESS);
+                    return promise->set_value(ConSess::NO_SESS);
 
                 SessionContext& sc = find_res->second;
+                CT ct{sc.con_handle, sc.timming_byte};
                 // Execute the job, the job returns the status of the controller.
-                ConSess::Status con_status = job(sc.con_handle, sc.timming_byte);
-                return promise.set_value(con_status);
+                ConSess::Status con_status = job(ct);
+                return promise->set_value(con_status);
             }
         );
 
@@ -177,10 +178,8 @@ ConSess::Status ConSess::startSession(StatusDelay status_delay){
     return this->getStatus(status_delay);
 }
 
-ConSess::Status ConSess::endSession(StatusDelay status_delay){
+void ConSess::endSession(){
     // TODO:
-    this->last_future_status = this->getDummyStatus(NO_RESPONSE);// = ConSessManager::kill_session(this->con, this->msg_str, this->err_str);
-    return this->getStatus(status_delay);
 }
 
 /**
@@ -192,17 +191,16 @@ ConSess::Status ConSess::checkConnectionStatus(StatusDelay status_delay){
     return this->getStatus(status_delay);
 }
 
-#define CON_JOB(...) [__VA_ARGS__](controller_hid_handle_t handle, u8& timming_byte)
+#define CON_JOB(...) [__VA_ARGS__](CT& ct)
 
 void ConSess::testSetLedBusy(){
     ConSessManager::add_job(*this->con,
         CON_JOB(this){
             *msg_str << this->con->hid_sn << " set_led_busy" << std::endl;
             
-            set_led_busy(handle, timming_byte, this->getProdID()); // Always returns 0, so no error checking.
+            set_led_busy(ct, this->getProdID()); // Always returns 0, so no error checking.
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -210,10 +208,9 @@ void ConSess::testIRCapture(IRSensor& ir){
     ConSessManager::add_job(*this->con,
         CON_JOB(&){
             *msg_str << this->con->hid_sn << " IRSensor::capture" << std::endl;
-            ir.capture(handle, timming_byte);
+            ir.capture(ct);
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -222,11 +219,10 @@ void ConSess::testHDRumble(RumbleData& rumble_data, bool& is_active){
     ConSessManager::add_job(*this->con,
         CON_JOB(&){
             *msg_str << this->con->hid_sn << " play_hd_rumble_file" << std::endl;
-            int res = play_hd_rumble_file(handle, timming_byte, rumble_data);
+            int res = play_hd_rumble_file(ct, rumble_data);
             is_active = false;
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -235,11 +231,10 @@ void ConSess::getTemperature(TemperatureData& fill_temp_data){
         CON_JOB(&){
             *msg_str << this->con->hid_sn << " get_temperature, parseTemperatureData" << std::endl;
             unsigned char temperature_data[2] = {};
-            get_temperature(handle, timming_byte, temperature_data);
+            get_temperature(ct, temperature_data);
             fill_temp_data = parseTemperatureData(temperature_data);
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -248,11 +243,10 @@ void ConSess::getBattery(BatteryData& fill_batt_data){
         CON_JOB(&){
             *msg_str << this->con->hid_sn << " get_battery, parseBatteryData" << std::endl;
             unsigned char battery_data[3] = {};
-            get_battery(handle, timming_byte, battery_data);
+            get_battery(ct, battery_data);
             fill_batt_data = parseBatteryData(battery_data);
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -260,10 +254,9 @@ void ConSess::getColors(SPIColors& fill_spi_colors){
     ConSessManager::add_job(*this->con,
         CON_JOB(&){
             *msg_str << this->con->hid_sn << " get_spi_colors" << std::endl;
-            fill_spi_colors = get_spi_colors(handle, timming_byte);
+            fill_spi_colors = get_spi_colors(ct);
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -279,14 +272,13 @@ void ConSess::dumpSPI(const std::string& to_file, bool& is_dumping, size_t& byte
                 spi_dump_file.c_str()
             };
             bytes_dumped = 0;
-            int res = dump_spi(handle, timming_byte, ctx);
+            int res = dump_spi(ct, ctx);
             if(res)
                 *msg_str << this->con->hid_sn << " There was a problem backing up the SPI. Try again?" << std::endl;
 
             is_dumping = false;      
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -294,12 +286,11 @@ void ConSess::writeColorsToSPI(const SPIColors& colors){
     ConSessManager::add_job(*this->con,
         CON_JOB(&, colors = colors){
             *msg_str << this->con->hid_sn << " write_spi_colors" << std::endl;
-            int res = write_spi_colors(handle, timming_byte, colors);
+            int res = write_spi_colors(ct, colors);
             if(res)
                 *msg_str << this->con->hid_sn << " There was a problem writing the colors. Try again?" << std::endl;
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }
 
@@ -307,9 +298,8 @@ void ConSess::testSendRumble(){
     ConSessManager::add_job(*this->con,
         CON_JOB(this){
             *msg_str << this->con->hid_sn << " send_rumble" << std::endl;
-            send_rumble(handle, timming_byte, this->getProdID());
+            send_rumble(ct, this->getProdID());
             return SESS_OK; // TODO: Use the return value of the main job function to provide session status.
-        },
-        this->status_promise
+        }
     );
 }

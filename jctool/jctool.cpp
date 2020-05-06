@@ -159,8 +159,8 @@ namespace ConCom {
      * Command
      */
     enum Com {
-        SUBC = 0x01, // Subcommand
-        RUM0 = 0x10, // Rumble
+        SUBC = 0x01, // Subcommand Type
+        RUM0 = 0x10, // Rumble Type
         UNK0 = 0x12, // Unknown
         UNK1 = 0x28, 
     };
@@ -180,7 +180,7 @@ namespace ConCom {
         CTRL = 0x3F, // Controller data packet
         STD0 = 0x21, // Standard input report, subcommand reply.
         IMCU = 0x23, // Input Report NFC/IR MCU FW update packet
-        FULM = 0x30, // Full mode
+        FULM = 0x30, // Full mode (60hz joycon)/(120hz procon)
         MCUM = 0x31, // A large packet with standard input report and NFC/IR MCU data
         STD1 = 0x32,
         STD2 = 0x33,
@@ -214,14 +214,6 @@ namespace ConCom {
         }
     }
 
-    /**
-     * controller handle and timming byte reference.
-     */
-    struct CT {
-        controller_hid_handle_t& handle;
-        u8& timming_byte;
-    };
-
     class Packet {
     public:
         u8 buf[49];
@@ -253,11 +245,12 @@ namespace ConCom {
 #ifndef __jctool_cpp_API__
 int set_led_busy() {
 #else
-int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type) {
+int set_led_busy(CT& ct, ConHID::ProdID con_type) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     ConCom::Packet p;
-    ConCom::CT ct{handle, timming_byte};
 
     //p.zero();
     auto& hdr = p.header();
@@ -294,9 +287,11 @@ int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdI
 #ifndef __jctool_cpp_API__
 std::string get_sn(u32 offset, const u16 read_len) {
 #else
-std::string get_sn(controller_hid_handle_t handle, u8& timming_byte) {
+std::string get_sn(CT& ct) {
     static const u32 offset = 0x6001;
     static const u16 read_len = 0xF;
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     int error_reading = 0;
@@ -346,7 +341,9 @@ std::string get_sn(controller_hid_handle_t handle, u8& timming_byte) {
 #ifndef __jctool_cpp_API__
 int get_spi_data(u32 offset, const u16 read_len, u8 *test_buf) {
 #else
-int get_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 read_len, u8 * test_buf) {
+int get_spi_data(CT& ct, u32 offset, const u16 read_len, u8 * test_buf) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -390,7 +387,9 @@ int get_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, c
 #ifndef __jctool_cpp_API__
 int write_spi_data(u32 offset, const u16 write_len, u8* test_buf) {
 #else
-int write_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 write_len, u8* test_buf) {
+int write_spi_data(CT& ct, u32 offset, const u16 write_len, u8* test_buf) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -430,7 +429,9 @@ int write_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset,
 #ifndef __jctool_cpp_API__
 int get_device_info(u8* test_buf) {
 #else
-int get_device_info(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf) {
+int get_device_info(CT& ct, u8* test_buf) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -469,7 +470,9 @@ int get_device_info(controller_hid_handle_t handle, u8& timming_byte, u8* test_b
 #ifndef __jctool_cpp_API__
 int get_battery(u8* test_buf) {
 #else
-int get_battery(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf) {
+int get_battery(CT& ct, u8* test_buf) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -508,7 +511,9 @@ int get_battery(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf) 
 #ifndef __jctool_cpp_API__
 int get_temperature(u8* test_buf) {
 #else
-int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf) {
+int get_temperature(CT& ct, u8* test_buf) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -608,7 +613,9 @@ int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_b
 #ifndef __jctool_cpp_API__
 int dump_spi(const char *dev_name) {
 #else
-int dump_spi(controller_hid_handle_t handle, u8& timming_byte, DumpSPICTX& dump_spi_ctx) {
+int dump_spi(CT& ct, DumpSPICTX& dump_spi_ctx) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
     const char*& dev_name = dump_spi_ctx.file_name;
     bool& cancel_spi_dump = dump_spi_ctx.cancel_spi_dump;
 #endif
@@ -694,7 +701,9 @@ int dump_spi(controller_hid_handle_t handle, u8& timming_byte, DumpSPICTX& dump_
 namespace Rumble {
     constexpr int size_write = 40;
     constexpr int timeout_ms = 64;
-    int enable_rumble(controller_hid_handle_t handle, u8& timming_byte, ConCom::Packet& packet_buf){
+    int enable_rumble(CT& ct, ConCom::Packet& packet_buf){
+        controller_hid_handle_t& handle = ct.handle;
+        u8& timming_byte = ct.timming_byte;
         packet_buf.zero();
         auto& hdr = packet_buf.header();
         auto& pkt = packet_buf.command();
@@ -712,15 +721,16 @@ namespace Rumble {
 #ifndef __jctool_cpp_API__
 int send_rumble() {
 #else
-int send_rumble(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type) {
+int send_rumble(CT& ct, ConHID::ProdID con_type) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
-    ConCom::CT ct{handle, timming_byte};
     ConCom::Packet p;
     u8 buf2[49];
     
     //Enable Vibration
-    Rumble::enable_rumble(handle, timming_byte, p);
+    Rumble::enable_rumble(ct, p);
     res = hid_read_timeout(handle, buf2, 1, 64);
 
     auto& hdr = p.header();
@@ -812,7 +822,9 @@ int send_rumble(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID
 #ifndef __jctool_cpp_API__
 int send_custom_command(u8* arg) {
 #else
-int send_custom_command(controller_hid_handle_t handle, u8& timming_byte, u8* arg){
+int send_custom_command(CT& ct, u8* arg){
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res_write;
     int res;
@@ -1367,7 +1379,9 @@ int button_test() {
 #ifndef __jctool_cpp_API__
 int play_tune(int tune_no) {
 #else
-int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
+int play_tune(CT& ct, int tune_no) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     ConCom::Packet packet_buf;
@@ -1378,7 +1392,7 @@ int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
     auto pkt = (brcm_cmd_01 *)(hdr + 1);
 
     //Enable Vibration
-    Rumble::enable_rumble(handle, timming_byte, packet_buf);
+    Rumble::enable_rumble(ct, packet_buf);
     res = hid_read_timeout(handle, buf2, 1, 120);
     // This needs to be changed for new bigger tunes.
     u32 *tune = new u32[6000];
@@ -1454,7 +1468,9 @@ int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no) {
 #ifndef __jctool_cpp_API__
 int play_hd_rumble_file(int file_type, u16 sample_rate, int samples, int loop_start, int loop_end, int loop_wait, int loop_times) {
 #else
-int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, const RumbleData& rumble_data) {
+int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
     VIBType file_type = rumble_data.metadata.vib_file_type;
     u16 sample_rate = rumble_data.metadata.sample_rate;
     int samples = rumble_data.metadata.samples;
@@ -1678,7 +1694,9 @@ int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, const 
 #ifndef __jctool_cpp_API__
 int ir_sensor_auto_exposure(int white_pixels_percent) {
 #else
-int ir_sensor_auto_exposure(controller_hid_handle_t handle, u8& timming_byte, int white_pixels_percent) {
+int ir_sensor_auto_exposure(CT& ct, int white_pixels_percent) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -1949,7 +1967,7 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
 
     int buf_size_img = IR::get_img_buf_size(ir_max_frag_no);
 
-    u8 buf[49];
+    ConCom::Packet p;
     u8 buf_reply[0x170];
     auto buf_image = std::make_unique<u8[]>(buf_size_img); // 8bpp greyscale image.
 	uint16_t bad_signal = 0;
@@ -1966,13 +1984,13 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
 
     memset(buf_image.get(), 0, buf_size_img);
 
-    memset(buf, 0, sizeof(buf));
+    //p.zero();;
     memset(buf_reply, 0, sizeof(buf_reply));
-    auto hdr = (brcm_hdr *)buf;
-    auto pkt = (brcm_cmd_01 *)(hdr + 1);
+    auto& hdr = p.header();
+    auto& pkt = p.command();
     hdr->cmd = 0x11;
     pkt->subcmd = 0x03;
-    buf[48] = 0xFF;
+    p.buf[48] = 0xFF;
 
     IR::StreamCTX sctx {
         previous_frag_no,
@@ -1985,8 +2003,8 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
         handle,
         timming_byte,
         hdr,
-        buf,
-        sizeof(buf)
+        p.buf,
+        p.buf_size
     };
 
     // First ack
@@ -2627,7 +2645,9 @@ stepf:
 #ifndef __jctool_cpp_API__
 int get_ir_registers(int start_reg, int reg_group) {
 #else
-int get_ir_registers(controller_hid_handle_t handle, u8& timming_byte, int start_reg, int reg_group) {
+int get_ir_registers(CT& ct, int start_reg, int reg_group) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[0x170];
@@ -2698,7 +2718,9 @@ int get_ir_registers(controller_hid_handle_t handle, u8& timming_byte, int start
 #ifndef __jctool_cpp_API__
 int ir_sensor_config_live(ir_image_config &ir_cfg) {
 #else
-int ir_sensor_config_live(controller_hid_handle_t handle, u8& timming_byte, ir_image_config& ir_cfg) {
+int ir_sensor_config_live(CT& ct, ir_image_config& ir_cfg) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -2770,7 +2792,9 @@ int ir_sensor_config_live(controller_hid_handle_t handle, u8& timming_byte, ir_i
 #ifndef __jctool_cpp_API__
 int nfc_tag_info() {
 #else
-int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte, bool& enable_nfc_scanning) {
+int nfc_tag_info(CT& ct, bool& enable_nfc_scanning) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     /////////////////////////////////////////////////////
     // Kudos to Eric Betts (https://github.com/bettse) //
@@ -3332,7 +3356,9 @@ stepf:
 #ifndef __jctool_cpp_API__
 int silence_input_report() {
 #else
-int silence_input_report(controller_hid_handle_t handle, u8& timming_byte) {
+int silence_input_report(CT& ct) {
+    controller_hid_handle_t& handle = ct.handle;
+    u8& timming_byte = ct.timming_byte;
 #endif
     int res;
     u8 buf[49];
@@ -3758,22 +3784,22 @@ std::string ir_sensorErrorToString(int errno_ir_sensor){
     }
 }
 
-SPIColors get_spi_colors(controller_hid_handle_t handle, u8& timming_byte){
+SPIColors get_spi_colors(CT& ct){
     unsigned char spi_colors[12];
     memset(spi_colors, 0, 12);
 
-    int res = get_spi_data(handle, timming_byte, 0x6050, 12, spi_colors);
+    int res = get_spi_data(ct, 0x6050, 12, spi_colors);
 
     SPIColors colors;
     memcpy(&colors, spi_colors, 12);
     return colors;
 }
 
-int write_spi_colors(controller_hid_handle_t handle, u8& timming_byte, const SPIColors& colors){
+int write_spi_colors(CT& ct, const SPIColors& colors){
     unsigned char spi_colors[12];
     memcpy(spi_colors, &colors.body, sizeof(colors));
 
-    return write_spi_data(handle, timming_byte, 0x6050, 12, spi_colors);
+    return write_spi_data(ct, 0x6050, 12, spi_colors);
 }
 
 lut_amp lut_joy_amp{

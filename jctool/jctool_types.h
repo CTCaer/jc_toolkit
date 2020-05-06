@@ -251,3 +251,12 @@ namespace ConHID {
         JoyConGrip = 0x200e,
     };
 }
+
+
+/**
+ * controller handle and timming byte reference.
+ */
+struct CT {
+    controller_hid_handle_t& handle;
+    u8& timming_byte;
+};

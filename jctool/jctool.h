@@ -29,28 +29,28 @@ int silence_input_report();
 int ir_sensor(ir_image_config &ir_cfg);
 int ir_sensor_config_live(ir_image_config &ir_cfg);
 #else
-std::string get_sn(controller_hid_handle_t handle, u8& timming_byte);
-int get_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 read_len, u8 *test_buf);
-int write_spi_data(controller_hid_handle_t handle, u8& timming_byte, u32 offset, const u16 write_len, u8* test_buf);
-int get_device_info(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
-int get_battery(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
-int get_temperature(controller_hid_handle_t handle, u8& timming_byte, u8* test_buf);
-int dump_spi(controller_hid_handle_t handle, u8& timming_byte, DumpSPICTX& dump_spi_ctx);
-int send_rumble(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type);
-int send_custom_command(controller_hid_handle_t handle, u8& timming_byte, u8* arg);
-int play_tune(controller_hid_handle_t handle, u8& timming_byte, int tune_no);
-int play_hd_rumble_file(controller_hid_handle_t handle, u8& timming_byte, const RumbleData& rumble_data);
+std::string get_sn(CT& ct);
+int get_spi_data(CT& ct, u32 offset, const u16 read_len, u8 *test_buf);
+int write_spi_data(CT& ct, u32 offset, const u16 write_len, u8* test_buf);
+int get_device_info(CT& ct, u8* test_buf);
+int get_battery(CT& ct, u8* test_buf);
+int get_temperature(CT& ct, u8* test_buf);
+int dump_spi(CT& ct, DumpSPICTX& dump_spi_ctx);
+int send_rumble(CT& ct, ConHID::ProdID con_type);
+int send_custom_command(CT& ct, u8* arg);
+int play_tune(CT& ct, int tune_no);
+int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data);
 int device_connection(controller_hid_handle_t& handle);
-int button_test(controller_hid_handle_t handle, u8& timming_byte);
-int set_led_busy(controller_hid_handle_t handle, u8& timming_byte, ConHID::ProdID con_type);
-int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
-int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
-int button_test(controller_hid_handle_t handle, u8& timming_byte);
-int nfc_tag_info(controller_hid_handle_t handle, u8& timming_byte);
-int silence_input_report(controller_hid_handle_t handle, u8& timming_byte);
+int button_test(CT& ct);
+int set_led_busy(CT& ct, ConHID::ProdID con_type);
+int nfc_tag_info(CT& ct);
+int silence_input_report(CT& ct);
+int button_test(CT& ct);
+int nfc_tag_info(CT& ct);
+int silence_input_report(CT& ct);
 using StoreRawCaptureCB = std::function<void(const u8*, size_t)>;
 int ir_sensor(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capture_cb);
-int ir_sensor_config_live(controller_hid_handle_t handle, u8& timming_byte, ir_image_config& ir_cfg);
+int ir_sensor_config_live(CT& ct, ir_image_config& ir_cfg);
 #endif
 
 #ifndef __jctool_cpp_API__

@@ -78,7 +78,7 @@ public:
     inline const std::string& getDevPath() const { return this->con->dev_path; }
 
     Status startSession(StatusDelay status_delay = StatusDelay::None);
-    Status endSession(StatusDelay status_delay = StatusDelay::None);
+    void endSession();
     Status checkConnectionStatus(StatusDelay status_delay = StatusDelay::None);
     
     void testSetLedBusy();

@@ -51,8 +51,8 @@ IRSensor::IRSensor()
     ir_image_config_Sets::denoise_color_intrpl(ir_config.ir_denoise, 68);
 }
 
-void IRSensor::capture(controller_hid_handle_t host_controller, u8& timming_byte){
-    if(host_controller == nullptr)
+void IRSensor::capture(CT& ct){
+    if(ct.handle == nullptr)
         return; // There is no controller
     
     this->capture_in_progress = true;
@@ -73,8 +73,8 @@ void IRSensor::capture(controller_hid_handle_t host_controller, u8& timming_byte
     }
     
     IRCaptureCTX capture_context{
-            host_controller,
-            timming_byte,
+            ct.handle,
+            ct.timming_byte,
             this->config,
             this->ir_max_frag_no,
             this->capture_mode,

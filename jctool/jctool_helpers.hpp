@@ -152,9 +152,9 @@ void convertVIBBinaryToRaw(ByteArray vib_data, ByteArray vib_out, int lf_amp, in
 
 std::string ir_sensorErrorToString(int errno_ir_sensor);
 
-SPIColors get_spi_colors(controller_hid_handle_t handle, u8& timming_byte);
+SPIColors get_spi_colors(CT& ct);
 
-int write_spi_colors(controller_hid_handle_t handle, u8& timming_byte, const SPIColors& colors);
+int write_spi_colors(CT& ct, const SPIColors& colors);
 
 
 /**

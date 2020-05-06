@@ -20,7 +20,7 @@ public:
     IRColor colorize_with{};
     bool auto_exposure{};
 
-    void capture(controller_hid_handle_t host_controller, u8& timming_byte);
+    void capture(CT& ct);
     uintptr_t getCaptureTexID();
 
     IRSensor();
