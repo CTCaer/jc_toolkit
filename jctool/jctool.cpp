@@ -30,6 +30,7 @@ const auto min = [](auto a, auto b){
 #include "tune.h"
 #include "jctool_helpers.hpp"
 #include "luts.h"
+#include "commands/con_com.hpp"
 
 #ifndef __jctool_cpp_API__
 #include "FormJoy.h"
@@ -147,100 +148,6 @@ void AnalogStickCalc(
         pOutY[0] = 0.0f;
     }
 }
-
-/**
- * ===================
- * Controller Commands
- * ===================
- * https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/bluetooth_hid_notes.md
- */
-namespace ConCom {
-    /**
-     * Command
-     */
-    enum Com {
-        SUBC = 0x01, // Subcommand Type
-        RUM0 = 0x10, // Rumble Type
-        UNK0 = 0x12, // Unknown
-        UNK1 = 0x28, 
-    };
-    /**
-     * Output Reports Subcommand
-     */
-    enum OutSub {
-        OMCU = 0x03, // Output Report NFC/IR MCU FW update packet
-        RUM1 = 0x10, // Rumble
-        RMCU = 0x11, // Request data from NFC/IR
-    };
-
-    /**
-     * Input Reports Subcommand
-     */
-    enum InSub {
-        CTRL = 0x3F, // Controller data packet
-        STD0 = 0x21, // Standard input report, subcommand reply.
-        IMCU = 0x23, // Input Report NFC/IR MCU FW update packet
-        FULM = 0x30, // Full mode (60hz joycon)/(120hz procon)
-        MCUM = 0x31, // A large packet with standard input report and NFC/IR MCU data
-        STD1 = 0x32,
-        STD2 = 0x33,
-    };
-
-    /**
-     * [Send] Feature report
-     */
-    enum Feature {
-        LAST = 0x02, // Get Last subcommand reply
-        OFWU = 0x70, // Enable OTA FW Upgrade. Unlocks erase/write memory commands. (MUST SEND ONE BYTE)
-        MEMR = 0x71, // Setup memory read.
-    };
-
-    namespace FeatureN {
-        inline int enable_OTAFW_upgrade(controller_hid_handle_t handle){
-            return -1;
-            {
-                static constexpr u8 send = OFWU;
-                // Will not work.
-                int res = hid_write(handle, &send, 1);
-                return res;
-            }
-        }
-        inline int setup_mem_read(controller_hid_handle_t handle){
-            // TODO:
-            return -1;
-        }
-        inline int get_last_reply(controller_hid_handle_t handle){
-            return -1;
-        }
-    }
-
-    class Packet {
-    public:
-        u8 buf[49];
-        static constexpr int buf_size = sizeof(buf);
-
-        inline brcm_hdr*& header() {return this->hdr; }
-        inline brcm_cmd_01*& command() { return this->cmd; }
-        inline void zero() { memset(this->buf, 0, sizeof(this->buf)); }
-
-        inline Packet():
-        hdr{(brcm_hdr*)this->buf},
-        cmd{(brcm_cmd_01*)(this->buf + sizeof(brcm_hdr))},
-        buf{}
-        {}
-    private:
-        brcm_hdr* hdr;
-        brcm_cmd_01* cmd;
-    };
-
-    /**
-     * REMINDER: The timming byte gets incremented here!
-     */
-    int send_pkt(CT& ct, Packet& pkt){
-        ct.timming_byte++;
-        return hid_write(ct.handle, pkt.buf, sizeof(pkt.buf));
-    }
-};
 
 #ifndef __jctool_cpp_API__
 int set_led_busy() {
@@ -699,20 +606,15 @@ int dump_spi(CT& ct, DumpSPICTX& dump_spi_ctx) {
 }
 
 namespace Rumble {
-    constexpr int size_write = 40;
-    constexpr int timeout_ms = 64;
     int enable_rumble(CT& ct, ConCom::Packet& packet_buf){
-        controller_hid_handle_t& handle = ct.handle;
-        u8& timming_byte = ct.timming_byte;
         packet_buf.zero();
         auto& hdr = packet_buf.header();
         auto& pkt = packet_buf.command();
         hdr->cmd = 0x01;
-        hdr->timer = timming_byte & 0xF;
-        timming_byte++;
+        hdr->timer = ct.timming_byte & 0xF;
         pkt->subcmd = 0x48;
         pkt->subcmd_arg.arg1 = 0x01;
-        int res = hid_write(handle, packet_buf.buf, size_write);
+        int res = ConCom::send_pkt(ct, packet_buf);
         if(res < 0)
             return res;
     }
@@ -730,7 +632,7 @@ int send_rumble(CT& ct, ConHID::ProdID con_type) {
     u8 buf2[49];
     
     //Enable Vibration
-    Rumble::enable_rumble(ct, p);
+    res = Rumble::enable_rumble(ct, p);
     res = hid_read_timeout(handle, buf2, 1, 64);
 
     auto& hdr = p.header();
@@ -1392,7 +1294,7 @@ int play_tune(CT& ct, int tune_no) {
     auto pkt = (brcm_cmd_01 *)(hdr + 1);
 
     //Enable Vibration
-    Rumble::enable_rumble(ct, packet_buf);
+    res = Rumble::enable_rumble(ct, packet_buf);
     res = hid_read_timeout(handle, buf2, 1, 120);
     // This needs to be changed for new bigger tunes.
     u32 *tune = new u32[6000];
@@ -1480,27 +1382,19 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
     int loop_times = rumble_data.metadata.loop_times;
 #endif
     int res;
-    u8 buf[49];
+    ConCom::Packet p;
+    auto& hdr = p.header();
+    auto& pkt = p.command();
     u8 buf2[49];
 
     //Enable Vibration
-    memset(buf, 0, sizeof(buf));
-    auto hdr = (brcm_hdr *)buf;
-    auto pkt = (brcm_cmd_01 *)(hdr + 1);
-    hdr->cmd = 0x01;
-    hdr->timer = timming_byte & 0xF;
-    timming_byte++;
-    pkt->subcmd = 0x48;
-    pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(buf));
+    res = Rumble::enable_rumble(ct, p);
     res = hid_read_timeout(handle, buf2, 1, 120);
 
     if (file_type == VIBRaw || file_type == VIBBinary) {
         for (int i = 0; i < samples * 4; i = i + 4) {
             Sleep(sample_rate);
-            memset(buf, 0, sizeof(buf));
-            hdr = (brcm_hdr *)buf;
-            pkt = (brcm_cmd_01 *)(hdr + 1);
+            p.zero();
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
@@ -1526,7 +1420,7 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
             }
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
-            res = hid_write(handle, buf, sizeof(*hdr));
+            res = hid_write(handle, p.buf, sizeof(*hdr));
 #ifndef __jctool_cpp_API__
             Application::DoEvents();
 #else
@@ -1543,9 +1437,7 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
 
         for (int i = 0; i < loop_start * 4; i = i + 4) {
             Sleep(sample_rate);
-            memset(buf, 0, sizeof(buf));
-            hdr = (brcm_hdr *)buf;
-            pkt = (brcm_cmd_01 *)(hdr + 1);
+            p.zero();
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
@@ -1563,7 +1455,7 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
 
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
             
-            res = hid_write(handle, buf, sizeof(*hdr));
+            res = hid_write(handle, p.buf, sizeof(*hdr));
 #ifndef __jctool_cpp_API__
             Application::DoEvents();
 #else
@@ -1573,9 +1465,7 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
         for (int j = 0; j < 1 + loop_times; j++) {
             for (int i = loop_start * 4; i < loop_end * 4; i = i + 4) {
                 Sleep(sample_rate);
-                memset(buf, 0, sizeof(buf));
-                hdr = (brcm_hdr *)buf;
-                pkt = (brcm_cmd_01 *)(hdr + 1);
+                p.zero();
                 hdr->cmd = 0x10;
                 hdr->timer = timming_byte & 0xF;
                 timming_byte++;
@@ -1593,7 +1483,7 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
 
                 memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
-                res = hid_write(handle, buf, sizeof(*hdr));
+                res = hid_write(handle, p.buf, sizeof(*hdr));
 #ifndef __jctool_cpp_API__
                 Application::DoEvents();
 #else
@@ -1602,9 +1492,7 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
             }
             Sleep(sample_rate);
             // Disable vibration
-            memset(buf, 0, sizeof(buf));
-            hdr = (brcm_hdr *)buf;
-            pkt = (brcm_cmd_01 *)(hdr + 1);
+            p.zero();
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
@@ -1613,14 +1501,12 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
             hdr->rumble_l[2] = 0x40;
             hdr->rumble_l[3] = 0x40;
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-            res = hid_write(handle, buf, sizeof(*hdr));
+            res = hid_write(handle, p.buf, sizeof(*hdr));
             Sleep(loop_wait * sample_rate);
         }
         for (int i = loop_end * 4; i < samples * 4; i = i + 4) {
             Sleep(sample_rate);
-            memset(buf, 0, sizeof(buf));
-            hdr = (brcm_hdr *)buf;
-            pkt = (brcm_cmd_01 *)(hdr + 1);
+            p.zero();
             hdr->cmd = 0x10;
             hdr->timer = timming_byte & 0xF;
             timming_byte++;
@@ -1637,7 +1523,7 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
 
             memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
 
-            res = hid_write(handle, buf, sizeof(*hdr));
+            res = hid_write(handle, p.buf, sizeof(*hdr));
 #ifndef __jctool_cpp_API__
             Application::DoEvents();
 #else
@@ -1648,45 +1534,36 @@ int play_hd_rumble_file(CT& ct, const RumbleData& rumble_data) {
 
     Sleep(sample_rate);
     // Disable vibration
-    memset(buf, 0, sizeof(buf));
-    hdr = (brcm_hdr *)buf;
-    pkt = (brcm_cmd_01 *)(hdr + 1);
+    p.zero();
     hdr->cmd = 0x10;
     hdr->timer = timming_byte & 0xF;
-    timming_byte++;
     hdr->rumble_l[0] = 0x00;
     hdr->rumble_l[1] = 0x01;
     hdr->rumble_l[2] = 0x40;
     hdr->rumble_l[3] = 0x40;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
-    res = hid_write(handle, buf, sizeof(buf));
+    res = ConCom::send_pkt(ct, p);
 
     Sleep(sample_rate + 120);
-    memset(buf, 0, sizeof(buf));
-    hdr = (brcm_hdr *)buf;
-    pkt = (brcm_cmd_01 *)(hdr + 1);
+    p.zero();
     hdr->cmd = 0x01;
     hdr->timer = timming_byte & 0xF;
-    timming_byte++;
     hdr->rumble_l[0] = 0x00;
     hdr->rumble_l[1] = 0x01;
     hdr->rumble_l[2] = 0x40;
     hdr->rumble_l[3] = 0x40;
     memcpy(hdr->rumble_r, hdr->rumble_l, sizeof(hdr->rumble_l));
     pkt->subcmd = 0x48;
-    res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 1, 64);
+    res = ConCom::send_pkt(ct, p);
+    res = hid_read_timeout(handle, p.buf, 1, 64);
 
-    memset(buf, 0, sizeof(buf));
-    hdr = (brcm_hdr *)buf;
-    pkt = (brcm_cmd_01 *)(hdr + 1);
+    p.zero();
     hdr->cmd = 0x01;
     hdr->timer = timming_byte & 0xF;
-    timming_byte++;
     pkt->subcmd = 0x30;
     pkt->subcmd_arg.arg1 = 0x01;
-    res = hid_write(handle, buf, sizeof(buf));
-    res = hid_read_timeout(handle, buf, 1, 64);
+    res = ConCom::send_pkt(ct, p);
+    res = hid_read_timeout(handle, p.buf, 1, 64);
 
     return 0;
 }
@@ -2196,6 +2073,46 @@ int get_raw_ir_image(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capt
     return 0;
 }
 
+namespace {
+    int set_input_report_x31(CT& ct, ConCom::Packet& p, u8* buf_read, size_t buf_read_size){
+        controller_hid_handle_t& handle = ct.handle;
+        u8& timming_byte = ct.timming_byte;
+        auto& hdr = p.header();
+        auto& pkt = p.command();
+        int res;
+        int error_reading = 0;
+        while (1) {
+            p.zero();
+            hdr->cmd = 1;
+            hdr->timer = timming_byte & 0xF;
+            pkt->subcmd = 0x03;
+            pkt->subcmd_arg.arg1 = 0x31;
+            res = ConCom::send_pkt(ct, p);
+            int retries = 0;
+            while (1) {
+                res = hid_read_timeout(handle, buf_read, buf_read_size, 64);
+                if (*(u16*)&buf_read[0xD] == 0x0380)
+                    return res;
+
+                retries++;
+                if (retries > 8 || res == 0)
+                    break;
+            }
+            error_reading++;
+            if (error_reading > 7)
+                return 0;
+        }
+        return res; // TODO: Is this reachable?
+    }
+}
+
+/**
+ * 
+ */
+namespace IRSetup {
+
+}
+
 #ifndef __jctool_cpp_API__
 int ir_sensor(ir_image_config &ir_cfg) {
 #else
@@ -2205,40 +2122,18 @@ int ir_sensor(IRCaptureCTX& capture_context, StoreRawCaptureCB store_capture_cb)
     IRCaptureMode& capture_mode = capture_context.capture_mode;
     ir_image_config& ir_cfg = capture_context.ir_cfg;
     u8& ir_max_frag_no = capture_context.ir_max_frag_no;
+    CT ct{handle, timming_byte};
+    ConCom::Packet pout;
 #endif
+    int error_reading = 0;
     int res;
     u8 buf[0x170];
     static int output_buffer_length = 49;
-    int error_reading = 0;
     int res_get = 0;
     // Set input report to x31
-    while (1) {
-        memset(buf, 0, sizeof(buf));
-        auto hdr = (brcm_hdr *)buf;
-        auto pkt = (brcm_cmd_01 *)(hdr + 1);
-        hdr->cmd = 1;
-        hdr->timer = timming_byte & 0xF;
-        timming_byte++;
-        pkt->subcmd = 0x03;
-        pkt->subcmd_arg.arg1 = 0x31;
-        res = hid_write(handle, buf, output_buffer_length);
-        int retries = 0;
-        while (1) {
-            res = hid_read_timeout(handle, buf, sizeof(buf), 64);
-            if (*(u16*)&buf[0xD] == 0x0380)
-                goto step1;
-
-            retries++;
-            if (retries > 8 || res == 0)
-                break;
-        }
-        error_reading++;
-        if (error_reading > 7) {
-            res_get = 1;
-            goto step10;
-        }
-    }
-
+    res = set_input_report_x31(ct, pout, buf, sizeof(buf));
+    if(res == 0)
+        goto step10;
 step1:
     // Enable MCU
     error_reading = 0;

@@ -65,7 +65,7 @@ SOFTWARE.
 #include "session/controller_session.hpp"
 #include "TP/TP.hpp"
 
-//#include "commands/com_builder_ui.hpp"
+#include "commands/com_builder_ui.hpp"
 
 namespace JCToolkit {
     namespace Assets {
@@ -975,14 +975,13 @@ namespace JCToolkit {
                         con_p->writeColorsToSPI(sess_data_p->user.preview_col);
                     }
                 }},
-                /*
                 {"Custom Commands", [&](){
                     if(ImGui::Button("New Command")){
                         nav_stack.push({"Command Builder",
                             ConCom::UI::page
                         });
                     }
-                }}*/
+                }},
                 {"Session Messages", [&](){
                     if(!_sess_ok())
                         return;

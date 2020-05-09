@@ -45,8 +45,10 @@ set(SOURCES
     jctool/jctool.cpp
     jctool/jctool_ui.cpp
     jctool/IRSensor.cpp
-
+    
     jctool/session/controller_session.cpp
+    "jctool/commands/com_builder.cpp"
+    "jctool/commands/com_builder_ui.cpp"
 )
 
 if (JCTOOL_API_ONLY)
