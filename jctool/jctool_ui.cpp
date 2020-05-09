@@ -65,6 +65,7 @@ SOFTWARE.
 #include "session/controller_session.hpp"
 #include "TP/TP.hpp"
 
+//#include "commands/com_builder_ui.hpp"
 
 namespace JCToolkit {
     namespace Assets {
@@ -173,6 +174,7 @@ namespace JCToolkit {
             TemperatureData temp_data;
             BatteryData batt_data;
             SPIColors saved_col;
+            SessionStatus status;
             std::string sn;
         };
         State state;
@@ -887,17 +889,14 @@ namespace JCToolkit {
         void show_session_page(std::pair<ConSess, ConSessData>& session, ImGui::NavStack& nav_stack){
             static ConSess* con_p{nullptr};
             static ConSessData* sess_data_p{nullptr};
+            static SessionStatus status = NO_SESS;
             static auto _sess_ok = [&](){
-                switch(session.first.getLastStatus(ConSess::LastStatusFrom::LastStatusGet)){
-                    case ConSess::SESS_OK:
-                    return true;
-                    case ConSess::DELAYED_STATUS_MANUAL:
-                    ImGui::Text("[StatusDelay::DelayedManual]");
-                    if(ImGui::Button("Click me to get the session status of the controller.")){
-                        con_p->getLastStatus();
-                    }
-                    ImGui::Text("Waiting for \"session OK.\"");
-                    break;
+                switch(status){
+                    case SESS_OK:
+                        return true;
+                    default:
+                    ImGui::Text("Waiting for \"SESS_OK.\"");
+                        break;
                 }
                 return false;
             };
@@ -976,19 +975,29 @@ namespace JCToolkit {
                         con_p->writeColorsToSPI(sess_data_p->user.preview_col);
                     }
                 }},
+                /*
+                {"Custom Commands", [&](){
+                    if(ImGui::Button("New Command")){
+                        nav_stack.push({"Command Builder",
+                            ConCom::UI::page
+                        });
+                    }
+                }}*/
                 {"Session Messages", [&](){
                     if(!_sess_ok())
                         return;
                     auto avail_size = ImGui::GetContentRegionAvail();
                     ImGui::MakeSection({"Message stream",
                         [&](){
-                            ImGui::Text("%s", con_p->messageStream().str().c_str());
+                            if(con_p->messageStream())
+                                ImGui::Text("%s", con_p->messageStream()->str().c_str());
                         }
                     }, {avail_size.x, avail_size.y/2});
                     
                     ImGui::MakeSection({"Error stream",
                         [&](){
-                            ImGui::Text("%s", con_p->errorStream().str().c_str());
+                            if(con_p->errorStream())
+                                ImGui::Text("%s", con_p->errorStream()->str().c_str());
                         }
                     }, {avail_size.x, avail_size.y/2});
                 }}
@@ -996,6 +1005,7 @@ namespace JCToolkit {
             static ImGui::Display* selected_section{sections};
             con_p = &session.first;
             sess_data_p = &session.second;
+            status = sess_data_p->state.status;
             show_as_sections_page(sections, IM_ARRAYSIZE(sections), selected_section, nav_stack);
         }
 
@@ -1047,13 +1057,12 @@ namespace JCToolkit {
                 }
 
                 if(ImGui::IsItemClicked()){
-                    /**
-                     * (p1) construct from a const ref con
-                     * (p2) start the session on constructor
-                     * (p3) delay getting status until it is done manually.
-                     */
-                    auto sess_insert = sessions.insert(std::make_pair(con, std::make_pair(ConSess(con, true, ConSess::StatusDelay::DelayedManual), ConSessData())));
+                    // Construct from a const ref con.
+                    auto sess_insert = sessions.insert(std::make_pair(con, std::make_pair(ConSess(con), ConSessData())));
                     auto& session = sess_insert.first->second;
+                    session.first.startSession([&](SessionStatus s){
+                        session.second.state.status = s;
+                    });
                     nav_stack.push({session.first.getProdStr() + " " + session.first.getHIDSN(),
                         [&](){
                             show_session_page(session, nav_stack);
