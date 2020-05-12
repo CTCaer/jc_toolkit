@@ -94,4 +94,6 @@ namespace ConCom {
         ct.timming_byte++;
         return hid_write(ct.handle, pkt.buf, sizeof(pkt.buf));
     }
+    
+    int set_input_report_x31(CT& ct, ConCom::Packet& p, u8* buf_read, size_t buf_read_size);
 };

@@ -48,6 +48,8 @@ SOFTWARE.
 
 #include "jctool.h"
 #include "jctool_helpers.hpp"
+#include "jctool_mcu.hpp"
+#include "jctool_rumble.hpp"
 #include "ir_sensor.h"
 
 #include "hidapi.h"
@@ -65,7 +67,7 @@ SOFTWARE.
 #include "session/controller_session.hpp"
 #include "TP/TP.hpp"
 
-#include "commands/com_builder_ui.hpp"
+#include "com-builder/com_builder_ui.hpp"
 
 namespace JCToolkit {
     namespace Assets {
@@ -267,10 +269,10 @@ namespace JCToolkit {
                 if(ImGui::Button("Cancel Dump"))
                     res = SPIDumpAction::CancelDump;
                 ImGui::SameLine();
-                ImGui::ProgressBar((float) bytes_dumped / SPI_SIZE, {-1, 0},
-                    std::string(std::to_string(int((float) bytes_dumped / SPI_SIZE * 100)) + "%").c_str()
+                ImGui::ProgressBar((float) bytes_dumped / MCU::SPI_SIZE, {-1, 0},
+                    std::string(std::to_string(int((float) bytes_dumped / MCU::SPI_SIZE * 100)) + "%").c_str()
                 );
-                ImGui::Text("%.2f KB / %.2f KB", (float) bytes_dumped / 1024, float(SPI_SIZE / 1024));
+                ImGui::Text("%.2f KB / %.2f KB", (float) bytes_dumped / 1024, float(MCU::SPI_SIZE / 1024));
 
                 return res;
             }
@@ -586,7 +588,7 @@ namespace JCToolkit {
                         rumble_fstream.read((char*)read_buf, rumble_data_size);
 
                         new_rumble_data.from_file = file_name;
-                        new_rumble_data.metadata = getVIBMetadata(read_buf);
+                        new_rumble_data.metadata = Rumble::getVIBMetadata(read_buf);
                         new_rumble_data.data.reset(read_buf, [](u8* p){
                             delete[] p;
                         }); // Allocate enough space for the rumble data.
@@ -904,9 +906,11 @@ namespace JCToolkit {
                 {"Controller", [&](){
                     if(!_sess_ok())
                         return;
-                    draw_controller(con_p->getProdID(), sess_data_p->state.saved_col);
+                    draw_controller(con_p->getCon().prod_id, sess_data_p->state.saved_col);
                     if(ImGui::Button("Get Colors")){
-                        con_p->getColors(sess_data_p->state.saved_col);
+                        con_p->fetchColors([](const SPIColors& colors){
+                            sess_data_p->user.preview_col = sess_data_p->state.saved_col = colors;
+                        });
                     }
                 }},
                 {"Basic Stuff", [&](){
@@ -920,11 +924,15 @@ namespace JCToolkit {
                     }
                     showTemperature(sess_data_p->state.temp_data);
                     if(ImGui::Button("Update Temperature")){
-                        con_p->getTemperature(sess_data_p->state.temp_data);
+                        con_p->fetchTemperature([](const TemperatureData& temp_data){
+                            sess_data_p->state.temp_data = temp_data;
+                        });
                     }
                     showBattery(sess_data_p->state.batt_data);
                     if(ImGui::Button("Update Battery")){
-                        con_p->getBattery(sess_data_p->state.batt_data);
+                        con_p->fetchBattery([](const BatteryData& batt_data){
+                            sess_data_p->state.batt_data = batt_data;
+                        });
                     }
                 }},
                 {"HD Rumble Player", [&](){
@@ -965,12 +973,12 @@ namespace JCToolkit {
                     if(ImGui::Button("Edit Colors")){
                         nav_stack.push({"Color Editor",
                             [&](){
-                                ModifyController::color_editor_page(con_p->getProdID(), sess_data_p->user.preview_col);
+                                ModifyController::color_editor_page(con_p->getCon().prod_id, sess_data_p->user.preview_col);
                             }
                         });
                     }
 
-                    draw_controller(con_p->getProdID(), sess_data_p->user.preview_col);
+                    draw_controller(con_p->getCon().prod_id, sess_data_p->user.preview_col);
                     if(ImGui::Button("Write colors to SPI")){
                         con_p->writeColorsToSPI(sess_data_p->user.preview_col);
                     }
@@ -1062,7 +1070,7 @@ namespace JCToolkit {
                     session.first.startSession([&](SessionStatus s){
                         session.second.state.status = s;
                     });
-                    nav_stack.push({session.first.getProdStr() + " " + session.first.getHIDSN(),
+                    nav_stack.push({session.first.getCon().prod_string + " " + session.first.getCon().hid_sn,
                         [&](){
                             show_session_page(session, nav_stack);
                         }

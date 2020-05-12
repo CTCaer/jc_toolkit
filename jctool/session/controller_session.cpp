@@ -36,64 +36,59 @@ SOFTWARE.
 #include "TP/TP.hpp"
 
 #include "jctool.h"
+#include "jctool_leds.hpp"
+#include "jctool_mcu.hpp"
+#include "jctool_rumble.hpp"
 #include "jctool_helpers.hpp"
 
-/**
- * Provides a context for a controller session.
- */
-struct SessionContext {
-    controller_hid_handle_t con_handle;
-    u8 timming_byte;
-    SessionStatus status;
-    std::unique_ptr<std::stringstream> err_str;
-    std::unique_ptr<std::stringstream> msg_str;
+SessionContext::SessionContext():
+con_handle{nullptr},
+timming_byte{0},
+status{NO_SESS},
+ctx_mutex_p{new std::mutex},
+log_mutex_p{new std::mutex},
+err_log{new std::stringstream},
+msg_log{new std::stringstream}
+{}
 
-    SessionContext():
-    con_handle{nullptr},
-    timming_byte{0},
-    status{NO_SESS},
-    err_str{new std::stringstream},
-    msg_str{new std::stringstream}
-    {}
-    
-    SessionContext(SessionContext&& move_sess):
-    con_handle{move_sess.con_handle},
-    timming_byte{move_sess.timming_byte},
-    status{move_sess.status},
-    err_str{std::move(move_sess.err_str)},
-    msg_str{std::move(move_sess.msg_str)}
-    {}
-};
+SessionContext::SessionContext(SessionContext&& move_sess):
+con_handle{move_sess.con_handle},
+timming_byte{move_sess.timming_byte},
+status{move_sess.status},
+ctx_mutex_p{std::move(move_sess.ctx_mutex_p)},
+log_mutex_p{std::move(move_sess.log_mutex_p)},
+err_log{std::move(move_sess.err_log)},
+msg_log{std::move(move_sess.msg_log)}
+{}
+
 namespace ConSessManager {
-    namespace {
-        static std::mutex cons_with_sessions_mutex;
-        static std::unordered_map<Con, SessionContext, ConHash, ConEqual> cons_with_sessions;
-        static std::stringstream msg_stream;
-        static std::stringstream err_stream;
-        /**
-         * Trys to connect to a controller device.
-         * On success, dispatches a session.
-         */
-        static SessionStatus session_dispatcher(const Con& con){
-            SessionContext sc;
-            sc.con_handle = hid_open_path(con.dev_path.c_str());
-            if(!sc.con_handle){
-                err_stream << con.hid_sn << " was not able to be used for a session." << std::endl;
-                return SESS_ERR;
-            }
+    static std::mutex cons_with_sessions_mutex;
+    static std::unordered_map<Con, SessionContext, ConHash, ConEqual> cons_with_sessions;
+    static std::stringstream msg_stream;
+    static std::stringstream err_stream;
 
-            cons_with_sessions_mutex.lock();
-            auto insert_res = cons_with_sessions.insert({con, std::move(sc)});
-            cons_with_sessions_mutex.unlock();
+    /**
+     * Trys to connect to a controller device.
+     * On success, dispatches a session.
+     */
+    SessionStatus session_dispatcher(const Con& con){
+        SessionContext sc;
+        sc.con_handle = hid_open_path(con.dev_path.c_str());
+        if(!sc.con_handle){
+            err_stream << con.hid_sn << " was not able to be used for a session." << std::endl;
+            return SESS_ERR;
+        }
 
-            if(!insert_res.second){
-                msg_stream << insert_res.first->first.hid_sn << " already has a session. [handle is " << insert_res.first->second.con_handle << "]" << std::endl;
-                return SESS_OK;
-            }
+        cons_with_sessions_mutex.lock();
+        auto insert_res = cons_with_sessions.insert({con, std::move(sc)});
+        cons_with_sessions_mutex.unlock();
 
-            *insert_res.first->second.msg_str << insert_res.first->first.hid_sn << " new session established. [handle is " << insert_res.first->second.con_handle << "]" << std::endl;
+        if(!insert_res.second){
+            msg_stream << insert_res.first->first.hid_sn << " already has a session. [handle is " << insert_res.first->second.con_handle << "]" << std::endl;
             return SESS_OK;
         }
+        insert_res.first->second.logMsg(insert_res.first->first.hid_sn + " new session established. [handle is " + std::to_string((uintptr_t)insert_res.first->second.con_handle) + "]");
+        return SESS_OK;
     }
 
     /**
@@ -126,6 +121,7 @@ namespace ConSessManager {
                 SessionContext* sess_ctx_p;
                 if(!get_con_sess_ctx(con, sess_ctx_p))
                     return;
+                std::lock_guard lock{sess_ctx_p->ctx_mutex()};
                 job(con, *sess_ctx_p);
                 //return promise->set_value(con_status);
             }
@@ -179,14 +175,14 @@ const std::stringstream* ConSess::errorStream() const {
     SessionContext* sess_ctx_p;
     if(!ConSessManager::get_con_sess_ctx(this->con, sess_ctx_p))
         return nullptr;
-    return sess_ctx_p->err_str.get();
+    return &sess_ctx_p->getErrLog();
 }
 
 const std::stringstream* ConSess::messageStream() const {
     SessionContext* sess_ctx_p;
     if(!ConSessManager::get_con_sess_ctx(this->con, sess_ctx_p))
         return nullptr;
-    return sess_ctx_p->msg_str.get();
+    return &sess_ctx_p->getMsgLog();
 }
 
 /**
@@ -220,17 +216,15 @@ SessionStatus ConSess::checkConnectionStatus(StatusDelay status_delay){
 #define CON_JOB(...) \
             [__VA_ARGS__](const Con& con, SessionContext& sc)
 #define CON_JOB_VARS \
-            CT ct{sc.con_handle, sc.timming_byte};\
-            std::stringstream& msg_str = *sc.msg_str;\
-            std::stringstream& err_str = *sc.err_str;
+            CT ct{sc.getCT()};
 
 void ConSess::testSetLedBusy(){
     ConSessManager::add_job(this->con,
         CON_JOB(){
             CON_JOB_VARS
-            msg_str << "set_led_busy" << std::endl;
+            sc.logMsg("set_led_busy");
             
-            set_led_busy(ct, con.prod_id); // Always returns 0, so no error checking.
+            LEDS::set_led_busy(ct, con.prod_id); // Always returns 0, so no error checking.
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
     );
@@ -240,7 +234,7 @@ void ConSess::testIRCapture(IRSensor& ir){
     ConSessManager::add_job(this->con,
         CON_JOB(&) {
             CON_JOB_VARS
-            msg_str << "IRSensor::capture" << std::endl;
+            sc.logMsg("IRSensor::capture");
             ir.capture(ct);
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
@@ -252,8 +246,8 @@ void ConSess::testHDRumble(RumbleData& rumble_data, bool& is_active){
     ConSessManager::add_job(this->con,
         CON_JOB(&rumble_data, &is_active) {
             CON_JOB_VARS
-            msg_str << " play_hd_rumble_file" << std::endl;
-            int res = play_hd_rumble_file(ct, rumble_data);
+            sc.logMsg("play_hd_rumble_file");
+            int res = Rumble::play_hd_rumble_file(ct, rumble_data);
             is_active = false;
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
@@ -263,38 +257,44 @@ void ConSess::testHDRumble(RumbleData& rumble_data, bool& is_active){
 /**
  * Fills in the temperature data asynchronously.
  */
-void ConSess::getTemperature(TemperatureData& fill_temp_data){
+void ConSess::fetchTemperature(std::function<void(const TemperatureData&)> got_temp_data_cb){
     ConSessManager::add_job(this->con,
-        CON_JOB(&fill_temp_data) {
+        CON_JOB(got_temp_data_cb) {
             CON_JOB_VARS
-            msg_str << "get_temperature, parseTemperatureData" << std::endl;
+            sc.logMsg("get_temperature, parseTemperatureData");
             unsigned char temperature_data[2] = {};
-            get_temperature(ct, temperature_data);
-            fill_temp_data = parseTemperatureData(temperature_data);
+            MCU::get_temperature(ct, temperature_data);
+            auto temp_data = MCU::parseTemperatureData(temperature_data);
+            if(got_temp_data_cb)
+                got_temp_data_cb(temp_data);
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
     );
 }
 
-void ConSess::getBattery(BatteryData& fill_batt_data){
+void ConSess::fetchBattery(std::function<void(const BatteryData&)> got_batt_data_cb){
     ConSessManager::add_job(this->con,
-        CON_JOB(&fill_batt_data) {
+        CON_JOB(got_batt_data_cb) {
             CON_JOB_VARS
-            msg_str << "get_battery, parseBatteryData" << std::endl;
+            sc.logMsg("get_battery, parseBatteryData");
             unsigned char battery_data[3] = {};
-            get_battery(ct, battery_data);
-            fill_batt_data = parseBatteryData(battery_data);
+            MCU::get_battery(ct, battery_data);
+            auto batt_data = MCU::parseBatteryData(battery_data);
+            if(got_batt_data_cb)
+                got_batt_data_cb(batt_data);
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
     );
 }
 
-void ConSess::getColors(SPIColors& fill_spi_colors){
+void ConSess::fetchColors(std::function<void(const SPIColors&)> got_colors_cb){
     ConSessManager::add_job(this->con,
-        CON_JOB(&fill_spi_colors) {
+        CON_JOB(got_colors_cb) {
             CON_JOB_VARS
-            msg_str << "get_spi_colors" << std::endl;
-            fill_spi_colors = get_spi_colors(ct);
+            sc.logMsg("get_spi_colors");
+            auto colors = MCU::get_spi_colors(ct);
+            if(got_colors_cb)
+                got_colors_cb(colors);
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
     );
@@ -306,16 +306,16 @@ void ConSess::dumpSPI(const std::string& to_file, bool& is_dumping, size_t& byte
     ConSessManager::add_job(this->con,
         CON_JOB(spi_dump_file = to_file, &is_dumping, &bytes_dumped, &cancel_spi_dump) {
             CON_JOB_VARS
-            msg_str << "dump_spi" << std::endl;
+            sc.logMsg("dump_spi");
             DumpSPICTX ctx{
                 cancel_spi_dump,
                 bytes_dumped,
                 spi_dump_file.c_str()
             };
             bytes_dumped = 0;
-            int res = dump_spi(ct, ctx);
+            int res = MCU::dump_spi(ct, ctx);
             if(res)
-                msg_str << "There was a problem backing up the SPI. Try again?" << std::endl;
+                sc.logErr("There was a problem backing up the SPI. Try again?");
 
             is_dumping = false;      
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
@@ -327,10 +327,10 @@ void ConSess::writeColorsToSPI(const SPIColors& colors){
     ConSessManager::add_job(this->con,
         CON_JOB(colors = colors){
             CON_JOB_VARS
-            msg_str << "write_spi_colors" << std::endl;
-            int res = write_spi_colors(ct, colors);
+            sc.logMsg("write_spi_colors");
+            int res = MCU::write_spi_colors(ct, colors);
             if(res)
-                msg_str << "There was a problem writing the colors. Try again?" << std::endl;
+                sc.logErr("There was a problem writing the colors. Try again?");
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
     );
@@ -340,8 +340,8 @@ void ConSess::testSendRumble(){
     ConSessManager::add_job(this->con,
         CON_JOB(){
             CON_JOB_VARS
-            msg_str << "send_rumble" << std::endl;
-            send_rumble(ct, con.prod_id);
+            sc.logMsg("send_rumble");
+            Rumble::send_rumble(ct, con.prod_id);
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
     );

@@ -25,7 +25,7 @@ SOFTWARE.
 */
 #include "IRSensor.hpp"
 
-#include "jctool.h"
+#include "jctool_irsensor.hpp"
 #include "jctool_helpers.hpp"
 #include "ir_sensor.h"
 #include "ImageLoad/ImageLoad.hpp"
@@ -80,7 +80,7 @@ void IRSensor::capture(CT& ct){
             this->capture_mode,
             this->capture_status
     };
-    int res = ir_sensor(capture_context,
+    int res = IR::ir_sensor(capture_context,
         [this](const u8* raw_capture, size_t size_raw_capture){
             auto raw_capture_copy = std::shared_ptr<u8>(new u8[size_raw_capture], [](u8* d){ delete[] d;});
             memcpy(raw_capture_copy.get(), raw_capture, size_raw_capture);
@@ -94,7 +94,7 @@ void IRSensor::capture(CT& ct){
                     ird.bytes = new u8[ird.width*ird.height*ird.num_channels];
 
                     // Colorize the raw capture.
-                    colorizefrom8BitsPP(
+                    IR::colorizefrom8BitsPP(
                         raw_capture_copy.get(),
                         ird.bytes,
                         ird.width,
@@ -117,7 +117,7 @@ void IRSensor::capture(CT& ct){
     );
     this->capture_in_progress = false;
     if(res > 0)
-        this->capture_status.message_stream << ir_sensorErrorToString(res);
+        this->capture_status.message_stream << MCU::ir_sensorErrorToString(res);
 }
 
 uintptr_t IRSensor::getCaptureTexID() {

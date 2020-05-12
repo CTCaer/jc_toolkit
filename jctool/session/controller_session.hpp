@@ -29,6 +29,58 @@ struct Con {
     Con(const hid_device_info* dev);
 };
 
+namespace ConSessManager{
+    SessionStatus session_dispatcher(const Con& con);
+}
+
+/**
+ * Provides a context for a controller session.
+ */
+class SessionContext {
+private:
+    controller_hid_handle_t con_handle;
+    std::unique_ptr<std::mutex> ctx_mutex_p;
+    u8 timming_byte;
+
+    std::unique_ptr<std::mutex> log_mutex_p;
+    std::unique_ptr<std::stringstream> err_log;
+    std::unique_ptr<std::stringstream> msg_log;
+public:
+    friend SessionStatus ConSessManager::session_dispatcher(const Con&);
+    SessionStatus status;
+
+    SessionContext();
+    
+    SessionContext(SessionContext&& move_sess);
+
+    inline const controller_hid_handle_t& getConHandle() const { return this->con_handle; }
+    inline CT getCT() {
+        return {this->con_handle, this->timming_byte};
+    }
+
+    inline std::mutex& ctx_mutex(){
+        return *this->ctx_mutex_p;
+    }
+
+    inline void logMsg(const std::string& message){
+        std::lock_guard lock{*this->log_mutex_p};
+        *msg_log << message << std::endl;
+    }
+
+    inline void logErr(const std::string& message){
+        std::lock_guard lock{*this->log_mutex_p};
+        *err_log << message << std::endl;
+    }
+
+    inline const std::stringstream& getMsgLog() const {
+        return *this->msg_log;
+    }
+
+    inline const std::stringstream& getErrLog() const {
+        return *this->err_log;
+    }
+};
+
 class ConSess {
     friend struct ConEqual;
     friend struct ConHash;
@@ -45,11 +97,7 @@ public:
     const std::stringstream* errorStream() const;
     const std::stringstream* messageStream() const;
 
-    inline ConHID::ProdID getProdID() { return this->con.prod_id; }
-    inline const std::string& getHIDSN() const { return this->con.hid_sn; }
-    inline const std::string& getManuStr() const { return this->con.manu_string; }
-    inline const std::string& getProdStr() const { return this->con.prod_string; }
-    inline const std::string& getDevPath() const { return this->con.dev_path; }
+    inline const Con& getCon() { return this->con; }
 
     void startSession(std::function<void(SessionStatus)> status_cb);
     void endSession();
@@ -60,9 +108,9 @@ public:
     void testHDRumble(RumbleData& rumble_data, bool& is_active);
     void testSendRumble();
 
-    void getTemperature(TemperatureData& fill_temp_data);
-    void getBattery(BatteryData& fill_batt_data);
-    void getColors(SPIColors& fill_spi_colors);
+    void fetchTemperature(std::function<void(const TemperatureData&)> got_temp_data_cb);
+    void fetchBattery(std::function<void(const BatteryData&)> got_batt_data_cb);
+    void fetchColors(std::function<void(const SPIColors&)> got_colors_cb);
     void dumpSPI(const std::string& to_file, bool& is_dumping, size_t& bytes_dumped, bool& cancel_spi_dump);
 
     void writeColorsToSPI(const SPIColors& colors);

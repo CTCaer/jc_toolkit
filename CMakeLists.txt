@@ -38,21 +38,25 @@ if(WIN32)
 endif()
 
 add_compile_options(
-    -D__jctool_cpp_API__
+    -D__jctool_disable_legacy_ui__
 )
 
 set(SOURCES
     jctool/jctool.cpp
-    jctool/jctool_ui.cpp
+    jctool/jctool_input.cpp
+    jctool/jctool_irsensor.cpp
+    jctool/jctool_leds.cpp
+    jctool/jctool_mcu.cpp
+    jctool/jctool_nfc.cpp
+    jctool/jctool_rumble.cpp
     jctool/IRSensor.cpp
     
     jctool/session/controller_session.cpp
-    "jctool/commands/com_builder.cpp"
-    "jctool/commands/com_builder_ui.cpp"
+    jctool/com-builder/com_builder.cpp
 )
 
-if (JCTOOL_API_ONLY)
-    add_compile_options(-D__jctool_API_ONLY__)
+if (JCTOOL_NO_UI)
+    add_compile_options(-D__jctool_no_UI__)
     add_library(${P}
         ${SOURCES}
     )
@@ -60,6 +64,8 @@ else()
     add_subdirectory(easy-imgui)
     add_executable(${P}
         ${SOURCES}
+        jctool/com-builder/com_builder_ui.cpp
+        jctool/jctool_ui.cpp
     )
     target_link_libraries(${P}
         easy-imgui
@@ -81,6 +87,7 @@ endif()
 target_include_directories(${P} PRIVATE
     ./
     jctool
+    jctool/include
     easy-imgui/imgui
     easy-imgui/tools
     hidapi/hidapi

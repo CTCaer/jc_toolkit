@@ -2,9 +2,6 @@
 #include <tuple>
 #include "jctool_types.h"
 
-// crc-8-ccitt / polynomial 0x07 look up table
-extern uint8_t mcu_crc8_table[];
-
 // ARGB Ironbow palette
 extern uint32_t iron_palette[];
 
