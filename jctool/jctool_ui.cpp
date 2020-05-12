@@ -48,6 +48,7 @@ SOFTWARE.
 
 #include "jctool.h"
 #include "jctool_helpers.hpp"
+#include "jctool_leds.hpp"
 #include "jctool_mcu.hpp"
 #include "jctool_rumble.hpp"
 #include "ir_sensor.h"
@@ -163,6 +164,7 @@ namespace JCToolkit {
 
     struct ConSessData {
         struct User {
+            LEDs::LEDFlags player_leds{};
             bool spi_dumping = false;
             bool spi_cancel_dump = false;
             size_t spi_bytes_dumped = 0;
@@ -944,6 +946,42 @@ namespace JCToolkit {
                     showRumbleData(rd);
                     if((rd.data != nullptr) && ImGui::Button("Play")){
                         con_p->testHDRumble(rd, sess_data_p->user.is_rumble_active);
+                    }
+                }},
+                {"LED Control", [&](){
+                    if(ImGui::BeginTable("player leds", 5)){
+                        LEDs::LEDFlags flag = LEDs::LED0_On;
+
+                        ImGui::TableNextCell();
+                        ImGui::Text("LEDS");
+                        ImGui::TableNextCell();
+                        ImGui::Text("3");
+                        ImGui::TableNextCell();
+                        ImGui::Text("2");
+                        ImGui::TableNextCell();
+                        ImGui::Text("1");
+                        ImGui::TableNextCell();
+                        ImGui::Text("0");
+                        ImGui::TableNextCell();
+
+                        bool modified = false;
+                        for(int i=0; i < 2; i++){
+                            if(i % 2 == 0)
+                                ImGui::Text("On");
+                            else
+                                ImGui::Text("Flash");
+                            ImGui::TableNextCell();
+                            for(int j=0; j < 4; j++, flag = LEDs::LEDFlags(flag << 1)){
+                                ImGui::PushID(flag);
+                                modified |= ImGui::CheckboxFlags("", (unsigned int*)&sess_data_p->user.player_leds, flag);
+                                ImGui::PopID();
+                                ImGui::TableNextCell();
+                            }
+                        }
+                        if(modified)
+                            con_p->setPlayerLEDs(sess_data_p->user.player_leds);
+
+                        ImGui::EndTable();
                     }
                 }},
                 {"IR Camera", [&](){

@@ -6,6 +6,7 @@
 #include <functional>
 #include <sstream>
 #include "jctool_types.h"
+#include "jctool_leds.hpp"
 
 #include "IRSensor.hpp"
 
@@ -114,6 +115,8 @@ public:
     void dumpSPI(const std::string& to_file, bool& is_dumping, size_t& bytes_dumped, bool& cancel_spi_dump);
 
     void writeColorsToSPI(const SPIColors& colors);
+
+    void setPlayerLEDs(LEDs::LEDFlags led_flags);
 private:
     Con con;
 };

@@ -36,7 +36,6 @@ SOFTWARE.
 #include "TP/TP.hpp"
 
 #include "jctool.h"
-#include "jctool_leds.hpp"
 #include "jctool_mcu.hpp"
 #include "jctool_rumble.hpp"
 #include "jctool_helpers.hpp"
@@ -224,7 +223,7 @@ void ConSess::testSetLedBusy(){
             CON_JOB_VARS
             sc.logMsg("set_led_busy");
             
-            LEDS::set_led_busy(ct, con.prod_id); // Always returns 0, so no error checking.
+            LEDs::set_led_busy(ct, con.prod_id); // Always returns 0, so no error checking.
             sc.status = SESS_OK; // TODO: Use the return value of the main job function to provide session status.
         }
     );
@@ -346,3 +345,15 @@ void ConSess::testSendRumble(){
         }
     );
 }
+
+void ConSess::setPlayerLEDs(LEDs::LEDFlags led_flags){
+    ConSessManager::add_job(this->con,
+        CON_JOB(led_flags){
+            CON_JOB_VARS
+            ConCom::Packet p{};
+            LEDs::set_player_leds(ct, led_flags,p);
+            sc.status = SESS_OK;
+        }
+    );
+}
+

@@ -17,10 +17,16 @@ namespace ConCom {
         UNK0 = 0x12, // Unknown
         UNK1 = 0x28, 
     };
+
+    enum Sub {
+        SLED = 0x30, // Set player LEDs.
+        GLED = 0x31, // Get player LEDs.
+        HLED = 0x38, // Set home LED.
+    };
     /**
      * Output Reports Subcommand
      */
-    enum OutSub {
+    enum Output {
         OMCU = 0x03, // Output Report NFC/IR MCU FW update packet
         RUM1 = 0x10, // Rumble
         RMCU = 0x11, // Request data from NFC/IR
@@ -29,7 +35,7 @@ namespace ConCom {
     /**
      * Input Reports Subcommand
      */
-    enum InSub {
+    enum Input {
         CTRL = 0x3F, // Controller data packet
         STD0 = 0x21, // Standard input report, subcommand reply.
         IMCU = 0x23, // Input Report NFC/IR MCU FW update packet
@@ -90,10 +96,10 @@ namespace ConCom {
      * REMINDER: The timming byte gets incremented here!
      * CT is a controller handle and timming byte reference pair.
      */
-    inline int send_pkt(CT& ct, Packet& pkt){
+    inline int send_pkt(CT& ct, const Packet& pkt){
         ct.timming_byte++;
         return hid_write(ct.handle, pkt.buf, sizeof(pkt.buf));
     }
     
-    int set_input_report_x31(CT& ct, ConCom::Packet& p, u8* buf_read, size_t buf_read_size);
+    int set_input_report_x31(CT& ct, Packet& p, u8* buf_read, size_t buf_read_size);
 };
