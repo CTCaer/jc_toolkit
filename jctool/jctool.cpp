@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <cstring>
 // #define NOMINMAX
 #include <Windows.h>
 
@@ -20,6 +21,7 @@ using namespace CppWinFormJoy;
 #pragma comment(lib, "SetupAPI")
 
 bool enable_traffic_dump = false;
+bool enable_hid_listings = false;
 
 hid_device *handle;
 hid_device *handle_l;
@@ -1402,7 +1404,7 @@ int get_raw_ir_image(u8 show_status) {
     u8 buf[49];
     u8 buf_reply[0x170];
     u8 *buf_image = new u8[19 * 4096]; // 8bpp greyscale image.
-	uint16_t bad_signal = 0;
+    uint16_t bad_signal = 0;
     int error_reading = 0;
     float noise_level = 0.0f;
     int avg_intensity_percent = 0.0f;
@@ -2912,8 +2914,47 @@ int test_chamber() {
     return 0;
     }
 
+void output_hid_device_info_list() {
+    // Enumerate and output the HID devices on the system
+    hid_device_info* devs, * cur_dev;
+    devs = hid_enumerate(0x0, 0x0);
+    cur_dev = devs;
+    std::wstring dev_info_list;
+    while (cur_dev) {
+        std::wstringstream dev_info;
+        if (cur_dev->product_string || cur_dev->manufacturer_string || cur_dev->serial_number) {
+            wchar_t* product_string      = cur_dev->product_string      ? cur_dev->product_string      : L"Unknown Product"      ;
+            wchar_t* manufacturer_string = cur_dev->manufacturer_string ? cur_dev->manufacturer_string : L"Unknown Manufacturer" ;
+            wchar_t* serial_number       = cur_dev->serial_number       ? cur_dev->serial_number       : L"Unknown Serial Number";
+
+            dev_info << std::setfill(L'0') << std::hex;
+            dev_info << L"HID Device: 0x"  << std::setw(4) << cur_dev->product_id << L" \"" << product_string      << L'"' << L'\n';
+            dev_info << L"\tvendor = 0x"   << std::setw(4) << cur_dev->vendor_id  << L" \"" << manufacturer_string << L'"' << L'\n';
+            dev_info << L"\trelease = "    << std::dec << cur_dev->release_number                                          << L'\n';
+            dev_info << L"\tserial = "     << serial_number << std::hex                                                    << L'\n';
+            dev_info << L"\tusage = 0x"    << std::setw(4) << cur_dev->usage << L" page: 0x" << cur_dev->usage_page        << L'\n';
+            dev_info << L"\n"              << cur_dev->path;
+
+            std::wstring dev_info_str = dev_info.str();
+            System::String^ dev_info_str_handle = System::String(dev_info_str.c_str(), 0, dev_info_str.length()).ToString();
+
+            if (MessageBox::Show(dev_info_str_handle,
+                L"CTCaer's Joy-Con Toolkit - HID Device Info Report",
+                MessageBoxButtons::OKCancel, MessageBoxIcon::Information) == System::Windows::Forms::DialogResult::Cancel) {
+                break;
+            }
+        }
+        cur_dev = cur_dev->next;
+    }
+    hid_free_enumeration(devs);
+}
+
 int device_connection(){
     if (check_connection_ok) {
+        if (enable_hid_listings) {
+            output_hid_device_info_list();
+        }
+        
         handle_ok = 0;
         // Joy-Con (L)
         if (handle = hid_open(0x57e, 0x2006, nullptr)) {
@@ -2965,6 +3006,11 @@ int Main(array<String^>^ args) {
     }
     */
     check_connection_ok = true;
+    if (args->Length > 0) {
+        if (args[0] == "-l") {
+            enable_hid_listings = true; // List all connected HID device information every device connection check 
+        }
+    }
     while (!device_connection()) {
         if (MessageBox::Show(
             L"The device is not paired or the device was disconnected!\n\n" +
