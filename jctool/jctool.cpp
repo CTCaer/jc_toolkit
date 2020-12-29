@@ -2953,6 +2953,7 @@ int device_connection(){
     if (check_connection_ok) {
         if (enable_hid_listings) {
             output_hid_device_info_list();
+            enable_hid_listings = false;
         }
         
         handle_ok = 0;
@@ -2973,6 +2974,39 @@ int device_connection(){
         }
         // Nothing found
         else {
+            // Check for third-party controllers
+            hid_device_info* devs = hid_enumerate(0x0, 0x0);
+            hid_device_info* cur_dev = devs;
+            while (cur_dev) {
+                std::wstring product_string      = cur_dev->product_string      ? cur_dev->product_string      : L"Unknown Product";
+                std::wstring manufacturer_string = cur_dev->manufacturer_string ? cur_dev->manufacturer_string : L"Unknown Manufacturer";
+                std::wstring serial_number       = cur_dev->serial_number       ? cur_dev->serial_number       : L"Unknown Serial Number";
+                
+                if (product_string == L"Wireless Gamepad" && manufacturer_string == L"Nintendo" && cur_dev->usage == 0x0005) {
+                //if (true) {
+                    std::wstring third_party_warning = L"A potential third-party device has been detected:\n\n\t" 
+                        + product_string + L" : " + manufacturer_string + L"\n\n"
+                        + L"Editing could be potentially unstable. Would you like to use this device anyways?";
+                    if (MessageBox::Show(System::String(third_party_warning.c_str(), 0, third_party_warning.length()).ToString(),
+                        L"CTCaer's Joy-Con Toolkit - Third-Party Device Detected",
+                        MessageBoxButtons::YesNo, MessageBoxIcon::Warning) == System::Windows::Forms::DialogResult::Yes)
+                    {
+                        if (handle = hid_open(cur_dev->product_id, cur_dev->vendor_id, cur_dev->serial_number)) {
+                            // Maybe do some more tests here just to double check
+                            hid_free_enumeration(devs);
+                            handle_ok = 3;
+                            return handle_ok;
+                        }
+                        else {
+                            MessageBox::Show(L"Could not obtain the device.\nIt's usage has been aborted.",
+                                L"CTCaer's Joy-Con Toolkit - Third-Party Device Connection Failed",
+                                MessageBoxButtons::OK, MessageBoxIcon::Stop);
+                        }
+                    }
+                }
+                cur_dev = cur_dev->next;
+            }
+            hid_free_enumeration(devs);
             return 0;
         }
     }
@@ -3008,7 +3042,7 @@ int Main(array<String^>^ args) {
     check_connection_ok = true;
     if (args->Length > 0) {
         if (args[0] == "-l") {
-            enable_hid_listings = true; // List all connected HID device information every device connection check 
+            enable_hid_listings = true; // List all connected HID device information for first connection check 
         }
     }
     while (!device_connection()) {
